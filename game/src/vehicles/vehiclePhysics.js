@@ -194,6 +194,8 @@ export class Vehicle {
   }
 
   effects(dt) {
+    // A police car that has lost its crew (stolen, wrecked) has nobody left to lean out of its window.
+    if (this.windowGunner && (this.dead || !this.controller || !this.controller.isPursuit)) this.windowGunner.visible = false;
     const tailX = this.position.x - this.forwardX() * (this.spec.length * 0.5);
     const tailZ = this.position.z - this.forwardZ() * (this.spec.length * 0.5);
     if (this.skidding) {
@@ -234,6 +236,7 @@ export class Vehicle {
     this.velZ = 0;
     this.speed = 0;
     this.siren = false;
+    if (this.windowGunner) this.windowGunner.visible = false;
     this.lights.rig.visible = false;
     this.mesh.traverse((part) => { if (part.isMesh && part.parent !== this.lights.rig) part.material = wreckMaterial; });
     this.mesh.rotation.z = 0.06;

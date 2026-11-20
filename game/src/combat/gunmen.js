@@ -84,7 +84,7 @@ class Gunman extends CharacterBody {
     const from = new THREE.Vector3(this.position.x + Math.sin(this.heading) * 0.6, this.position.y + 1.45, this.position.z + Math.cos(this.heading) * 0.6);
     const miss = hit ? 0 : 1.6;
     const to = new THREE.Vector3(player.position.x + (Math.random() - 0.5) * miss * 2, player.position.y + 1.1 + (Math.random() - 0.5) * miss, player.position.z + (Math.random() - 0.5) * miss * 2);
-    game.particles.tracer(from, to, this.faction === 'police' ? 0xbfd8ff : 0xffc9a8);
+    game.particles.tracer(from, to, this.faction === 'police' ? 0xbfd8ff : 0xffb14a);
     game.particles.muzzleFlash(from.x, from.y, from.z);
     game.audio.gunshot('distant', Math.max(0.15, 1 - distance / 60));
     // Anyone's gunfire clears the pavement, not only Nova's.

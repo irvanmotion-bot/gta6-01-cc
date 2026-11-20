@@ -195,7 +195,7 @@ function bountyScene(game) {
   const boss = crew.find((gunman) => gunman.kind === 'capo');
   const [near, left, right] = crew.filter((gunman) => gunman !== boss);
   // Where each stands as she opens up, and which way he sidesteps while he shoots (the gunmen's own strafe).
-  const posts = [[near, 0, -5.4, 1], [left, -2.9, -8.2, -1], [boss, 1.5, -9, 1], [right, 2.7, -12.6, 1]];
+  const posts = [[near, 0, -5.4, 1], [left, -2.9, -8.2, -1], [boss, 1.5, -9, 1], [right, 0.9, -12.4, 1]];
   for (const [gunman, x, z, strafe] of posts) {
     gunman.position.set(x0 + x, 0, z0 + z);
     gunman.heading = 0;
@@ -216,7 +216,7 @@ function bountyScene(game) {
   game.wanted.setStars(3, 99);
   // Saros P.D. answers the shots: one cruiser has pulled up across the drive and put its two officers on the
   // street (the dispatcher's own rule for a suspect on foot), and another is coming down the drive behind it.
-  spawnPursuit(game, 'patrol', 'centinela', x0 + 2.0, z0 - 13.4, 0.6, 0);
+  spawnPursuit(game, 'patrol', 'centinela', x0 + 2.6, z0 - 13.6, 1.05, 0);
   spawnPursuit(game, 'patrol', 'centinela', x0 + 2.8, z0 - 62, 0, 14);
   // The people out for the eclipse are caught in it, each in their own way: a sprint, hands up, ducked low, on the
   // ground, and two who would rather film it.

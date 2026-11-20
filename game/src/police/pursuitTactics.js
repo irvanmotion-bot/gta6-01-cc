@@ -4,6 +4,7 @@
 import * as THREE from 'three';
 import { nearestNode, nodePosition, stepToward } from '../world/roadNetwork.js';
 import { angleDelta, clamp, distance2D } from '../core/random.js';
+import { MeshBatcher } from '../render/meshBatcher.js';
 
 /** Drives one pursuit vehicle with the tactic the dispatcher gave it. */
 export class PursuitDriver {
@@ -42,6 +43,7 @@ export class PursuitDriver {
     const playerSpeed = player.vehicle ? Math.abs(player.vehicle.speed) : player.moveSpeed;
     this.redeploy -= dt;
     this.swerving = false;
+    this.tuckIn(vehicle, dt);
 
     if (this.deployed) {
       vehicle.setControls(0, 0, true);
@@ -108,12 +110,37 @@ export class PursuitDriver {
     game.particles.muzzleFlash(from.x, from.y, from.z, 0.6);
     game.audio.gunshot('distant', Math.max(0.2, 1 - distance / 50));
     this.shotsFired += 1;
+    this.leanOut(vehicle, side);
     if (!hit) return;
     if (player.vehicle) {
       player.vehicle.damage(WINDOW_FIRE.damage * 0.7);
       game.particles.sparks(to.x, to.y, to.z, 3);
     }
     player.takeDamage(WINDOW_FIRE.damage, 'bullet');
+  }
+
+  /**
+   * Show the officer who is shooting: head, shoulders and gun arm out of the window on `side` of the car, for as
+   * long as the burst lasts and a moment after it.
+   */
+  leanOut(vehicle, side) {
+    if (!this.gunner || this.gunner.parent !== vehicle.mesh) {
+      this.gunner = new THREE.Mesh(windowGunnerShape, windowGunnerMaterial);
+      vehicle.mesh.add(this.gunner);
+      // The car itself pulls him back in if it loses its pursuit driver (stolen, wrecked): see vehiclePhysics.js.
+      vehicle.windowGunner = this.gunner;
+    }
+    this.gunner.position.set(side * (vehicle.spec.width / 2 - 0.12), vehicle.spec.height * 0.72 - 0.3, 0.45);
+    this.gunner.rotation.y = side > 0 ? 0 : Math.PI;
+    this.gunner.visible = true;
+    this.gunnerClock = 1.1;
+  }
+
+  /** Back inside once the shooting stops (and at once when the crew gets out or the car is wrecked). */
+  tuckIn(vehicle, dt) {
+    if (!this.gunner || !this.gunner.visible) return;
+    this.gunnerClock -= dt;
+    if (this.gunnerClock <= 0 || this.deployed || vehicle.dead) this.gunner.visible = false;
   }
 
   /** The point to steer at with the player in view, by tactic. */
@@ -196,6 +223,20 @@ export function assignPursuitTactics(units, stars, playerDriving) {
     else { driver.tactic = PACK_PATTERN[slot % PACK_PATTERN.length]; slot += 1; }
   }
 }
+
+/** The officer at the window, from the sill up and leaning out along +x: shoulders, head and cap, the gun arm. */
+function buildWindowGunner() {
+  const parts = new MeshBatcher();
+  parts.addBox(0.14, 0, 0, 0.4, 0.42, 0.34, '#2e4a7d');
+  parts.addBox(0.24, 0.44, 0.03, 0.25, 0.27, 0.26, '#e0ac69');
+  parts.addBox(0.24, 0.69, 0.03, 0.29, 0.1, 0.3, '#16203a');
+  parts.addBox(0.56, 0.25, 0.12, 0.52, 0.13, 0.13, '#2e4a7d');
+  parts.addBox(0.86, 0.25, 0.12, 0.14, 0.13, 0.13, '#e0ac69');
+  parts.addBox(1.02, 0.27, 0.12, 0.3, 0.1, 0.07, '#16181b');
+  return parts.build(null, { receiveShadow: false }).geometry;
+}
+const windowGunnerShape = buildWindowGunner();
+const windowGunnerMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
 
 /** Shooting from a moving cruiser: the wanted level it starts at, reach in metres, shots a burst and their odds. */
 const WINDOW_FIRE = { fromStars: 3, range: 40, burst: 3, rate: 0.12, pause: 1.5, accuracy: 0.22, damage: 5 };

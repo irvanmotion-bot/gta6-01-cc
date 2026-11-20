@@ -160,7 +160,7 @@ export class Minimap {
     c.save();
     c.lineJoin = 'round';
     c.lineCap = 'round';
-    for (const [lineWidth, style] of [[7.5 * unit, 'rgba(18,14,36,0.9)'], [4 * unit, color || '#ffb547']]) {
+    for (const [lineWidth, style] of [[9 * unit, 'rgba(18,14,36,0.92)'], [5.4 * unit, color === '#ffb547' || !color ? '#ffd23f' : color]]) {
       c.beginPath();
       corners.forEach((corner, index) => {
         const spot = toMap(corner.x, corner.z);
