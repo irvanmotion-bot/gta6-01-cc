@@ -2,6 +2,7 @@
 // systems, plays the real simulation forward for a few seconds with keys held down, then freezes the frame.
 import { LANDMARKS } from '../world/cityLayout.js';
 import { tryEnterVehicle } from '../vehicles/carjacking.js';
+import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
 import { STREET_RACES } from '../activities/streetRaces.js';
 import { restoreGame, summarizeGame, captureGame } from '../core/gameSnapshot.js';
@@ -87,6 +88,16 @@ function chaseScene(game) {
   spawnPursuit(game, 'tactical', 'bastion', 3.4, 366, Math.PI, 6);
   spawnPursuit(game, 'patrol', 'centinela', 3, 205, 0, 35);
   game.police.roadblocks.deploy({ x: 0, z: 392, alongX: false, direction: 1 }, true);
+  // Everyone else on Ocean Drive: a cab and a pickup caught in the lanes, people scattering off the kerb and the boardwalk.
+  for (const [model, x, z, heading, paint] of [['solCab', 2.7, 349, Math.PI, null], ['toro', -2.7, 339, 0, '#d35400']]) {
+    const bystander = game.vehicles.spawn(model, x, z, heading, paint);
+    bystander.driver = 'ai';
+    bystander.ambient = true;
+    bystander.controller = createTrafficDriverFor(game, bystander, game.traffic.rng);
+    bystander.controller.panic(6);
+  }
+  for (const z of [321, 328, 336, 345]) game.pedestrians.spawnFleeing(7.8, z, { x: 0, z: 300 });
+  for (const z of [324, 333, 343, 356]) game.pedestrians.spawnAt({ x: -9.5, z, boardwalk: true }).scare(0, 300, 9);
   const wreck = game.vehicles.spawn('centinela', 8.8, 336, 0.5);
   wreck.health = 0;
   wreck.hitByPlayer = true;
@@ -101,6 +112,8 @@ function chaseScene(game) {
     if (t > 1.45) game.input.held.add('ShiftLeft');
     // The gunship's next burst is due as the frame is taken, so its tracer is in the air.
     if (t > 1.7 && game.police.helicopter.cooldown > 0.05) game.police.helicopter.cooldown = 0;
+    // No hit in the last moments, so the red damage vignette does not tint the frame.
+    if (t > 1.2) game.player.invulnerable = 1;
     game.camera.yaw = 0.05;
     game.camera.pitch = 0.13;
     game.camera.idleLook = 0;
