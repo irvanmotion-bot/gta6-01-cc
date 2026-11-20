@@ -76,7 +76,7 @@ export function freshStats() {
   return {
     missionsPassed: 0, missionsFailed: 0, carsStolen: 0, peopleHurt: 0, copsDowned: 0, enforcersDowned: 0, choppersDowned: 0, shotsFired: 0,
     maxStars: 0, escapes: 0, earned: 0, spent: 0, faresDone: 0, racesRun: 0, racesWon: 0, bountiesClaimed: 0, favorsUsed: 0, metresDriven: 0,
-    timesBusted: 0, timesWiped: 0, playSeconds: 0,
+    stunts: 0, nearMisses: 0, bestCombo: 0, stuntCash: 0, timesBusted: 0, timesWiped: 0, playSeconds: 0,
   };
 }
 

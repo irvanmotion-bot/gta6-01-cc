@@ -1,4 +1,4 @@
-// Things to do between missions: taxi fares in a Saros Cab, the twelve hidden Corona Tokens and cash for powerslides.
+// Things to do between missions: taxi fares in a Saros Cab and the twelve hidden Corona Tokens.
 import { CITY } from '../core/config.js';
 import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, districtNameAt, kerbSpot } from '../world/cityLayout.js';
@@ -11,7 +11,6 @@ export class SideActivities {
     this.tokens = new Set();
     this.fare = null;
     this.faresDone = 0;
-    this.airTime = 0;
   }
 
   reset(tokens = [], faresDone = 0) {
@@ -104,7 +103,6 @@ export class SideActivities {
     const vehicle = player.vehicle;
     if (game.input.wasPressed('KeyT')) this.toggleTaxi();
     if (vehicle && vehicle.spec.taxi && !this.fare && !game.missions.active) game.hud.hint('Press T to take taxi fares');
-    this.updateStunts(dt, vehicle);
     if (!this.fare) return;
     if (!vehicle || !vehicle.spec.taxi) { this.fare = null; game.hud.notify('Taxi duty off.'); return; }
     const fare = this.fare;
@@ -129,20 +127,6 @@ export class SideActivities {
     }
   }
 
-  /** A long powerslide pays a little stunt money. */
-  updateStunts(dt, vehicle) {
-    if (vehicle && vehicle.skidding && Math.abs(vehicle.speed) > 12) {
-      this.airTime += dt;
-    } else {
-      if (this.airTime > 1.6) {
-        const bonus = Math.round(this.airTime * 40);
-        this.game.player.addCash(bonus);
-        this.game.hud.notify(`Powerslide ${this.airTime.toFixed(1)}s · +$${bonus}`);
-        this.game.cred.earn(Math.round(this.airTime * CRED_AWARDS.powerslide), 'powerslide');
-      }
-      this.airTime = 0;
-    }
-  }
 }
 
 /** Where the Corona Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */

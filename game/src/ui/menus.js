@@ -210,7 +210,8 @@ export function statisticRows(game) {
   const s = game.stats;
   return [
     ['Story jobs passed', `${game.missions.completed.size} / ${STORY_MISSIONS.length}`], ['Jobs failed', s.missionsFailed], ['Cash earned', formatCash(s.earned)], ['Cash spent', formatCash(s.spent)],
-    ['Cars stolen', s.carsStolen], ['Distance driven', `${(s.metresDriven / 1000).toFixed(1)} km`], ['Street races won', `${s.racesWon} of ${s.racesRun}`], ['Taxi fares delivered', s.faresDone],
+    ['Cars stolen', s.carsStolen], ['Distance driven', `${(s.metresDriven / 1000).toFixed(1)} km`], ['Near misses · best combo', `${s.nearMisses} · ×${s.bestCombo}`], ['Stunt money', formatCash(s.stuntCash)],
+    ['Street races won', `${s.racesWon} of ${s.racesRun}`], ['Taxi fares delivered', s.faresDone],
     ['Corona Tokens found', game.activities.tokenCount()], ['Bounties claimed', game.bounties.tally()], ['Highest wanted level', '★'.repeat(s.maxStars) || 'none'], ['Police escapes', s.escapes],
     ['Officers downed', s.copsDowned], ['Vane guns downed', s.enforcersDowned], ['Helicopters downed', s.choppersDowned], ['Shots fired', s.shotsFired],
     ['Crew favors called', s.favorsUsed], ['Times arrested', s.timesBusted], ['Times wiped out', s.timesWiped], ['Time played', formatPlayTime(s.playSeconds)],

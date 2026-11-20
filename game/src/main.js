@@ -14,6 +14,7 @@ import { TuningWorkshop } from './garage/tuningWorkshop.js';
 import { WorkshopShowroom } from './garage/workshopShowroom.js';
 import { StreetRaces } from './activities/streetRaces.js';
 import { VaneBounties } from './activities/vaneBounties.js';
+import { DrivingStunts } from './activities/drivingStunts.js';
 import { SideActivities } from './missions/sideActivities.js';
 import { captureGame, restoreGame, summarizeGame } from './core/gameSnapshot.js';
 import { freshStats, loadSaveSlot, loadSettings, migrateRetiredSaves, writeSaveSlot } from './core/saveGame.js';
@@ -115,6 +116,7 @@ class Game {
     this.activities = new SideActivities(this);
     this.races = new StreetRaces(this);
     this.bounties = new VaneBounties(this);
+    this.stunts = new DrivingStunts(this);
     this.shops = new Shops(this);
     this.darkness = new DarknessCover(this);
     this.watchParties = new EclipseWatchParties(this);
@@ -198,6 +200,7 @@ class Game {
     this.crew.reset();
     this.workshop.reset();
     this.bounties.reset();
+    this.stunts.reset();
     this.darkness.headlightsOn = true;
     this.stats = freshStats();
     this.player.armor = 0;
@@ -355,6 +358,7 @@ class Game {
       this.missions.update(dt);
       this.races.update(dt);
       this.bounties.update(dt);
+      this.stunts.update(dt);
       this.activities.update(dt);
       this.shops.update(dt);
       this.workshop.update(dt);

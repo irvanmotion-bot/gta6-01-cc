@@ -129,6 +129,12 @@ function chaseScene(game) {
   rayo.velZ = speed;
   rayo.health = rayo.maxHealth * 0.78;
   clearLane(game, rayo, 0, z0 - 90, z0 + 220);
+  // Two citizens' cars in the next lane on her way up the block: she goes by each with less than a metre between
+  // the doors, and the second near miss is still on the HUD, at double pay, when the frame is taken.
+  const cruise = 9;
+  for (const [model, paint, passAfter] of [['estela', '#3498db', 0.74], ['avocet', '#1abc9c', 1.04]]) {
+    spawnCivilianCar(game, model, lane - 2.75, z0 + (speed - cruise) * passAfter, 0, paint);
+  }
   game.wanted.setStars(5, 99);
   const pack = [];
   // Up the block: a blockade with barriers, officers and a spike strip, a cab caught in front of it and the

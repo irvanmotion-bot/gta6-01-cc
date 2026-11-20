@@ -226,8 +226,29 @@ export function playWholeGame() {
   workshop.boosted = ride.boosting || bay.nitroCharge < 1;
   game.input.held.clear();
 
-  // A street race against three rivals, driven by teleporting through the checkpoints. The nitro run above may
-  // have clipped somebody: the grid only takes a car the police are not after, so any heat is dropped first.
+  // Driving stunts: two parked cars passed at speed with less than a metre between the doors are two NEAR MISSES,
+  // the second inside the combo's clock and so at double pay; the HUD pops each one up.
+  teleport(2.7, 200);
+  ride.heading = 0;
+  for (const other of [...game.vehicles.list]) if (other !== ride && Math.abs(other.position.x) < 9 && other.position.z > 170 && other.position.z < 340) game.vehicles.remove(other);
+  for (const z of [232, 266]) game.vehicles.spawn('estela', -0.05, z, 0).parked = true;
+  const stunts = { cashBefore: player.cash, nearBefore: game.stats.nearMisses, popups: [] };
+  for (let k = 0; k < 160; k += 1) {
+    ride.heading = 0;
+    ride.velX = 0;
+    ride.velZ = Math.max(ride.velZ, 30);
+    run(1);
+    const title = document.querySelector('.stunt-popup.visible .stunt-title');
+    if (title && !stunts.popups.includes(title.textContent)) stunts.popups.push(title.textContent);
+  }
+  stunts.nearMisses = game.stats.nearMisses - stunts.nearBefore;
+  stunts.paid = player.cash - stunts.cashBefore;
+  stunts.bestCombo = game.stats.bestCombo;
+  stunts.line = document.querySelector('.stunt-line').textContent;
+  if (stunts.nearMisses !== 2 || stunts.bestCombo < 2 || !stunts.popups.includes('NEAR MISS ×2') || stunts.paid < 75) failures.push(`two near misses did not pay as a combo: ${JSON.stringify(stunts)}`);
+
+  // A street race against three rivals, driven by teleporting through the checkpoints. The runs above may have
+  // clipped somebody: the grid only takes a car the police are not after, so any heat is dropped first.
   const heatFromNitroRun = game.wanted.stars;
   game.wanted.reset();
   standDown();
@@ -437,7 +458,7 @@ export function playWholeGame() {
   // still end with every job passed.
   if (!eclipse.storyComplete) failures.push(`the story did not complete: ${missions.filter((result) => !result.endsWith(':passed')).join(', ')}`);
   return {
-    failures, missions, eclipse, afterStory, sight, sizes, radio, workshop, race, bounty, street, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
+    failures, missions, eclipse, afterStory, sight, sizes, radio, workshop, stunts, race, bounty, street, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
     hud, pauseMenu, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
   };
 }

@@ -116,6 +116,11 @@ export class Hud {
 
   buildOverlays(root) {
     this.notifications = createElement('div', 'notifications', root);
+    // The pop-up of a driving stunt, under the feed: its name and combo, what it paid, the combo's clock as a bar.
+    this.stuntBox = createElement('div', 'stunt-popup', root);
+    this.stuntTitle = createElement('b', 'stunt-title', this.stuntBox);
+    this.stuntLine = createElement('span', 'stunt-line', this.stuntBox);
+    this.stuntClock = createElement('u', '', createElement('i', 'stunt-clock', this.stuntBox));
     this.crosshair = createElement('div', 'crosshair', root);
     this.hintBox = createElement('div', 'hint', root);
     this.hintKey = createElement('b', 'hint-key', this.hintBox);
@@ -251,6 +256,13 @@ export class Hud {
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
     cache.text(this.street, streetNameAt(player.position.x, player.position.z).toUpperCase());
     cache.toggle(this.root, 'driving', Boolean(player.vehicle));
+    const stunt = game.stunts.popup();
+    cache.toggle(this.stuntBox, 'visible', stunt !== null);
+    if (stunt) {
+      cache.text(this.stuntTitle, stunt.title);
+      cache.text(this.stuntLine, stunt.line);
+      cache.width(this.stuntClock, stunt.share);
+    }
 
     cache.toggle(this.crosshair, 'visible', !player.vehicle && (player.aiming || game.weapons.current !== 'fists'));
     this.hitClock -= dt;

@@ -13,11 +13,14 @@ export class StreetCred {
     this.rank = rankForPoints(points);
   }
 
-  /** Earn cred for a named deed; climbing a rank announces what it unlocked. */
-  earn(amount, reason) {
+  /**
+   * Earn cred for a named deed; climbing a rank announces what it unlocked. A `quiet` deed (a driving stunt, which
+   * has its own pop-up) leaves no line in the feed.
+   */
+  earn(amount, reason, quiet = false) {
     if (amount <= 0) return;
     this.points += Math.round(amount);
-    this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason}`);
+    if (!quiet) this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason}`);
     const rank = rankForPoints(this.points);
     if (rank > this.rank) {
       this.rank = rank;
@@ -77,5 +80,5 @@ export const CRED_RANKS = [
   { title: 'Queen of Saros', cred: 10000, unlocks: 'the crown' },
 ];
 
-/** What each deed is worth; the systems that pay cred read their amount here. */
-export const CRED_AWARDS = { stage: 30, escapePerStar: 45, fare: 30, token: 50, bounty: 140, raceWin: 220, racePodium: 110, officer: 8, enforcer: 14, helicopter: 160, powerslide: 6 };
+/** What each deed is worth; the systems that pay cred read their amount here (driving stunts keep theirs in drivingStunts.js). */
+export const CRED_AWARDS = { stage: 30, escapePerStar: 45, fare: 30, token: 50, bounty: 140, raceWin: 220, racePodium: 110, officer: 8, enforcer: 14, helicopter: 160 };
