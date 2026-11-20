@@ -74,6 +74,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .eclipse-row { display: flex; align-items: baseline; column-gap: 1vh; white-space: nowrap; }
 .eclipse-big { font-family: var(--display); font-weight: 900; font-size: 4vh; line-height: 1.1; color: #fff; }
 .eclipse-line { font-size: 1.9vh; color: var(--cream); }
+.eclipse-short { display: none; font-size: 1.9vh; color: var(--amber); white-space: nowrap; }
 .eclipse-track { height: 0.8vh; margin-top: 0.2vh; background: rgba(244, 236, 216, 0.2); border-radius: 0.5vh; overflow: hidden; }
 .eclipse-track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--amber), var(--cream)); }
 .eclipse-panel.totality { border-top-color: var(--cream); background: rgba(6, 5, 16, 0.88); }
@@ -194,6 +195,17 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .favor-name { color: var(--cream); }
 .favor.locked { opacity: 0.55; }
 
+/* Combat tags: a health bar over each gunman shooting at Nova, a capo's name over his */
+.combat-tags { position: absolute; inset: 0; overflow: hidden; }
+.combat-tag { position: absolute; display: none; flex-direction: column; align-items: center; row-gap: 0.3vh; transform: translate(-50%, -100%); white-space: nowrap; }
+.combat-tag.visible { display: flex; }
+.combat-name { display: none; padding: 0 0.7vh; font-size: 1.9vh; line-height: 2.4vh; color: #fff; background: rgba(13, 10, 30, 0.86); border-radius: 0.4vh; }
+.combat-tag.named .combat-name { display: block; }
+.combat-bar { width: 7vh; height: 1vh; box-sizing: border-box; background: rgba(13, 10, 30, 0.86); border: 0.2vh solid var(--ink); border-radius: 0.5vh; overflow: hidden; }
+.combat-tag.named .combat-bar { width: 10vh; }
+.combat-bar i { display: block; height: 100%; background: var(--coral); }
+.combat-tag.police .combat-bar i { background: #5b9dff; }
+
 /* Feed and prompts in the middle */
 .notifications { position: absolute; left: 47vh; right: 48vh; top: 1.3vh; display: flex; flex-direction: column; gap: 0.5vh; align-items: center; }
 .note { font-size: 1.9vh; background: var(--panel); padding: 0.4vh 1.2vh; border-radius: 0.5vh; animation: slide-in 0.25s; transition: opacity 0.6s; max-width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -238,10 +250,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 #hud.huge .job-row.now span { font-size: 2vh; line-height: 2.4vh; }
 #hud.huge .job-accent { display: block; font-size: 2vh; line-height: 2.5vh; color: var(--amber); }
 #hud.huge .dialogue { zoom: 0.6; }
-#hud.huge .eclipse-disc, #hud.huge .eclipse-track, #hud.huge .eclipse-caption { display: none; }
+#hud.huge .eclipse-disc, #hud.huge .eclipse-track, #hud.huge .eclipse-caption, #hud.huge .eclipse-line { display: none; }
 #hud.huge .eclipse-panel { padding: 0.5vh 1.2vh 0.7vh; }
 #hud.huge .eclipse-row { flex-direction: column-reverse; align-items: flex-start; white-space: normal; }
-#hud.huge .eclipse-line { color: var(--amber); }
+#hud.huge .eclipse-short { display: block; }
 #hud.huge .eclipse-big { font-size: 3.3vh; }
 #hud.huge .eclipse-cover { white-space: normal; }
 #hud.huge .status-top { flex-direction: column; align-items: flex-start; row-gap: 0.5vh; }
@@ -262,6 +274,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 #hud.huge .vehicle-panel { border-top: 0.45vh solid var(--amber); border-radius: 0 0 0.7vh 0.7vh; }
 #hud.huge .speed-row { justify-content: space-between; }
 #hud.huge .speed-value { font-size: 3.6vh; }
+#hud.huge .combat-name { font-size: 4.1vh; line-height: 4.8vh; padding: 0 1.2vh; }
+#hud.huge .combat-bar { width: 13vh; height: 2.2vh; border-width: 0.4vh; border-radius: 1.1vh; }
+#hud.huge .combat-tag.named .combat-bar { width: 19vh; }
 #hud.huge .hint { zoom: 1.5; bottom: 1.6vh; }
 #hud.huge .notifications { zoom: 1.5; left: 46vh; right: 31vh; }
 

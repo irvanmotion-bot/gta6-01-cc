@@ -1,6 +1,7 @@
 // The heads-up display: builds every panel (job, crew, eclipse countdown, status, dispatch, weapon, vehicle, radio,
-// radar), sizes them by the HUD SIZE setting, and runs the pieces that belong to no panel: the dialogue box with
-// the speaker's portrait and part, banners, the feed of notifications, key prompts and the crosshair.
+// radar) and the health bars over the gunmen, sizes them by the HUD SIZE setting, and runs the pieces that belong
+// to no panel: the dialogue box with the speaker's portrait and part, banners, the feed of notifications, key
+// prompts and the crosshair.
 import { districtNameAt, streetNameAt } from '../world/cityLayout.js';
 import { partOfSpeaker } from '../missions/storyMissions.js';
 import { DomCache, createElement } from './domBuilder.js';
@@ -12,6 +13,7 @@ import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudRadioPanel } from './hudRadioPanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
+import { HudCombatTags } from './hudCombatTags.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
 
 /**
@@ -33,6 +35,8 @@ export class Hud {
     root.id = 'hud';
     this.root = root;
     this.size = HUD_SIZES.large;
+    // The tags over the gunmen are part of the street: they go under every panel.
+    this.combatTags = new HudCombatTags(game, root, this.cache);
     const left = createElement('div', 'hud-column left-column', root);
     const right = createElement('div', 'hud-column right-column', root);
     const radar = this.buildRadar(root);
@@ -242,6 +246,7 @@ export class Hud {
     this.weaponBar.update(dt);
     this.vehiclePanel.update(dt);
     this.radioPanel.update(dt);
+    this.combatTags.update(dt);
     cache.text(this.clock, `${game.calendar.dayName()} ${game.calendar.clockText()}`);
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
     cache.text(this.street, streetNameAt(player.position.x, player.position.z).toUpperCase());

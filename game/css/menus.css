@@ -1,106 +1,89 @@
-/* The start screen, pause menu, save-slot cards, city atlas, shop counter, workshop showroom and loading card of
-   Totality, in the HUD's palette: shadow indigo, low-sun amber, coral and corona cream. */
-.menu { position: fixed; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 0 4vh; background: linear-gradient(90deg, rgba(18, 14, 36, 0.94) 0%, rgba(18, 14, 36, 0.86) 38%, rgba(18, 14, 36, 0.5) 70%, rgba(18, 14, 36, 0.3) 100%); }
-.menu.visible { display: flex; }
-.menu header h1 { position: relative; margin: 0; font-family: var(--display); font-style: italic; font-size: 13vh; line-height: 0.86; letter-spacing: 0.25vh; color: var(--cream); text-shadow: 0 0.6vh 0 var(--coral), 0 1.2vh 0 var(--ink), 0 0 5vh rgba(18, 14, 36, 0.7); }
-.menu-logo { position: relative; }
-/* The logo: the title set across a sun with the moon three quarters over it. */
-.logo-disc { position: absolute; left: 18vh; top: -5.5vh; width: 19vh; height: 19vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 7vh rgba(255, 181, 71, 0.8); overflow: hidden; }
-.logo-disc::after { content: ""; position: absolute; left: 4.1vh; top: 3.2vh; width: 19.6vh; height: 19.6vh; border-radius: 50%; background: #17122b; }
-.menu header p { position: relative; margin: 2vh 0 2.6vh; font-size: 1.8vh; font-weight: 800; letter-spacing: 0.16vh; white-space: nowrap; text-transform: uppercase; color: var(--amber); text-shadow: 0 0.2vh 0.4vh var(--ink); }
+/* The start screen, pause menu, save-slot rows, district map, city atlas, shop counter, workshop showroom and
+   loading card of Totality, in the HUD's palette (shadow indigo, low-sun amber, coral, corona cream) and in the
+   HUD's type: upright, bold and wide, in capitals, sized in window heights so a small window still reads. */
+.menu { position: fixed; inset: 0; display: none; background: linear-gradient(90deg, rgba(13, 10, 30, 0.96) 0%, rgba(13, 10, 30, 0.9) 44%, rgba(13, 10, 30, 0.62) 100%); font-family: var(--label); font-weight: 700; color: #fff; }
+.menu.visible { display: block; }
 
-/* The items are buttons: a framed plate each, the chosen one filled with low-sun amber. */
-.menu-list { display: flex; flex-direction: column; gap: 1.1vh; width: 52vh; }
-.menu-item { all: unset; cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 7.4vh; padding: 0 2.2vh; box-sizing: border-box; border: 0.3vh solid rgba(244, 236, 216, 0.4); border-left: 1vh solid var(--amber); border-radius: 0.9vh; background: rgba(23, 18, 43, 0.9); transition: 0.12s; }
-.menu-item span { font-family: var(--display); font-size: 3.9vh; line-height: 1.05; letter-spacing: 0.22vh; }
-.menu-item small { font-size: 1.6vh; font-weight: 600; color: var(--dim); }
-.menu-item.selected { border-color: var(--cream); background: linear-gradient(90deg, #ffb547, #ff8a4d); color: var(--ink); transform: translateX(1.4vh); box-shadow: 0 0 3vh rgba(255, 181, 71, 0.45); }
-.menu-item.selected small { color: var(--ink); }
-/* The pause menu has more items: its buttons are lower, and only the chosen one spells out its hint. */
-#pause-menu .menu-list { gap: 0.8vh; }
-#pause-menu .menu-item { min-height: 6vh; }
-#pause-menu .menu-item span { font-size: 3.3vh; }
-#pause-menu .menu-item small { display: none; }
-#pause-menu .menu-item.selected small { display: block; }
+/* The logo, top left: the title set across a sun with the moon most of the way over it, the screen's name under it. */
+.menu-logo { position: absolute; left: 3vh; top: 2.4vh; width: 68vh; }
+.logo-disc { position: absolute; left: 47vh; top: -0.6vh; width: 12vh; height: 12vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 4vh rgba(255, 181, 71, 0.8); overflow: hidden; }
+.logo-disc::after { content: ""; position: absolute; left: 2.6vh; top: 2vh; width: 12.4vh; height: 12.4vh; border-radius: 50%; background: #17122b; }
+.menu header h1 { position: relative; margin: 0; font-family: var(--display); font-weight: 900; font-size: 10.6vh; line-height: 1; letter-spacing: 0.01em; color: var(--cream); text-shadow: 0 0.5vh 0 var(--coral), 0 1vh 0 var(--ink); }
+.menu header p { position: relative; display: flex; align-items: center; gap: 1.2vh; margin: 1.5vh 0 0; font-size: 2.7vh; line-height: 1; letter-spacing: 0.03em; white-space: nowrap; text-transform: uppercase; color: var(--amber); }
+.menu header p b { padding: 0.5vh 1.2vh 0.6vh; font-family: var(--display); font-weight: 900; font-size: 4.2vh; letter-spacing: 0.04em; color: var(--ink); background: var(--cream); border-radius: 0.5vh; }
 
-.menu-panel { position: absolute; right: 5vh; top: 9vh; bottom: 9vh; width: 66vh; display: none; background: rgba(23, 18, 43, 0.86); border-top: 0.6vh solid var(--amber); border-radius: 0 0 1vh 1vh; padding: 2.4vh 2.8vh; overflow: hidden; box-sizing: border-box; }
+/* The items are buttons: a plate of dark glass each with an amber edge, the chosen one filled with amber. An item
+   that carries a value (a setting, a slot) prints it on the right. The chosen item's hint is the line under the list. */
+.menu-list { position: absolute; left: 3vh; top: 22.4vh; width: 68vh; display: flex; flex-direction: column; gap: 0.9vh; }
+.menu-item { all: unset; cursor: pointer; box-sizing: border-box; height: 7.9vh; display: flex; align-items: center; justify-content: space-between; column-gap: 1.6vh; padding: 0 1.6vh 0 1.4vh; background: var(--panel); border-left: 1vh solid var(--amber); border-radius: 0 0.7vh 0.7vh 0; white-space: nowrap; }
+.menu-item span { font-family: var(--display); font-weight: 900; font-size: 5.1vh; line-height: 1; letter-spacing: 0.02em; }
+.menu-item em { font-family: var(--display); font-weight: 900; font-style: normal; font-size: 4.2vh; line-height: 1; color: var(--amber); }
+.menu-item small { display: none; }
+.menu-item.selected { background: var(--amber); border-left-color: var(--cream); color: var(--ink); }
+.menu-item.selected em { color: var(--ink); }
+.menu-hint { position: absolute; left: 3vh; bottom: 2.2vh; width: 68vh; font-size: 2.5vh; line-height: 1.15; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#start-menu .menu-list { top: 24vh; gap: 1.2vh; }
+#start-menu .menu-item { height: 9vh; }
+#start-menu .menu-hint { bottom: 6vh; }
+.title-footer { position: absolute; left: 3vh; bottom: 2.2vh; font-size: 2.2vh; color: var(--dim); white-space: nowrap; }
+
+/* The panel on the right. Home: the three save slots as rows over the district map. Other pages: one table. */
+.menu-panel { position: absolute; left: 74vh; right: 2.4vh; top: 2.4vh; bottom: 2.4vh; display: none; box-sizing: border-box; padding: 1.4vh 2vh 1.6vh; background: var(--panel); border-top: 0.6vh solid var(--amber); border-radius: 0 0 0.9vh 0.9vh; overflow: hidden; }
 .menu-panel.visible { display: block; }
-/* The home panel: three save-slot cards over the district map and its legend. */
-.menu-panel.home.visible { display: flex; flex-direction: column; gap: 2vh; left: 61vh; right: 3vh; top: 4vh; bottom: 6vh; width: auto; padding: 0; background: none; border: 0; overflow: visible; }
-.save-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6vh; flex: none; }
-.save-card { all: unset; cursor: pointer; position: relative; display: grid; grid-template-columns: 1fr; padding: 0 1.8vh 1.6vh; box-sizing: border-box; background: rgba(23, 18, 43, 0.94); border: 0.3vh solid rgba(244, 236, 216, 0.4); border-radius: 1vh; overflow: hidden; }
-.save-card:hover { border-color: var(--cream); }
-.save-card b { margin: 0 -1.8vh 1vh; padding: 0.7vh 1.8vh 0.6vh; font-family: var(--display); font-weight: 400; font-size: 3vh; letter-spacing: 0.2vh; color: var(--ink); background: var(--dim); }
-.save-card span { font-family: var(--display); font-size: 10vh; line-height: 0.95; color: var(--cream); }
-.save-card i { display: block; height: 1.8vh; margin: 1vh 0; background: rgba(244, 236, 216, 0.16); border-radius: 0.9vh; overflow: hidden; }
+.menu-panel.home.visible { display: flex; flex-direction: column; gap: 1.2vh; padding: 0; background: none; border: 0; border-radius: 0; overflow: visible; }
+.save-cards { flex: none; display: flex; flex-direction: column; gap: 0.7vh; padding: 0.9vh 1.4vh 1.2vh; background: var(--panel); border-top: 0.6vh solid var(--amber); border-radius: 0 0 0.9vh 0.9vh; }
+.save-caption { font-size: 2.6vh; line-height: 1.2; letter-spacing: 0.03em; color: var(--amber); white-space: nowrap; }
+.save-card { all: unset; cursor: pointer; position: relative; box-sizing: border-box; height: 7.2vh; display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; column-gap: 1.6vh; padding: 0 1.2vh 0.7vh; background: rgba(244, 236, 216, 0.1); border-left: 0.8vh solid var(--dim); border-radius: 0 0.5vh 0.5vh 0; white-space: nowrap; overflow: hidden; }
+.save-card:hover { background: rgba(244, 236, 216, 0.2); }
+.save-card b { font-family: var(--display); font-weight: 900; font-size: 4vh; line-height: 1; color: #fff; }
+.save-card span { font-family: var(--display); font-weight: 900; font-size: 4.6vh; line-height: 1; color: var(--amber); }
+.save-card em { font-style: normal; font-size: 3.5vh; line-height: 1; color: #fff; overflow: hidden; }
+.save-card strong { padding: 0.3vh 0.8vh; font-size: 2.3vh; line-height: 1.1; color: var(--ink); background: var(--amber); border-radius: 0.4vh; }
+.save-card i { position: absolute; left: 0; right: 0; bottom: 0; height: 0.8vh; background: rgba(244, 236, 216, 0.16); }
 .save-card i u { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
-.save-card em { font-family: var(--display); font-style: normal; font-size: 3.1vh; letter-spacing: 0.12vh; color: #fff; }
-.save-card small { font-size: 1.55vh; font-weight: 700; color: var(--dim); white-space: nowrap; }
-.save-card strong { position: absolute; right: 1.2vh; top: 0.9vh; padding: 0.1vh 0.8vh; font-family: var(--display); font-weight: 400; font-size: 1.8vh; letter-spacing: 0.12vh; color: var(--amber); background: var(--ink); border-radius: 0.5vh; }
-.save-card.lit { border-color: var(--amber); box-shadow: 0 0 3vh rgba(255, 181, 71, 0.4); }
-.save-card.lit b { background: var(--amber); }
-.save-card.lit span { color: var(--amber); }
-.save-card.empty span, .save-card.empty em { color: var(--dim); }
-.menu-map { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 25vh; border: 0.4vh solid var(--amber); border-radius: 1vh; overflow: hidden; background: rgba(23, 18, 43, 0.94); }
-.menu-map-canvas { width: 100%; height: 100%; display: block; min-height: 0; }
-.menu-legend { padding: 1.4vh 1.6vh; }
-.menu-legend b { display: block; font-family: var(--display); font-weight: 400; font-style: italic; font-size: 4.4vh; line-height: 1; letter-spacing: 0.2vh; color: var(--amber); }
-.menu-legend ul { list-style: none; margin: 1.2vh 0 0; padding: 0; display: grid; gap: 0.9vh; font-size: 1.75vh; font-weight: 800; color: var(--cream); }
-.menu-legend li { display: flex; align-items: center; gap: 1vh; white-space: nowrap; }
-.menu-legend li i { flex: none; width: 3vh; height: 2.4vh; border-radius: 0.4vh; box-shadow: inset 0 0 0 0.2vh rgba(18, 14, 36, 0.5); }
-.menu-legend li i.sea { background: #2f9fcb; }
-.menu-legend li i.path { background: repeating-linear-gradient(135deg, rgba(23, 18, 43, 0.9) 0 0.5vh, rgba(244, 236, 216, 0.85) 0.5vh 0.8vh); }
-.menu-legend li i.place { width: 2.4vh; margin: 0 0.3vh; border-radius: 50%; background: var(--coral); box-shadow: inset 0 0 0 0.3vh var(--ink); }
-.panel-title { font-family: var(--display); font-size: 3.4vh; letter-spacing: 0.25vh; color: var(--amber); margin-bottom: 1.4vh; }
-.panel-note { font-size: 1.8vh; font-weight: 600; color: var(--dim); margin: 1.6vh 0 0; }
-.menu-table { display: grid; gap: 0.45vh; font-size: 1.9vh; }
-.menu-table div { display: flex; justify-content: space-between; gap: 3vh; border-bottom: 0.15vh solid rgba(244, 236, 216, 0.14); padding-bottom: 0.3vh; }
-.menu-table b { font-family: var(--display); letter-spacing: 0.1vh; color: var(--amber); font-weight: 400; }
-.title-footer { position: absolute; left: 7vh; bottom: 3vh; font-size: 1.8vh; font-weight: 600; color: var(--cream); text-shadow: 0 0.2vh 0.4vh var(--ink); }
-
-/* Save-slot cards on the start screen */
-.slot-cards { display: flex; flex-direction: column; gap: 1.4vh; }
-.slot-card { display: grid; grid-template-columns: 13vh 1fr; column-gap: 1.6vh; align-items: center; background: rgba(244, 236, 216, 0.07); border-left: 0.8vh solid var(--dim); padding: 1.3vh 1.8vh; }
-.slot-card b { grid-row: span 4; font-family: var(--display); font-weight: 400; font-size: 4vh; font-style: italic; letter-spacing: 0.1vh; }
-.slot-card span { font-family: var(--display); font-size: 3vh; letter-spacing: 0.12vh; color: var(--amber); }
-.slot-card i { display: block; height: 1.1vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.5vh; overflow: hidden; }
-.slot-card i u { display: block; height: 100%; background: var(--amber); }
-.slot-card small { font-size: 1.8vh; font-weight: 700; color: var(--cream); letter-spacing: 0.05vh; }
-.slot-card.latest { border-left-color: var(--amber); background: rgba(255, 181, 71, 0.14); }
-.slot-card.empty { opacity: 0.6; }
-.slot-card.empty span { color: var(--dim); }
+.save-card small { display: none; }
+.save-card.lit { border-left-color: var(--amber); background: rgba(255, 190, 85, 0.2); }
+.save-card.empty b, .save-card.empty span, .save-card.empty em { color: var(--dim); }
+.menu-map { position: relative; flex: 1; min-height: 0; border: 0.5vh solid var(--amber); border-radius: 0.9vh; overflow: hidden; background: #2f9fcb; }
+.menu-map-canvas { width: 100%; height: 100%; display: block; }
+.menu-map-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.5vh 1.2vh 0.6vh; font-size: 2.5vh; line-height: 1.15; letter-spacing: 0.03em; color: var(--amber); background: rgba(13, 10, 30, 0.86); white-space: nowrap; overflow: hidden; }
+.panel-title { font-family: var(--display); font-weight: 900; font-size: 4.6vh; line-height: 1.1; letter-spacing: 0.02em; color: var(--amber); margin-bottom: 0.8vh; }
+.menu-table { display: grid; font-size: 2.75vh; line-height: 4.05vh; }
+.menu-table div { display: flex; justify-content: space-between; column-gap: 2vh; border-bottom: 0.15vh solid rgba(244, 236, 216, 0.16); white-space: nowrap; }
+.menu-table span { color: var(--cream); overflow: hidden; text-overflow: ellipsis; }
+.menu-table b { color: #fff; }
+.menu-table.keys div { justify-content: flex-start; }
+.menu-table.keys b { flex: none; width: 23vh; color: var(--amber); }
 
 /* City atlas: map on the left, the week and the record on the right */
-.atlas { position: fixed; inset: 0; display: none; background: #17122b; }
+.atlas { position: fixed; inset: 0; display: none; background: #17122b; font-family: var(--label); font-weight: 700; }
 .atlas.visible { display: block; }
 .atlas-map { position: absolute; left: 2vh; top: 2vh; bottom: 2vh; right: 68vh; border: 0.5vh solid var(--amber); border-radius: 0.8vh; overflow: hidden; box-sizing: border-box; }
 #city-map { position: absolute; inset: 0; width: 100%; height: 100%; }
-.atlas-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6vh 1.4vh; background: rgba(23, 18, 43, 0.86); font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.25vh; color: var(--amber); }
+.atlas-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6vh 1.4vh; background: rgba(13, 10, 30, 0.88); font-size: 2.4vh; letter-spacing: 0.03em; color: var(--amber); }
 .atlas-side { position: absolute; right: 2vh; top: 2vh; bottom: 2vh; width: 64vh; overflow: hidden; }
 .atlas-head { display: flex; justify-content: space-between; align-items: flex-end; }
-/* The logo, as on the start screen: the title set across a sun with the moon most of the way over it. */
 .atlas-logo { position: relative; padding-top: 0.6vh; }
-.atlas-disc { position: absolute; left: 22vh; top: -1vh; width: 13vh; height: 13vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 4vh rgba(255, 181, 71, 0.75); overflow: hidden; }
-.atlas-disc::after { content: ""; position: absolute; left: 2.9vh; top: 2.2vh; width: 13.4vh; height: 13.4vh; border-radius: 50%; background: #17122b; }
-.atlas-head h2 { position: relative; margin: 0; font-family: var(--display); font-style: italic; font-size: 10.5vh; line-height: 0.9; color: var(--cream); letter-spacing: 0.3vh; text-shadow: 0 0.5vh 0 var(--coral), 0 1vh 0 var(--ink); }
-.atlas-head p { position: relative; margin: 1.2vh 0 0; font-size: 1.9vh; font-weight: 800; letter-spacing: 0.06vh; color: var(--amber); }
+.atlas-disc { position: absolute; left: 30vh; top: -0.6vh; width: 10vh; height: 10vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 4vh rgba(255, 181, 71, 0.75); overflow: hidden; }
+.atlas-disc::after { content: ""; position: absolute; left: 2.2vh; top: 1.7vh; width: 10.4vh; height: 10.4vh; border-radius: 50%; background: #17122b; }
+.atlas-head h2 { position: relative; margin: 0; font-family: var(--display); font-weight: 900; font-size: 8vh; line-height: 1; color: var(--cream); letter-spacing: 0.01em; text-shadow: 0 0.4vh 0 var(--coral), 0 0.8vh 0 var(--ink); }
+.atlas-head p { position: relative; margin: 1.2vh 0 0; font-size: 2.2vh; letter-spacing: 0.03em; color: var(--amber); white-space: nowrap; }
 .atlas-percent { text-align: right; }
-.atlas-percent b { display: block; font-family: var(--display); font-weight: 400; font-size: 8.4vh; line-height: 0.9; color: var(--amber); }
-.atlas-percent span { font-size: 1.7vh; font-weight: 800; letter-spacing: 0.2vh; }
+.atlas-percent b { display: block; font-family: var(--display); font-weight: 900; font-size: 7.4vh; line-height: 0.95; color: var(--amber); }
+.atlas-percent span { font-size: 2.1vh; letter-spacing: 0.06em; }
 .atlas-bar { height: 1.4vh; margin: 0.9vh 0 0.4vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.7vh; overflow: hidden; }
 .atlas-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
-.atlas-side h3 { margin: 1.3vh 0 0.5vh; font-family: var(--display); font-weight: 400; font-size: 2.1vh; letter-spacing: 0.16vh; color: var(--amber); border-bottom: 0.2vh solid rgba(255, 181, 71, 0.4); white-space: nowrap; overflow: hidden; }
+.atlas-side h3 { margin: 1.2vh 0 0.5vh; font-size: 2.2vh; font-weight: 700; letter-spacing: 0.04em; color: var(--amber); border-bottom: 0.2vh solid rgba(255, 190, 85, 0.4); white-space: nowrap; overflow: hidden; }
 .atlas-week { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6vh; }
 .atlas-day { background: rgba(244, 236, 216, 0.06); border-top: 0.5vh solid var(--dim); border-radius: 0 0 0.6vh 0.6vh; padding: 0.4vh 0.6vh 0.6vh; min-height: 24vh; }
-.atlas-day h4 { margin: 0 0 0.4vh; font-family: var(--display); font-weight: 400; font-size: 2.6vh; letter-spacing: 0.14vh; color: var(--dim); }
+.atlas-day h4 { margin: 0 0 0.4vh; font-family: var(--display); font-weight: 900; font-size: 2.6vh; letter-spacing: 0.02em; color: var(--dim); }
 .atlas-day.past { border-top-color: var(--amber); }
 .atlas-day.past h4 { color: var(--amber); }
-.atlas-day.today { border-top-color: var(--cream); background: rgba(255, 181, 71, 0.18); }
+.atlas-day.today { border-top-color: var(--cream); background: rgba(255, 190, 85, 0.18); }
 .atlas-day.today h4 { color: var(--cream); }
-.atlas-job { display: grid; grid-template-columns: 2.4vh 1fr; column-gap: 0.4vh; align-items: baseline; margin-top: 0.4vh; padding: 0.3vh 0.5vh; border-radius: 0.4vh; background: rgba(23, 18, 43, 0.6); font-size: 1.7vh; line-height: 1.15; }
-.atlas-job i { font-style: normal; font-family: var(--display); color: var(--dim); }
-.atlas-job b { font-weight: 800; }
-.atlas-job u { grid-column: 2; text-decoration: none; font-family: var(--display); letter-spacing: 0.06vh; color: var(--dim); }
+.atlas-job { display: grid; grid-template-columns: 2.6vh 1fr; column-gap: 0.4vh; align-items: baseline; margin-top: 0.4vh; padding: 0.3vh 0.5vh; border-radius: 0.4vh; background: rgba(13, 10, 30, 0.6); font-size: 1.8vh; line-height: 1.15; }
+.atlas-job i { font-style: normal; color: var(--dim); }
+.atlas-job u { grid-column: 2; text-decoration: none; color: var(--dim); }
 .atlas-job.done { background: var(--amber); color: var(--ink); }
 .atlas-job.done i, .atlas-job.done u { color: var(--ink); }
 .atlas-job.active { background: var(--cream); color: var(--ink); }
@@ -109,75 +92,72 @@
 .atlas-job.open u { color: var(--amber); }
 .atlas-job.locked { opacity: 0.5; }
 .atlas-activities { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2.4vh; }
-.atlas-activity { display: grid; grid-template-columns: 13.5vh 1fr 4.6vh; align-items: center; gap: 0.8vh; font-size: 1.7vh; font-weight: 700; line-height: 2.6vh; white-space: nowrap; }
+.atlas-activity { display: grid; grid-template-columns: 15vh 1fr 5vh; align-items: center; gap: 0.8vh; font-size: 1.9vh; line-height: 2.7vh; white-space: nowrap; }
 .atlas-activity i { display: block; height: 1.2vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.6vh; overflow: hidden; }
 .atlas-activity i u { display: block; height: 100%; background: var(--amber); }
-.atlas-activity b { text-align: right; font-family: var(--display); font-weight: 400; }
-/* Save slots: three big cards, the slot's number, its completion as a figure and a bar, where its week stands */
+.atlas-activity b { text-align: right; }
+/* Save slots in the atlas: three cards, the slot's number, its completion as a figure and a bar, where its week stands */
 .atlas-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vh; }
 .atlas-slot { position: relative; display: grid; grid-template-columns: auto 1fr; column-gap: 1vh; align-items: end; padding: 1.2vh 1.3vh 1.3vh; background: rgba(244, 236, 216, 0.08); border-top: 0.8vh solid var(--dim); border-radius: 0 0 0.9vh 0.9vh; }
-.atlas-slot b { font-family: var(--display); font-weight: 400; font-style: italic; font-size: 13vh; line-height: 0.86; color: var(--cream); }
-.atlas-slot span { font-family: var(--display); font-size: 5.4vh; line-height: 1; text-align: right; color: var(--amber); }
+.atlas-slot b { font-family: var(--display); font-weight: 900; font-size: 11vh; line-height: 0.9; color: var(--cream); }
+.atlas-slot span { font-family: var(--display); font-weight: 900; font-size: 4.6vh; line-height: 1; text-align: right; color: var(--amber); }
 .atlas-slot i { grid-column: span 2; display: block; height: 1.6vh; margin: 1vh 0 0.8vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.8vh; overflow: hidden; }
 .atlas-slot i u { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
-.atlas-slot em { grid-column: span 2; font-family: var(--display); font-style: normal; font-size: 2.5vh; letter-spacing: 0.1vh; color: #fff; }
-.atlas-slot small { grid-column: span 2; font-size: 1.5vh; font-weight: 700; color: var(--dim); white-space: nowrap; }
-.atlas-slot strong { position: absolute; right: 0; top: -0.8vh; padding: 0.1vh 0.9vh 0.2vh; font-family: var(--display); font-weight: 400; font-size: 1.7vh; letter-spacing: 0.12vh; color: var(--ink); background: var(--amber); border-radius: 0 0 0 0.6vh; }
-.atlas-slot.active { border-top-color: var(--amber); background: rgba(255, 181, 71, 0.2); box-shadow: 0 0 2.4vh rgba(255, 181, 71, 0.35); }
+.atlas-slot em { grid-column: span 2; font-style: normal; font-size: 2.5vh; color: #fff; white-space: nowrap; }
+.atlas-slot small { grid-column: span 2; font-size: 1.6vh; color: var(--dim); white-space: nowrap; }
+.atlas-slot strong { position: absolute; right: 0; top: -0.8vh; padding: 0.1vh 0.9vh 0.2vh; font-size: 1.8vh; color: var(--ink); background: var(--amber); border-radius: 0 0 0 0.6vh; }
+.atlas-slot.active { border-top-color: var(--amber); background: rgba(255, 190, 85, 0.2); box-shadow: 0 0 2.4vh rgba(255, 190, 85, 0.35); }
 .atlas-slot.empty b, .atlas-slot.empty span { color: var(--dim); }
 
-/* Shop counter: Ammo Amigo's card in the middle of the screen */
-#shop-menu { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(18, 14, 36, 0.6); }
+/* The shop counter: the shop's name and Nova's cash across the top, then numbered rows, each with what it sells,
+   what it does and its price; a key or a click buys. Ammo Amigo's card stands in the middle of the screen. */
+#shop-menu { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(13, 10, 30, 0.6); font-family: var(--label); font-weight: 700; color: #fff; }
 #shop-menu.visible { display: flex; }
-.shop-card { width: 74vh; background: rgba(23, 18, 43, 0.95); border-top: 0.8vh solid var(--amber); border-radius: 0 0 1vh 1vh; padding: 2.2vh 2.8vh; box-shadow: 0 2vh 6vh rgba(10, 8, 24, 0.6); box-sizing: border-box; }
-.shop-card h2 { margin: 0; font-family: var(--display); font-size: 6vh; font-style: italic; line-height: 1; color: var(--cream); }
-.shop-tag { margin: 0.5vh 0 1vh; font-size: 1.8vh; color: var(--dim); }
-.shop-cash { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1vh; padding: 0.4vh 1.2vh; background: rgba(255, 181, 71, 0.16); border-radius: 0.5vh; }
-.shop-cash span { font-size: 1.7vh; font-weight: 800; letter-spacing: 0.2vh; color: var(--amber); }
-.shop-cash b { font-family: var(--display); font-weight: 400; font-size: 3.6vh; color: #fff; }
-.shop-row, .shop-close { all: unset; cursor: pointer; display: flex; align-items: center; gap: 1.6vh; width: 100%; box-sizing: border-box; padding: 0.8vh 1.2vh; margin-bottom: 0.6vh; background: rgba(244, 236, 216, 0.07); border-radius: 0.5vh; }
-.shop-row:hover { background: rgba(255, 181, 71, 0.35); }
-.shop-key { font-family: var(--display); font-size: 2.6vh; width: 3.4vh; height: 3.4vh; display: grid; place-items: center; background: var(--amber); color: var(--ink); border-radius: 0.4vh; flex: none; }
-.shop-label { flex: 1; font-size: 2.3vh; font-weight: 700; color: #fff; }
-.shop-label small { display: block; font-size: 1.5vh; font-weight: 500; color: var(--dim); }
-.shop-pips { display: flex; gap: 0.5vh; }
-.shop-pips i { width: 1.9vh; height: 1.9vh; border-radius: 50%; box-shadow: inset 0 0 0 0.25vh var(--amber); }
+.shop-card { width: 104vh; box-sizing: border-box; padding: 1.2vh 1.8vh 1.6vh; background: rgba(13, 10, 30, 0.93); border-top: 0.7vh solid var(--amber); border-radius: 0 0 1vh 1vh; }
+.shop-head { display: flex; justify-content: space-between; align-items: center; column-gap: 2vh; white-space: nowrap; }
+.shop-card h2 { margin: 0; font-family: var(--display); font-weight: 900; font-size: 6.2vh; line-height: 1.1; letter-spacing: 0.01em; color: var(--cream); }
+.shop-cash { display: flex; align-items: baseline; column-gap: 1vh; }
+.shop-cash span { font-size: 2.4vh; letter-spacing: 0.04em; color: var(--amber); }
+.shop-cash b { font-family: var(--display); font-weight: 900; font-size: 5.2vh; line-height: 1; color: #fff; }
+.shop-tag { margin: 0 0 0.9vh; font-size: 2.2vh; line-height: 1.2; letter-spacing: 0.02em; color: var(--dim); white-space: nowrap; overflow: hidden; }
+.shop-rows { display: flex; flex-direction: column; gap: 0.8vh; }
+.shop-row { all: unset; cursor: pointer; box-sizing: border-box; display: flex; align-items: center; column-gap: 1.4vh; padding: 0.6vh 1.4vh 0.8vh 1vh; background: rgba(244, 236, 216, 0.1); border-left: 0.8vh solid var(--amber); border-radius: 0 0.6vh 0.6vh 0; white-space: nowrap; }
+.shop-row:hover { background: rgba(255, 190, 85, 0.3); }
+.shop-key { position: relative; flex: none; width: 6.4vh; height: 6.4vh; display: grid; place-items: center; font-family: var(--display); font-weight: 900; font-size: 4vh; color: var(--ink); background: var(--amber); border-radius: 0.7vh; }
+.shop-key.pictured { background: rgba(13, 10, 30, 0.8); }
+.shop-key.pictured svg { width: 4.6vh; height: 4.6vh; fill: var(--amber); }
+.shop-key.pictured u { position: absolute; left: -0.5vh; top: -0.5vh; width: 2.7vh; height: 2.7vh; display: grid; place-items: center; text-decoration: none; font-size: 2.1vh; color: var(--ink); background: var(--amber); border-radius: 0.4vh; }
+.shop-label { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.shop-label b { font-family: var(--display); font-weight: 900; font-size: 4.8vh; line-height: 1.1; letter-spacing: 0.01em; color: #fff; }
+.shop-label em { display: flex; align-items: center; column-gap: 1.2vh; font-style: normal; font-size: 3.1vh; line-height: 1.2; letter-spacing: 0.03em; color: var(--amber); }
+.shop-label small { font-size: 2.1vh; line-height: 1.25; color: var(--dim); overflow: hidden; text-overflow: ellipsis; }
+.shop-pips { display: flex; gap: 0.6vh; }
+.shop-pips i { width: 2.8vh; height: 1.5vh; border-radius: 0.3vh; box-shadow: inset 0 0 0 0.25vh var(--amber); }
 .shop-pips i.on { background: var(--amber); }
-.shop-price { font-family: var(--display); font-size: 3vh; color: var(--amber); min-width: 11vh; text-align: right; }
-.shop-row.too-dear, .shop-row.locked { opacity: 0.5; }
+.shop-price { flex: none; font-family: var(--display); font-weight: 900; font-size: 5.4vh; line-height: 1; color: var(--amber); text-align: right; }
 .shop-row.too-dear .shop-price { color: var(--coral); }
-.shop-row.locked small { color: var(--coral); font-weight: 800; }
-.shop-close { justify-content: center; font-weight: 700; font-size: 1.9vh; margin: 1vh 0 0; background: rgba(244, 236, 216, 0.14); }
+.shop-row.locked { border-left-color: var(--dim); }
+.shop-row.locked .shop-label b, .shop-row.locked .shop-price { color: var(--dim); }
+.shop-row.locked small { color: var(--coral); }
+.shop-row.fitted .shop-price { color: var(--cream); }
+.shop-close { all: unset; cursor: pointer; display: block; box-sizing: border-box; width: 100%; margin-top: 0.9vh; padding: 0.7vh 0 0.8vh; text-align: center; font-size: 3vh; line-height: 1.1; letter-spacing: 0.06em; color: #fff; background: rgba(244, 236, 216, 0.18); border-radius: 0.6vh; }
+.shop-close:hover { background: rgba(255, 190, 85, 0.4); }
 
-/* Bravo's workshop: the car on its turntable fills the left of the screen, the counter stands on the right */
-#shop-menu.showroom { justify-content: flex-end; align-items: stretch; background: linear-gradient(90deg, rgba(18, 14, 36, 0) 48%, rgba(18, 14, 36, 0.55) 60%); }
-#shop-menu.showroom .shop-card { width: 66vh; margin: 2vh; align-self: center; }
-.showroom-plate { position: absolute; left: 3vh; bottom: 3vh; display: flex; flex-direction: column; padding: 1vh 2vh 1.2vh; background: var(--panel); border-left: 0.8vh solid var(--amber); border-radius: 0 0.8vh 0.8vh 0; }
-.showroom-plate small { font-size: 1.6vh; font-weight: 800; letter-spacing: 0.3vh; color: var(--amber); }
-.showroom-plate b { font-family: var(--display); font-weight: 400; font-style: italic; font-size: 8vh; line-height: 1; color: #fff; letter-spacing: 0.2vh; }
-.showroom-plate span { font-size: 2vh; font-weight: 800; letter-spacing: 0.14vh; color: var(--cream); }
-/* The workshop's lines as cards, two abreast: key and picture on top, the tiers fitted and the price underneath. */
-#shop-menu.showroom .shop-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 1vh; }
-.upgrade-card { display: grid; grid-template-columns: 8.6vh 1fr; grid-template-rows: auto auto; column-gap: 1.2vh; row-gap: 0.8vh; align-items: center; margin: 0; padding: 1.2vh 1.4vh; position: relative; border: 0.25vh solid rgba(244, 236, 216, 0.22); border-left: 0.9vh solid var(--amber); border-radius: 0.8vh; }
-.upgrade-card .shop-key { position: absolute; right: 1vh; top: 1vh; width: 3vh; height: 3vh; font-size: 2.2vh; }
-.upgrade-icon { width: 8.6vh; height: 8.6vh; padding: 1.3vh; box-sizing: border-box; fill: var(--amber); background: rgba(23, 18, 43, 0.75); border-radius: 0.8vh; }
-.upgrade-card .shop-label { font-family: var(--display); font-weight: 400; font-size: 2.7vh; line-height: 1.05; letter-spacing: 0.08vh; padding-right: 3.4vh; }
-.upgrade-card .shop-label small { margin-top: 0.4vh; font-family: var(--body); font-size: 1.4vh; font-weight: 600; letter-spacing: 0; }
-.upgrade-card .shop-pips { gap: 0.7vh; }
-.upgrade-card .shop-pips i { width: 2.6vh; height: 1.5vh; border-radius: 0.4vh; }
-.upgrade-card .shop-price { font-size: 3.6vh; }
-.upgrade-card.wide { grid-column: span 2; grid-template-columns: 6vh 1fr auto; grid-template-rows: auto; padding-right: 5.4vh; }
-.upgrade-card.wide .upgrade-icon { width: 6vh; height: 6vh; padding: 1vh; }
-.upgrade-card.wide .shop-label { padding-right: 0; }
-#shop-menu.showroom .spec-bar { grid-template-columns: 17vh 1fr 13vh; font-size: 1.8vh; line-height: 3.5vh; }
-#shop-menu.showroom .spec-bar i { height: 2vh; border-radius: 1vh; }
-#shop-menu.showroom .spec-bar b { font-size: 2.6vh; }
-.spec-bars { margin-bottom: 1.2vh; }
-.spec-bar { display: grid; grid-template-columns: 16vh 1fr 12vh; align-items: center; gap: 1.2vh; font-size: 1.6vh; font-weight: 800; letter-spacing: 0.1vh; line-height: 2.6vh; }
-.spec-bar i { display: block; height: 1.2vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.6vh; overflow: hidden; }
+/* Bravo's workshop: the car on its turntable in the left of the screen with its name plate and spec sheet under it,
+   the counter down the right */
+#shop-menu.showroom { justify-content: flex-end; align-items: stretch; background: linear-gradient(90deg, rgba(13, 10, 30, 0) 40%, rgba(13, 10, 30, 0.5) 46%); }
+#shop-menu.showroom .shop-card { width: 89vh; margin: 2vh 2vh 2vh 0; align-self: center; }
+#shop-menu.showroom .shop-card h2 { font-size: 5.6vh; }
+.showroom-plate { position: absolute; left: 2vh; bottom: 2vh; width: 64vh; box-sizing: border-box; padding: 0.8vh 1.6vh 1.2vh; background: var(--panel); border-left: 0.8vh solid var(--amber); border-radius: 0 0.8vh 0.8vh 0; white-space: nowrap; }
+.showroom-plate small { display: block; font-size: 2.3vh; line-height: 1.2; letter-spacing: 0.05em; color: var(--amber); }
+.showroom-plate > b { display: block; font-family: var(--display); font-weight: 900; font-size: 7.4vh; line-height: 1; letter-spacing: 0.01em; color: #fff; }
+.showroom-plate > span { display: block; font-size: 2.8vh; line-height: 1.3; letter-spacing: 0.02em; color: var(--cream); }
+.spec-bars { margin-top: 0.5vh; }
+.spec-bar { display: grid; grid-template-columns: 19vh 1fr 16vh; align-items: center; column-gap: 1.2vh; font-size: 2.2vh; line-height: 2.9vh; letter-spacing: 0.02em; color: var(--cream); }
+.spec-bar i { display: block; height: 1.2vh; background: rgba(244, 236, 216, 0.16); border-radius: 0.6vh; overflow: hidden; }
 .spec-bar i u { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
-.spec-bar b { text-align: right; font-family: var(--display); font-weight: 400; font-size: 2vh; color: var(--cream); }
+.spec-bar b { text-align: right; color: #fff; }
 
-#loading { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 42%, #ffcf6b 0, #ffb547 12vh, #ff6a4d 13vh, #17122b 60vh); font-family: var(--display); font-size: 14vh; font-style: italic; color: var(--cream); text-shadow: 0 0.8vh 0 var(--ink); transition: opacity 0.6s; }
-#loading small { font-family: var(--body); font-size: 2.4vh; font-style: normal; font-weight: 700; letter-spacing: 0.3vh; text-shadow: 0 0.2vh 0.4vh var(--ink); color: var(--cream); }
+#loading { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 42%, #ffcf6b 0, #ffb547 12vh, #ff6a4d 13vh, #17122b 60vh); font-family: var(--display); font-weight: 900; font-size: 13vh; color: var(--cream); text-shadow: 0 0.8vh 0 var(--ink); transition: opacity 0.6s; }
+#loading small { font-family: var(--body); font-size: 2.6vh; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; text-shadow: 0 0.2vh 0.4vh var(--ink); color: var(--cream); }
 #loading.done { opacity: 0; pointer-events: none; }

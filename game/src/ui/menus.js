@@ -1,9 +1,10 @@
-// The start screen and the pause menu: the logo over a column of buttons (continue, new game, save, load, atlas,
-// statistics, controls, settings) and, beside them, the three save slots as cards that load on a click and the
-// district map of Saros with its legend. By keyboard or mouse.
+// The start screen and the pause menu: the logo over a column of big buttons (continue, new game, resume, save,
+// load, city map, stats, controls, settings, quit) with the chosen button's hint under them and, beside them, the
+// three save slots as rows that load on a click, over the district map of Saros. By keyboard or mouse.
 import { SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
 import { CITY_NAME, GAME_TITLE } from '../core/config.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
+import { completionPercent } from '../progression/completionTracker.js';
 import { DISTRICTS } from '../world/cityLayout.js';
 import { createElement, formatCash } from './domBuilder.js';
 import { HUD_SIZES } from './hud.js';
@@ -11,24 +12,28 @@ import { HUD_SIZES } from './hud.js';
 export class Menus {
   constructor(game) {
     this.game = game;
-    this.start = this.buildScreen('start-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Open-world crime · ${CITY_NAME}, eclipse week</p>`);
-    this.pause = this.buildScreen('pause-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Paused · the moon waits for nobody</p>`);
-    createElement('footer', 'title-footer', this.start, 'WASD move · Mouse look · F steal a car · Click to shoot · M city atlas · Esc pause');
+    this.start = this.buildScreen('start-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p><b>${CITY_NAME}</b>OPEN-WORLD CRIME GAME</p>`);
+    this.pause = this.buildScreen('pause-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p><b>PAUSED</b><span class="pause-where"></span></p>`);
+    createElement('footer', 'title-footer', this.start, 'WASD MOVE · MOUSE LOOK · F STEAL A CAR · CLICK SHOOT · M MAP · ESC PAUSE');
     this.screen = null;
     this.page = 'main';
     this.index = 0;
     this.items = [];
   }
 
-  /** One menu screen: a header, the list of items on the left and a panel for cards and tables on the right. */
+  /**
+   * One menu screen: the logo, the list of buttons on the left with a line for the chosen button's hint under it,
+   * and a panel for the save slots, the map and the tables on the right.
+   */
   buildScreen(id, headerMarkup) {
     const root = createElement('section', 'menu', document.body);
     root.id = id;
     createElement('header', 'menu-logo', root).innerHTML = headerMarkup;
     createElement('nav', 'menu-list', root);
+    createElement('div', 'menu-hint', root);
     createElement('div', 'menu-panel', root);
     root.addEventListener('click', (event) => {
-      // A save-slot card loads its slot; an empty one starts a new week in it.
+      // A save-slot row loads its slot; an empty one starts a new week in it.
       const card = event.target.closest('[data-slot]');
       if (card) { this.game.audio.unlock(); this.game.audio.menuSelect(); this.game.continueGame(Number(card.dataset.slot)); return; }
       const row = event.target.closest('[data-index]');
@@ -50,6 +55,11 @@ export class Menus {
     this.index = 0;
     this.start.classList.toggle('visible', screen === 'start');
     this.pause.classList.toggle('visible', screen === 'pause');
+    if (screen === 'pause') {
+      // Beside PAUSED: the day and hour the week stands at, the slot being played and how much of the game is done.
+      const game = this.game;
+      this.pause.querySelector('.pause-where').textContent = `${game.calendar.dayName()} ${game.calendar.clockText()} · SLOT ${game.saveSlot} · ${completionPercent(game)}%`;
+    }
     if (screen) this.render();
   }
 
@@ -58,22 +68,22 @@ export class Menus {
     if (this.screen === 'start') {
       const items = [];
       const latest = latestSaveSlot();
-      if (latest) items.push({ label: 'CONTINUE', hint: `Load slot ${latest}, your latest save`, run: () => game.continueGame(latest) });
+      if (latest) items.push({ label: 'CONTINUE', value: `SLOT ${latest}`, hint: `Load slot ${latest}, your latest save`, run: () => game.continueGame(latest) });
       items.push({ label: 'NEW GAME', hint: 'Monday of eclipse week: Nova Reyes comes home', run: () => (latest ? this.open('new') : game.newGame(freeSaveSlot())) });
       if (latest) items.push({ label: 'LOAD GAME', hint: 'Pick one of three save slots', run: () => this.open('load') });
       items.push({ label: 'CONTROLS', hint: 'Keyboard and mouse', run: () => this.open('controls') });
-      items.push({ label: 'SETTINGS', hint: 'Sound, mouse and graphics', run: () => this.open('settings') });
+      items.push({ label: 'SETTINGS', hint: 'Sound, mouse, HUD size and graphics', run: () => this.open('settings') });
       return items;
     }
     const blocked = game.saveBlockedBy();
     return [
-      { label: 'RESUME', hint: 'Back to the streets', run: () => game.setState('play') },
-      { label: 'SAVE GAME', hint: blocked || `Write slot ${game.saveSlot} now`, run: () => { if (blocked) game.audio.menuMove(); else { game.saveGame(false, true); this.render(); } } },
+      { label: 'RESUME', hint: 'Back to the streets of Saros', run: () => game.setState('play') },
+      { label: 'SAVE GAME', value: `SLOT ${game.saveSlot}`, hint: blocked ? `Cannot save now: ${blocked.toLowerCase()}` : `Write slot ${game.saveSlot} now`, run: () => { if (blocked) game.audio.menuMove(); else { game.saveGame(false, true); this.render(); } } },
       { label: 'LOAD GAME', hint: 'Pick one of three save slots', run: () => this.open('load') },
-      { label: 'CITY ATLAS', hint: 'Map, jobs, progress and save slots', run: () => game.setState('map') },
-      { label: 'STATISTICS', hint: `Your record in ${CITY_NAME}`, run: () => this.open('stats') },
+      { label: 'CITY MAP', hint: 'The atlas: streets, jobs, the week and your progress', run: () => game.setState('map') },
+      { label: 'STATS', hint: `Your record in ${CITY_NAME}`, run: () => this.open('stats') },
       { label: 'CONTROLS', hint: 'Keyboard and mouse', run: () => this.open('controls') },
-      { label: 'SETTINGS', hint: 'Sound, mouse and graphics', run: () => this.open('settings') },
+      { label: 'SETTINGS', hint: 'Sound, mouse, HUD size and graphics', run: () => this.open('settings') },
       { label: 'QUIT TO TITLE', hint: 'Progress since the last save is lost', run: () => game.quitToTitle() },
     ];
   }
@@ -85,12 +95,12 @@ export class Menus {
     for (let slot = 1; slot <= SAVE_SLOT_COUNT; slot += 1) {
       const card = cards[slot - 1];
       if (mode === 'load') {
-        if (card) items.push({ label: `LOAD SLOT ${slot}`, hint: slotLine(card), run: () => this.game.continueGame(slot) });
+        if (card) items.push({ label: `LOAD SLOT ${slot}`, value: `${card.percent}%`, hint: slotLine(card), run: () => this.game.continueGame(slot) });
       } else {
-        items.push({ label: `NEW GAME · SLOT ${slot}`, hint: card ? `Overwrites: ${slotLine(card)}` : 'Empty slot', run: () => { deleteSaveSlot(slot); this.game.newGame(slot); } });
+        items.push({ label: `NEW IN SLOT ${slot}`, value: card ? `${card.percent}%` : 'EMPTY', hint: card ? `Overwrites: ${slotLine(card)}` : 'Empty slot', run: () => { deleteSaveSlot(slot); this.game.newGame(slot); } });
       }
     }
-    items.push({ label: 'BACK', hint: '', run: () => this.open('main') });
+    items.push({ label: 'BACK', hint: 'To the main menu', run: () => this.open('main') });
     return items;
   }
 
@@ -104,12 +114,12 @@ export class Menus {
       this.render();
     };
     return [
-      { label: `VOLUME · ${Math.round(settings.volume * 100)}%`, hint: 'Master volume', run: cycle('volume', [0, 0.2, 0.4, 0.6, 0.8, 1]) },
-      { label: `MOUSE SPEED · ${settings.sensitivity.toFixed(2)}`, hint: 'Camera sensitivity', run: cycle('sensitivity', [0.5, 0.75, 1, 1.25, 1.5, 2]) },
-      { label: `HUD SIZE · ${(HUD_SIZES[settings.hudSize] || HUD_SIZES.large).label}`, hint: 'Standard, large, or huge with the essentials only', run: cycle('hudSize', Object.keys(HUD_SIZES)) },
-      { label: `SHADOWS · ${settings.shadows ? 'ON' : 'OFF'}`, hint: 'Turn off for more speed', run: cycle('shadows', [true, false]) },
-      { label: `RENDER SCALE · ${Math.round(settings.renderScale * 100)}%`, hint: 'More pixels for smoother edges, fewer for more speed', run: cycle('renderScale', [0.75, 1, 1.5, 2]) },
-      { label: 'BACK', hint: '', run: () => this.open('main') },
+      { label: 'VOLUME', value: `${Math.round(settings.volume * 100)}%`, hint: 'Master volume', run: cycle('volume', [0, 0.2, 0.4, 0.6, 0.8, 1]) },
+      { label: 'MOUSE SPEED', value: settings.sensitivity.toFixed(2), hint: 'Camera sensitivity', run: cycle('sensitivity', [0.5, 0.75, 1, 1.25, 1.5, 2]) },
+      { label: 'HUD SIZE', value: (HUD_SIZES[settings.hudSize] || HUD_SIZES.large).label, hint: 'Standard, large, or huge with the essentials only', run: cycle('hudSize', Object.keys(HUD_SIZES)) },
+      { label: 'SHADOWS', value: settings.shadows ? 'ON' : 'OFF', hint: 'Turn off for more speed', run: cycle('shadows', [true, false]) },
+      { label: 'RENDER SCALE', value: `${Math.round(settings.renderScale * 100)}%`, hint: 'More pixels for smoother edges, fewer for more speed', run: cycle('renderScale', [0.75, 1, 1.5, 2]) },
+      { label: 'BACK', hint: 'To the main menu', run: () => this.open('main') },
     ];
   }
 
@@ -120,27 +130,26 @@ export class Menus {
   }
 
   /**
-   * The menu's home panel. On top the three save slots as cards, each a button that loads its slot: the slot's
-   * name, its completion as a big figure and a bar, the day and job it stands at, the time played and the rank.
-   * Under them the district map of Saros with its legend.
+   * The menu's home panel. On top the three save slots as rows, each a button that loads its slot: the slot's
+   * number, its completion as a figure and a bar along its foot, the day and job it stands at, and a tag on the
+   * slot being played (or the latest one). Under them the district map of Saros, the districts named on it.
    */
   homeMarkup() {
-    const lit = this.screen === 'pause' ? this.game.saveSlot : latestSaveSlot();
+    const paused = this.screen === 'pause';
+    const lit = paused ? this.game.saveSlot : latestSaveSlot();
     const cards = listSaveSlots().map((card, index) => {
       const slot = index + 1;
-      const tag = slot === lit ? `<strong>${this.screen === 'pause' ? 'PLAYING' : 'LATEST'}</strong>` : '';
-      if (!card) return `<button class="save-card empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>NEW</span><i><u style="width:0"></u></i><em>EMPTY SLOT</em><small>Start a new week here</small>${tag}</button>`;
-      return `<button class="save-card${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>${card.percent}%</span><i><u style="width:${card.percent}%"></u></i>
-        <em>${card.day || 'MON'} · JOB ${card.jobs}/${STORY_MISSIONS.length}</em><small>${formatPlayTime(card.playSeconds)} PLAYED · RANK ${card.rank} · ${formatCash(card.cash)}</small>${tag}</button>`;
+      const tag = slot === lit ? `<strong>${paused ? 'PLAYING' : 'LATEST'}</strong>` : '';
+      if (!card) return `<button class="save-card empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SLOT ${slot}</b><span>NEW</span><em>EMPTY · START HERE</em>${tag}<i><u style="width:0"></u></i></button>`;
+      return `<button class="save-card${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SLOT ${slot}</b><span>${card.percent}%</span><em>${card.day || 'MON'} · JOB ${card.jobs}/${STORY_MISSIONS.length}</em>${tag}
+        <i><u style="width:${card.percent}%"></u></i><small>${formatPlayTime(card.playSeconds)} PLAYED · RANK ${card.rank} · ${formatCash(card.cash)}</small></button>`;
     }).join('');
-    const districts = Object.values(DISTRICTS).map((district) => `<li><i style="background:${district.map}"></i>${district.name}</li>`).join('');
-    return `<div class="save-cards">${cards}</div>
-      <div class="menu-map"><canvas class="menu-map-canvas"></canvas>
-        <div class="menu-legend"><b>${CITY_NAME.toUpperCase()}</b><ul>${districts}<li><i class="sea"></i>Avocet Sound</li><li><i class="path"></i>Path of totality</li><li><i class="place"></i>Landmark</li></ul></div></div>`;
+    return `<div class="save-cards"><div class="save-caption">SAVE SLOTS · CLICK ONE TO LOAD IT</div>${cards}</div>
+      <div class="menu-map"><canvas class="menu-map-canvas"></canvas><div class="menu-map-caption">${CITY_NAME.toUpperCase()} · ${Object.keys(DISTRICTS).length} DISTRICTS · PATH OF TOTALITY FRI 17:12</div></div>`;
   }
 
   statsMarkup() {
-    return `<div class="panel-title">STATISTICS</div><div class="menu-table">${statisticRows(this.game).map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
+    return `<div class="panel-title">STATS · YOUR RECORD</div><div class="menu-table">${statisticRows(this.game).map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
   }
 
   render() {
@@ -150,9 +159,9 @@ export class Menus {
     if (this.page === 'main') this.items = this.mainItems();
     else if (this.page === 'settings') this.items = this.settingsItems();
     else if (this.page === 'load' || this.page === 'new') this.items = this.slotItems(this.page);
-    else this.items = [{ label: 'BACK', hint: '', run: () => this.open('main') }];
-    list.innerHTML = this.items.map((item, index) => `<button class="menu-item" data-index="${index}"><span>${item.label}</span><small>${item.hint}</small></button>`).join('');
-    if (this.page === 'controls') panel.innerHTML = `<div class="panel-title">CONTROLS</div><div class="menu-table">${CONTROLS.map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join('')}</div>`;
+    else this.items = [{ label: 'BACK', hint: 'To the main menu', run: () => this.open('main') }];
+    list.innerHTML = this.items.map((item, index) => `<button class="menu-item" data-index="${index}"><span>${item.label}</span>${item.value ? `<em>${item.value}</em>` : ''}</button>`).join('');
+    if (this.page === 'controls') panel.innerHTML = `<div class="panel-title">CONTROLS</div><div class="menu-table keys">${CONTROLS.map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join('')}</div>`;
     else if (this.page === 'stats') panel.innerHTML = this.statsMarkup();
     else panel.innerHTML = this.homeMarkup();
     panel.classList.add('visible');
@@ -162,9 +171,12 @@ export class Menus {
     this.highlight();
   }
 
+  /** Light the chosen button and print its hint on the line under the list. */
   highlight() {
     const root = this.screen === 'start' ? this.start : this.pause;
     root.querySelectorAll('.menu-item').forEach((row, index) => row.classList.toggle('selected', index === this.index));
+    const item = this.items[this.index];
+    root.querySelector('.menu-hint').textContent = item ? `${item.label}: ${item.hint}` : '';
   }
 
   activate() {
@@ -193,7 +205,7 @@ export class Menus {
   }
 }
 
-/** The record of a playthrough as label and value pairs: the pause menu and the city atlas both show it. */
+/** The record of a playthrough as label and value pairs: the pause menu's STATS page shows it. */
 export function statisticRows(game) {
   const s = game.stats;
   return [
@@ -215,8 +227,8 @@ function slotLine(card) {
 }
 
 const CONTROLS = [
-  ['W A S D', 'Walk · steer, accelerate, brake'], ['Mouse', 'Look around · aim'], ['Shift', 'Sprint · nitro in a car'], ['Space', 'Jump · handbrake'],
-  ['F', 'Enter / exit vehicle · carjack'], ['Left click', 'Punch · shoot'], ['Right click', 'Aim'], ['1-5 · Q · wheel', 'Switch weapon'],
+  ['W A S D', 'Walk · steer, accelerate, brake'], ['MOUSE', 'Look around · aim'], ['SHIFT', 'Sprint · nitro in a car'], ['SPACE', 'Jump · handbrake'],
+  ['F', 'Enter / exit vehicle · carjack'], ['LEFT CLICK', 'Punch · shoot'], ['RIGHT CLICK', 'Aim'], ['1-5 · Q · WHEEL', 'Switch weapon'],
   ['R', 'Reload · next radio station'], ['E', 'Shop · workshop · race · save'], ['T', 'Taxi fares (in a Saros Cab)'], ['L', 'Headlights off and on: run dark'], ['Z · X · C', 'Crew favors: car, signal jam, patch-up'],
-  ['H', 'Horn'], ['M · Tab', `${GAME_TITLE} city atlas`], ['Esc · P', 'Pause'],
+  ['H', 'Horn'], ['M · TAB', 'City map'], ['ESC · P', 'Pause'],
 ];

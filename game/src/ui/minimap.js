@@ -254,18 +254,20 @@ export class Minimap {
     c.restore();
   }
 
-  /** The pause screen's full map, north up, with street names and every landmark. */
   /**
-   * The districts of Saros on a menu's small map: the painted city, the path of totality, the district names set
-   * large and a dot for each landmark. No street names, no blips and no player: the atlas (M) has those.
+   * The districts of Saros on a menu's small map: the painted city, the path of totality, a dot for each landmark
+   * and the district names set as large as the map allows, one word a line. No street names, no blips and no
+   * player: the atlas (M) has those. The foot of the frame is left clear for the menu's caption.
    */
   drawDistrictMap(canvas) {
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(canvas.clientWidth * ratio);
+    canvas.height = Math.round(canvas.clientHeight * ratio);
     const c = canvas.getContext('2d');
-    const scale = Math.min(canvas.width / MAP_WIDTH, canvas.height / MAP_DEPTH);
+    const foot = canvas.height * 0.1;
+    const scale = Math.min(canvas.width / MAP_WIDTH, (canvas.height - foot) / (MAP_DEPTH - 70));
     const offsetX = (canvas.width - MAP_WIDTH * scale) / 2;
-    const offsetY = (canvas.height - MAP_DEPTH * scale) / 2;
+    const offsetY = -18 * scale;
     const toX = (x) => offsetX + (x - MAP_MIN_X) * scale;
     const toY = (z) => offsetY + (z - MAP_MIN_Z) * scale;
     c.fillStyle = '#2f9fcb';
@@ -274,30 +276,39 @@ export class Minimap {
     this.drawPathOfTotality(c, toX, toY, scale);
     for (const place of Object.values(LANDMARKS)) {
       c.beginPath();
-      c.arc(toX(place.x), toY(place.z), Math.max(3, 15 * scale), 0, Math.PI * 2);
+      c.arc(toX(place.x), toY(place.z), Math.max(3, 13 * scale), 0, Math.PI * 2);
       c.fillStyle = place.color;
       c.fill();
       c.lineWidth = Math.max(1.5, 4 * scale);
       c.strokeStyle = '#17122b';
       c.stroke();
     }
-    c.font = `900 ${Math.max(11, 46 * scale)}px Impact, "Arial Black", sans-serif`;
+    const type = Math.max(11, canvas.height * 0.07);
+    c.font = `900 ${type}px "Arial Black", "Segoe UI Black", Arial, sans-serif`;
     c.textAlign = 'center';
-    c.lineWidth = 4;
+    c.textBaseline = 'middle';
+    c.lineWidth = type * 0.3;
     c.lineJoin = 'round';
-    c.strokeStyle = 'rgba(23,18,43,0.7)';
+    c.strokeStyle = 'rgba(13,10,30,0.9)';
     c.fillStyle = '#ffffff';
-    for (const [id, x, z] of [['orrery', 480, 340], ['hill', 520, 96], ['azimuth', 770, 236], ['yards', 440, 652]]) {
-      const text = DISTRICTS[id].name.toUpperCase();
-      c.strokeText(text, toX(x), toY(z));
-      c.fillText(text, toX(x), toY(z));
-    }
-    c.save();
-    c.translate(toX(86), toY(360));
-    c.rotate(-Math.PI / 2);
-    c.strokeText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
-    c.fillText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
-    c.restore();
+    /** Each word of a district's name on its own line, centred on a point of the city; `turn` stands it on end. */
+    const nameDistrict = (id, x, z, turn = 0) => {
+      const words = DISTRICTS[id].name.toUpperCase().split(' ');
+      c.save();
+      c.translate(toX(x), toY(z));
+      c.rotate(turn);
+      words.forEach((word, index) => {
+        const y = (index - (words.length - 1) / 2) * type * 1.02;
+        c.strokeText(word, 0, y);
+        c.fillText(word, 0, y);
+      });
+      c.restore();
+    };
+    nameDistrict('hill', 520, 82);
+    nameDistrict('orrery', 450, 318);
+    nameDistrict('azimuth', 760, 470);
+    nameDistrict('yards', 400, 642);
+    nameDistrict('strand', 84, 330, -Math.PI / 2);
   }
 
   drawFullMap() {

@@ -23,6 +23,8 @@ export class HudEclipsePanel {
     const row = createElement('div', 'eclipse-row', text);
     this.big = createElement('b', 'eclipse-big', row);
     this.line = createElement('span', 'eclipse-line', row);
+    // The few words the biggest HUD size prints over the readout in place of the caption and the line.
+    this.short = createElement('span', 'eclipse-short', row);
     this.fill = createElement('i', '', createElement('div', 'eclipse-track', text));
     this.cover = createElement('div', 'eclipse-cover', text);
   }
@@ -60,6 +62,7 @@ export class HudEclipsePanel {
     cache.text(this.big, readout.big);
     // The panel has room for the first words of the line; the atlas prints it whole.
     cache.text(this.line, readout.line.split(/ · |: /)[0]);
+    cache.text(this.short, readout.short);
     cache.toggle(this.root, 'worded', !readout.ticking);
     cache.width(this.fill, readout.share);
     cache.toggle(this.root, 'ticking', readout.ticking);
