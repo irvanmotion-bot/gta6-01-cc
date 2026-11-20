@@ -2,7 +2,8 @@
 import * as THREE from 'three';
 import { createGlowTexture } from '../render/proceduralTextures.js';
 
-const MAX = 900;
+const MAX = 1100;
+const RING_LIFE = 0.55;
 const VERTEX = `
 attribute float size;
 attribute vec4 tint;
@@ -43,12 +44,22 @@ export class Particles {
     scene.add(this.points);
 
     this.tracers = [];
-    const tracerGeometry = new THREE.BoxGeometry(0.06, 0.06, 1);
+    const tracerGeometry = new THREE.BoxGeometry(0.09, 0.09, 1);
     for (let k = 0; k < 24; k += 1) {
       const mesh = new THREE.Mesh(tracerGeometry, new THREE.MeshBasicMaterial({ color: 0xfff1a8, transparent: true }));
       mesh.visible = false;
       scene.add(mesh);
       this.tracers.push({ mesh, life: 0 });
+    }
+    this.rings = [];
+    const ringGeometry = new THREE.RingGeometry(0.82, 1, 40);
+    ringGeometry.rotateX(-Math.PI / 2);
+    for (let k = 0; k < 4; k += 1) {
+      const mesh = new THREE.Mesh(ringGeometry, new THREE.MeshBasicMaterial({ color: 0xffd9a0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }));
+      mesh.visible = false;
+      mesh.renderOrder = 4;
+      scene.add(mesh);
+      this.rings.push({ mesh, life: 0 });
     }
     this.flash = new THREE.PointLight(0xffc266, 0, 26);
     scene.add(this.flash);
@@ -106,7 +117,23 @@ export class Particles {
       this.emit(x + (Math.random() - 0.5) * 3, y + 1 + Math.random() * 2, z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, 3 + Math.random() * 4, (Math.random() - 0.5) * 3, 2.6 + Math.random(), 2.8, 2.2, 0.1, 0.1, 0.1, 0.7);
     }
     this.sparks(x, y + 1, z, 26);
+    // Burning debris thrown high, a white-hot core and a shockwave ring racing out along the ground.
+    for (let k = 0; k < 16; k += 1) {
+      const a = Math.random() * Math.PI * 2;
+      const s = 6 + Math.random() * 10;
+      this.emit(x, y + 1, z, Math.cos(a) * s, 7 + Math.random() * 9, Math.sin(a) * s, 1.1 + Math.random() * 0.6, 0.5, -0.2, 1, 0.55, 0.12, 1, 16);
+    }
+    for (let k = 0; k < 8; k += 1) this.emit(x + (Math.random() - 0.5) * 2, y + 0.6 + Math.random(), z + (Math.random() - 0.5) * 2, 0, 1.5, 0, 0.32, 4.6, 3, 1, 0.96, 0.8, 1);
+    this.shockwave(x, z);
     this.lightFlash(x, y + 2, z, 60, 0.45);
+  }
+
+  /** A ring of hot air that spreads from a blast and fades. */
+  shockwave(x, z) {
+    const ring = this.rings.find((entry) => entry.life <= 0) || this.rings[0];
+    ring.mesh.position.set(x, 0.3, z);
+    ring.mesh.visible = true;
+    ring.life = RING_LIFE;
   }
 
   lightFlash(x, y, z, intensity, life) {
@@ -132,6 +159,7 @@ export class Particles {
 
   clear() {
     this.items.length = 0;
+    for (const ring of this.rings) { ring.life = 0; ring.mesh.visible = false; }
   }
 
   update(dt) {
@@ -160,6 +188,14 @@ export class Particles {
       tracer.life -= dt;
       tracer.mesh.material.opacity = Math.max(0, tracer.life / 0.11);
       if (tracer.life <= 0) tracer.mesh.visible = false;
+    }
+    for (const ring of this.rings) {
+      if (ring.life <= 0) continue;
+      ring.life -= dt;
+      const t = 1 - Math.max(0, ring.life) / RING_LIFE;
+      ring.mesh.scale.setScalar(1.5 + t * 15);
+      ring.mesh.material.opacity = (1 - t) * 0.75;
+      if (ring.life <= 0) ring.mesh.visible = false;
     }
     if (this.flashLife > 0) {
       this.flashLife -= dt;

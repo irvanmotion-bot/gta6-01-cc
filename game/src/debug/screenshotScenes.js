@@ -99,6 +99,8 @@ function chaseScene(game) {
   play(game, 1.75, (t) => {
     game.input.held.add('KeyW');
     if (t > 1.45) game.input.held.add('ShiftLeft');
+    // The gunship's next burst is due as the frame is taken, so its tracer is in the air.
+    if (t > 1.7 && game.police.helicopter.cooldown > 0.05) game.police.helicopter.cooldown = 0;
     game.camera.yaw = 0.05;
     game.camera.pitch = 0.13;
     game.camera.idleLook = 0;

@@ -38,6 +38,8 @@ export class Vehicle {
     this.maxHealth = this.spec.health;
     this.tiresShredded = false;
     this.boosting = false;
+    this.markX = x;
+    this.markZ = z;
     this.unit = null;
     this.driver = null;
     this.controller = null;
@@ -196,7 +198,16 @@ export class Vehicle {
   effects(dt) {
     const tailX = this.position.x - this.forwardX() * (this.spec.length * 0.5);
     const tailZ = this.position.z - this.forwardZ() * (this.spec.length * 0.5);
-    if (this.skidding) this.game.particles.tireSmoke(tailX, 0.2, tailZ);
+    if (this.skidding) {
+      this.game.particles.tireSmoke(tailX, 0.2, tailZ);
+      // A fresh pair of tyre streaks for every metre and a half slid.
+      const slid = Math.hypot(this.position.x - this.markX, this.position.z - this.markZ);
+      if (slid > 1.5) {
+        if (slid < 4) this.game.skidMarks.lay(this, slid + 0.2);
+        this.markX = this.position.x;
+        this.markZ = this.position.z;
+      }
+    }
     if (this.tiresShredded && Math.abs(this.speed) > 6) this.game.particles.sparks(tailX, 0.15, tailZ, 1);
     if (this.boosting) this.game.particles.nitroFlame(tailX, 0.45, tailZ, this.velX, this.velZ);
     this.smoke(dt, false);

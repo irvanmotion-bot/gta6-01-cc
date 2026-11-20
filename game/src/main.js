@@ -38,6 +38,7 @@ import { WorldMarkers } from './world/worldMarkers.js';
 import { SkyAndSun } from './render/skyAndSun.js';
 import { ChaseCamera } from './render/chaseCamera.js';
 import { Particles } from './effects/particles.js';
+import { SkidMarks } from './effects/skidMarks.js';
 import { SoundEffects } from './audio/soundEffects.js';
 import { Input } from './core/input.js';
 import { distance2D } from './core/random.js';
@@ -79,6 +80,7 @@ class Game {
     this.boats = new BoatsAtSea(this.scene);
     this.headlamp = new PlayerHeadlamp(this.scene);
     this.particles = new Particles(this.scene);
+    this.skidMarks = new SkidMarks(this.scene);
     this.markers = new WorldMarkers(this.scene);
     this.pickups = new Pickups(this);
     this.vehicles = new VehicleFleet(this);
@@ -156,6 +158,7 @@ class Game {
     this.gunmen.clear();
     this.pickups.clear();
     this.particles.clear();
+    this.skidMarks.clear();
     this.police.clear();
     this.wanted.reset();
     this.weapons.reset();
