@@ -100,9 +100,10 @@ export class Particles {
   }
 
   /** The burst at a gun's muzzle: a white-hot heart in a short yellow flare, gone in a few frames. */
-  muzzleFlash(x, y, z) {
-    this.emit(x, y, z, 0, 0, 0, 0.2, 1.5, 0.3, 1, 0.74, 0.2, 1);
-    this.emit(x, y, z, 0, 0, 0, 0.17, 0.8, 0.1, 1, 0.97, 0.8, 1);
+  muzzleFlash(x, y, z, scale = 1) {
+    this.emit(x, y, z, 0, 0, 0, 0.16, 2.3 * scale, 0.4 * scale, 1, 0.5, 0.12, 0.4);
+    this.emit(x, y, z, 0, 0, 0, 0.2, 1.6 * scale, 0.3 * scale, 1, 0.74, 0.2, 1);
+    this.emit(x, y, z, 0, 0, 0, 0.17, 0.85 * scale, 0.1 * scale, 1, 0.97, 0.8, 1);
   }
 
   sparks(x, y, z, count) {

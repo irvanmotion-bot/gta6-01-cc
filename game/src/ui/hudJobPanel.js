@@ -1,9 +1,14 @@
-// The HUD's top-left job panel: the story job with its number and stage n of m, its title, progress bar, objective
-// and timer; a street race or taxi fare when one is running; and in free roam, where the next job waits.
+// The HUD's top-left job panel: who gave the job (their portrait), its name, one bar cut into the job's steps with
+// the step in hand named under it, the objective and the timer. A street race, a taxi fare or a bounty hit takes the
+// panel over while it runs; in free roam it points at the next job.
 import { completionPercent } from '../progression/completionTracker.js';
-import { STORY_MISSIONS } from '../missions/storyMissions.js';
+import { CHARACTERS, STORY_MISSIONS } from '../missions/storyMissions.js';
 import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { createElement, formatClock } from './domBuilder.js';
+import { drawSpeakerPortrait } from './speakerPortraits.js';
+
+/** A bar is cut into steps up to this many; a longer run (a race's checkpoints) fills one plain bar. */
+const MAX_SEGMENTS = 12;
 
 export class HudJobPanel {
   constructor(game, parent, cache) {
@@ -11,12 +16,18 @@ export class HudJobPanel {
     this.cache = cache;
     const root = createElement('div', 'hud-panel job-panel', parent);
     this.root = root;
-    const head = createElement('div', 'job-head', root);
+    const top = createElement('div', 'job-top', root);
+    this.face = createElement('canvas', 'job-face', top);
+    this.face.width = 64;
+    this.face.height = 64;
+    this.drawnFace = '';
+    const name = createElement('div', 'job-name', top);
+    const head = createElement('div', 'job-head', name);
     this.header = createElement('span', 'job-header', head);
     this.timer = createElement('b', 'job-timer', head);
-    this.title = createElement('div', 'job-title', root);
+    this.title = createElement('div', 'job-title', name);
+    this.track = createElement('div', 'job-track', root);
     this.stage = createElement('div', 'job-stage', root);
-    this.fill = createElement('i', '', createElement('div', 'job-track', root));
     this.objective = createElement('div', 'job-objective', root);
     this.next = createElement('div', 'job-next', root);
   }
@@ -26,8 +37,10 @@ export class HudJobPanel {
     const missions = this.game.missions;
     const info = missions.stageInfo();
     if (!info) return null;
+    const giver = CHARACTERS[missions.active.mission.giver];
     return {
-      header: `JOB ${String(info.number).padStart(2, '0')}/${info.total} · STAGE ${info.stage}/${info.count}`, title: info.title, stageLine: '',
+      header: `STORY JOB ${info.number} · FROM ${giver.name}`, title: info.title, stageLine: `STEP ${info.stage} OF ${info.count} · ${info.name.toUpperCase()}`,
+      steps: info.count, stepsDone: info.stage - 1, stepShare: missions.stepShare(), face: giver.name, faceColor: giver.color,
       share: info.share, objective: missions.objectiveText(), next: info.next, timer: missions.active.timer, counting: 'down', kind: 'story',
     };
   }
@@ -46,19 +59,37 @@ export class HudJobPanel {
     };
   }
 
+  /** The bar as markup: one cell per step (done, in hand with its own fill, or still to come), or one plain fill. */
+  trackMarkup(info) {
+    const percent = (share) => Math.round(Math.max(0, Math.min(1, share)) * 100);
+    if (!info.steps || info.steps > MAX_SEGMENTS) return `<i class="whole"><u style="width:${percent(info.share)}%"></u></i>`;
+    let cells = '';
+    for (let step = 0; step < info.steps; step += 1) {
+      const state = step < info.stepsDone ? 'done' : step === info.stepsDone ? 'now' : '';
+      cells += `<i class="${state}">${state === 'now' ? `<u style="width:${percent(info.stepShare || 0)}%"></u>` : ''}</i>`;
+    }
+    return cells;
+  }
+
   update() {
     const game = this.game;
     const cache = this.cache;
-    const info = this.storyInfo() || game.races.panelInfo() || game.activities.panelInfo() || this.freeRoamInfo();
+    const info = this.storyInfo() || game.races.panelInfo() || game.activities.panelInfo() || game.bounties.panelInfo() || this.freeRoamInfo();
     cache.text(this.header, info.header);
     cache.text(this.title, info.title.toUpperCase());
     cache.text(this.stage, info.stageLine);
     cache.toggle(this.stage, 'empty', !info.stageLine);
-    cache.width(this.fill, info.share);
+    cache.html(this.track, this.trackMarkup(info));
     cache.text(this.objective, `▸ ${info.objective}`);
     cache.text(this.next, info.kind === 'roam' ? info.next : `NEXT ▸ ${info.next}`);
     cache.text(this.timer, info.timer === null || info.timer === undefined ? '' : formatClock(info.timer));
     cache.toggle(this.timer, 'urgent', info.counting === 'down' && info.timer !== null && info.timer < 20);
     cache.toggle(this.root, 'roam', info.kind === 'roam');
+    // Whose job it is: the giver of a story job, the capo with a price on him, or Nova herself between jobs.
+    const face = info.face || 'NOVA';
+    if (face !== this.drawnFace) {
+      this.drawnFace = face;
+      drawSpeakerPortrait(this.face, face, info.faceColor || '#ff9e7a');
+    }
   }
 }

@@ -1,8 +1,10 @@
 // Builds each car's low-poly body from its catalog entry: shell, cabin glass, lights, wheels, taxi sign or police light bar.
 import * as THREE from 'three';
-import { MeshBatcher } from '../render/meshBatcher.js';
+import { MeshBatcher, placement } from '../render/meshBatcher.js';
 
 const wheelGeometry = buildWheelGeometry();
+/** The dark disc behind a wheel: it shows above the tyre as the round of the wheel arch. */
+const archShape = new THREE.CylinderGeometry(0.5, 0.5, 0.09, 16).rotateZ(Math.PI / 2);
 const wheelMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
 const lightBarGeometry = new THREE.BoxGeometry(1, 0.26, 0.4);
 
@@ -70,7 +72,14 @@ function addBodyTrim(batch, spec, shape, paint, frame) {
   const { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter, cabinLength, noseHeight, tailHeight } = frame;
   for (const side of [-1, 1]) {
     const flank = side * (width / 2 - 0.01);
-    for (const t of [0.82, 0.18]) batch.addBox(side * (width / 2 - 0.05), clearance - 0.08, at(t), 0.09, 0.5, 0.98, '#121416');
+    // A round arch over each wheel, cut dark into the flank, with a lip of paint standing proud over it.
+    const archRadius = Math.max(0.4, Math.min(0.5, clearance + shellHeight - 0.42));
+    for (const t of [0.82, 0.18]) {
+      batch.addGeometry(archShape, placement(side * (width / 2 - 0.035), 0.36, at(t), 0, 1, archRadius / 0.5, archRadius / 0.5), '#121416');
+      batch.addBox(side * (width / 2 + 0.005), 0.34 + archRadius, at(t), 0.07, 0.06, archRadius * 1.7, shade(paint, 0.82));
+    }
+    // A handle on each door.
+    batch.addBox(flank, clearance + shellHeight * 0.66, cabinCenter + cabinLength * 0.16, 0.05, 0.05, 0.2, '#15171a');
     batch.addBox(flank, clearance + shellHeight * 0.78, cabinCenter, 0.05, 0.05, cabinLength, shade(paint, 1.18));
     batch.addBox(flank, clearance + 0.02, 0, 0.06, 0.12, length * 0.5, shade(paint, 0.6));
     batch.addBox(flank, clearance + shellHeight * 0.2, cabinCenter, 0.045, shellHeight * 0.72, 0.03, shade(paint, 0.5));
@@ -116,6 +125,22 @@ export function buildVehicleModel(spec, paint) {
   batch.addBox(0, clearance + shellHeight + cabinHeight * 0.88, cabinCenter + roofShift, width * 0.92 * rakeX + 0.04, cabinHeight * 0.12, cabinLength * rakeZ + 0.04, spec.police ? '#2e6fd8' : paint);
   batch.addBox(0, clearance + shellHeight, cabinCenter + roofShift * 0.5, width * 0.93, cabinHeight * 0.9, 0.09, shade(paint, 0.85));
   batch.taperLastBox(rakeX, 1, roofShift * 0.5);
+  // Pillars in the body's colour at the four corners of the glasshouse, leaning with the glass, so the cabin
+  // reads as a windscreen, side windows and a rear window instead of one dark block.
+  const glassHalf = width * 0.46;
+  const glassTop = clearance + shellHeight + cabinHeight * 0.45;
+  const leanFront = roofShift + (cabinLength * (rakeZ - 1)) / 2;
+  const leanRear = roofShift - (cabinLength * (rakeZ - 1)) / 2;
+  for (const side of [-1, 1]) {
+    for (const [z, lean] of [[cabinEnd - 0.05, leanFront], [cabinStart + 0.05, leanRear]]) {
+      batch.addBox(side * (glassHalf - 0.025), clearance + shellHeight, z, 0.11, cabinHeight * 0.9, 0.14, paint);
+      batch.reshapeLastBox((point) => {
+        if (point.y < glassTop) return;
+        point.x -= side * glassHalf * (1 - rakeX);
+        point.z += lean;
+      });
+    }
+  }
   if (shape.bed) {
     batch.addBox(0, clearance + shellHeight, at(0.2), width, 0.28, length * 0.38, shade(paint, 0.8));
     batch.addBox(0, clearance + shellHeight - 0.02, at(0.2), width * 0.86, 0.04, length * 0.34, '#22262a');

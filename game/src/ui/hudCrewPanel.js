@@ -1,23 +1,25 @@
-// The HUD's crew panel: the three crew favors with their key, who grants them, and whether each is ready,
-// cooling down, active or still locked behind a rank.
+// The HUD's crew panel: Nova's three crew members by name and face, the favor each one grants, the key that calls
+// it, and whether it is ready, cooling down, active or still locked behind a rank.
 import { createElement } from './domBuilder.js';
+import { drawSpeakerPortrait } from './speakerPortraits.js';
 
 export class HudCrewPanel {
   constructor(game, parent, cache) {
     this.game = game;
     this.cache = cache;
     const root = createElement('div', 'hud-panel crew-panel', parent);
-    createElement('div', 'panel-caption', root, 'CREW FAVORS');
     this.rows = game.crew.status().map((favor) => {
       const row = createElement('div', 'favor', root);
-      const key = createElement('b', 'favor-key', row, favor.key);
-      key.style.background = favor.color;
+      const face = createElement('canvas', 'favor-face', row);
+      face.width = 48;
+      face.height = 48;
+      drawSpeakerPortrait(face, favor.portrait, favor.color);
+      createElement('b', 'favor-key', row, favor.key);
       const text = createElement('div', 'favor-text', row);
+      createElement('span', 'favor-who', text, favor.who);
       createElement('span', 'favor-name', text, favor.name);
-      createElement('small', 'favor-who', text, favor.who);
       const fill = createElement('i', '', createElement('div', 'favor-track', text));
-      fill.style.background = favor.color;
-      return { row, fill, state: createElement('em', 'favor-state', row) };
+      return { row, fill, state: createElement('em', 'favor-state', text) };
     });
   }
 

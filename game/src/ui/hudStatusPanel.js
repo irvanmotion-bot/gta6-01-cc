@@ -1,25 +1,26 @@
-// The HUD's status panel, under the eclipse panel: big wanted stars and cash on one line, the response tier and
-// escape bar while wanted, thick health and armor bars side by side, and the street-cred rank on one thin line.
-// (The weapons have their own bar: hudWeaponBar.js.)
+// The HUD's status panel, under the eclipse panel: big wanted stars and cash on one line, the street-cred rank on a
+// thin line and the escape bar while evading. It also owns the health and armor bars, which sit under the minimap.
+// (The response tier is named in the dispatch panel's head; the weapons have their own bar: hudWeaponBar.js.)
 import { createElement, createMeter, formatCash } from './domBuilder.js';
 
 export class HudStatusPanel {
-  constructor(game, parent, cache) {
+  /** `vitalsParent` is where the health and armor bars go: the radar block, under the minimap. */
+  constructor(game, parent, cache, vitalsParent) {
     this.game = game;
     this.cache = cache;
     this.shownCash = 0;
     const root = createElement('div', 'hud-panel status-panel', parent);
-    // Stars and cash share the top line; the tier badge and the escape bar appear under it only while wanted.
+    // Stars and cash share the top line; the rank is one thin line under them, and the escape bar shows while evading.
     const top = createElement('div', 'status-top', root);
     this.stars = createElement('div', 'wanted-stars', top);
     for (let index = 0; index < 5; index += 1) createElement('i', '', this.stars, '★');
     this.cash = createElement('div', 'cash-readout', top);
+    this.rank = createMeter(root, 'rank-meter', 'RANK');
     this.tier = createElement('div', 'wanted-tier', root);
     this.escape = createMeter(root, 'escape-meter', 'EVADING');
-    const vitals = createElement('div', 'vitals', root);
+    const vitals = createElement('div', 'vitals', vitalsParent);
     this.health = createMeter(vitals, 'health-meter', 'HEALTH');
     this.armor = createMeter(vitals, 'armor-meter', 'ARMOR');
-    this.rank = createMeter(root, 'rank-meter', 'RANK');
   }
 
   update(dt) {

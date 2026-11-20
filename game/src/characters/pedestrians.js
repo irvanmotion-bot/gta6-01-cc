@@ -30,6 +30,10 @@ class Pedestrian extends CharacterBody {
     this.boardwalk = false;
     // One citizen in three is timid: close gunfire puts them on the ground instead of on the run.
     this.timid = Math.random() < 0.34;
+    // The rest each run their own way, and one in four of them would rather watch from a distance, phone out.
+    this.fearStyle = FEAR_STYLES[Math.floor(Math.random() * FEAR_STYLES.length)];
+    this.bold = !this.timid && Math.random() < 0.36;
+    this.gawkStyle = Math.random() < 0.62 ? 'film' : 'point';
   }
 
   /** Pick the next sidewalk corner: usually on round the block, sometimes across the street. */
@@ -63,6 +67,14 @@ class Pedestrian extends CharacterBody {
       dirZ = this.position.z - this.fearZ;
       speed = 5.6;
       if (this.timer <= 0) this.calmDown();
+    } else if (this.state === 'gawk') {
+      // Far enough to feel safe: turned to the trouble, filming it or pointing it out, until it comes too close.
+      this.timer -= dt;
+      speed = 0;
+      this.turnToward(Math.atan2(this.fearX - this.position.x, this.fearZ - this.position.z), dt, 6);
+      const player = this.game.player.position;
+      if (Math.hypot(player.x - this.position.x, player.z - this.position.z) < GAWK_DISTANCE * 0.6) this.scare(player.x, player.z, 9);
+      else if (this.timer <= 0) this.calmDown();
     } else if (this.state === 'cower') {
       // Too close to the gunfire to run: down on their heels, arms over the head, until it has been quiet a while.
       this.timer -= dt;
@@ -112,6 +124,8 @@ class Pedestrian extends CharacterBody {
     this.gazing = false;
     this.cheering = false;
     this.cowering = false;
+    this.filming = false;
+    this.pointing = false;
     this.panicking = true;
     this.state = 'flee';
     this.fearX = x;
@@ -125,8 +139,25 @@ class Pedestrian extends CharacterBody {
     this.gazing = false;
     this.cheering = false;
     this.panicking = false;
+    this.filming = false;
+    this.pointing = false;
     this.cowering = true;
     this.state = 'cower';
+    this.fearX = x;
+    this.fearZ = z;
+    this.timer = seconds;
+  }
+
+  /** Stop and watch a danger at (x, z) from where they stand: phone up, or an arm pointing it out. */
+  gawk(x, z, seconds) {
+    if (!this.alive) return;
+    this.gazing = false;
+    this.cheering = false;
+    this.panicking = false;
+    this.cowering = false;
+    this.filming = this.gawkStyle === 'film';
+    this.pointing = !this.filming;
+    this.state = 'gawk';
     this.fearX = x;
     this.fearZ = z;
     this.timer = seconds;
@@ -136,6 +167,8 @@ class Pedestrian extends CharacterBody {
   calmDown() {
     this.panicking = false;
     this.cowering = false;
+    this.filming = false;
+    this.pointing = false;
     this.state = 'walk';
   }
 
@@ -237,16 +270,18 @@ export class PedestrianCrowd {
       if (!ped.alive) continue;
       const distance = distance2D(x, z, ped.position.x, ped.position.z);
       if (distance >= radius) continue;
-      if (ped.timid && distance < cowerWithin) { if (ped.state !== 'cower') ped.cower(x, z, 5 + ped.pace * 2); else ped.timer = Math.max(ped.timer, 3); } else ped.scare(x, z, seconds);
+      if (ped.timid && distance < cowerWithin) { if (ped.state !== 'cower') ped.cower(x, z, 5 + ped.pace * 2); else ped.timer = Math.max(ped.timer, 3); }
+      else if (ped.bold && distance > GAWK_DISTANCE && ped.state !== 'flee') { if (ped.state !== 'gawk') ped.gawk(x, z, seconds); else ped.timer = Math.max(ped.timer, seconds * 0.5); }
+      else ped.scare(x, z, seconds);
     }
   }
 
   /** How the crowd is taking it right now, for the playthrough check: running, cowering, strolling. */
   moodCount() {
-    const mood = { fleeing: 0, cowering: 0, calm: 0 };
+    const mood = { fleeing: 0, cowering: 0, watching: 0, calm: 0 };
     for (const ped of this.list) {
       if (!ped.alive) continue;
-      if (ped.state === 'flee') mood.fleeing += 1; else if (ped.state === 'cower') mood.cowering += 1; else mood.calm += 1;
+      if (ped.state === 'flee') mood.fleeing += 1; else if (ped.state === 'cower') mood.cowering += 1; else if (ped.state === 'gawk') mood.watching += 1; else mood.calm += 1;
     }
     return mood;
   }
@@ -278,6 +313,10 @@ export class PedestrianCrowd {
 }
 
 const INSET = 1.5;
+/** How a citizen who runs carries it: hands up, a flat-out sprint, or ducked low with an arm over the head. */
+const FEAR_STYLES = ['handsUp', 'sprint', 'sprint', 'duck'];
+/** Beyond this many metres from the trouble the bold stop to film it; closer than that, everyone runs. */
+const GAWK_DISTANCE = 13;
 /** For each corner (NW, NE, SE, SW): the two street crossings that leave it, as [di, dj, corner on the far block]. */
 const CROSSINGS = [
   [[-1, 0, 1], [0, -1, 3]],

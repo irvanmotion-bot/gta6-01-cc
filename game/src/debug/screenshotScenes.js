@@ -1,9 +1,10 @@
-// The scenes behind ?shot=chase|standoff|workshop|atlas|title: each loads a save, stages a moment with the game's
+// The scenes behind ?shot=chase|bounty|workshop|atlas|title: each loads a save, stages a moment with the game's
 // own systems, plays the real simulation forward for a few seconds with keys held down, then freezes the frame.
 import { LANDMARKS } from '../world/cityLayout.js';
+import { VANE_CAPOS } from '../activities/vaneBounties.js';
 import { tryEnterVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
-import { STORY_MISSIONS } from '../missions/storyMissions.js';
+import { GETAWAY_PAINT, STORY_MISSIONS } from '../missions/storyMissions.js';
 import { CONTACTS, ECLIPSE_DAY } from '../eclipse/eclipseCalendar.js';
 import { restoreGame, summarizeGame, captureGame } from '../core/gameSnapshot.js';
 import { freshStats, writeSaveSlot } from '../core/saveGame.js';
@@ -122,8 +123,8 @@ function chaseScene(game) {
   rayo.position.set(lane, 0, z0);
   rayo.heading = 0;
   tryEnterVehicle(game);
+  // Jazz comes on the radio the moment the door shuts: her line is in the crew's ribbon when the frame is taken.
   play(game, 0.05);
-  game.hud.clearSpeech();
   game.calendar.setHour(hourOfCoverage(0.6));
   rayo.velZ = speed;
   rayo.health = rayo.maxHealth * 0.78;
@@ -174,45 +175,69 @@ function chaseScene(game) {
 }
 
 /**
- * On foot on Corona Drive as the eclipse begins, the low sun behind Nova: she drops one of Vane's lookouts and
- * turns her rifle on the next, a car at the kerb is hers for the taking, and the first cruiser is on its way.
+ * A bounty hit on foot, Thursday afternoon at the south end of the Strand: El Anzuelo and his guards have come off
+ * the boardwalk into Corona Drive. Nova has dropped one and set their car alight; the capo and two guards shoot
+ * back, Saros P.D. answers the noise, a car at the kerb is hers for the taking, and the eclipse crowd scatters.
  */
-function standoffScene(game) {
+function bountyScene(game) {
   const seconds = 1.0;
+  const capo = VANE_CAPOS.find((entry) => entry.id === 'anzuelo');
   const x0 = 2.4;
-  const z0 = 351;
+  const z0 = capo.z + 13;
   const facing = Math.PI + 0.12;
-  loadCity(game, stagedSave(9), x0, z0, facing);
-  game.player.cash = 61200;
-  startHeist(game, 'eliminate');
-  game.calendar.setHour(hourOfCoverage(0.34));
-  game.weapons.select('rifle');
-  // A citizen's Duna left at the kerb beside her: in reach, so the game rings it and offers F to steal it.
-  const parked = game.vehicles.spawn('avocet', x0 + 3.1, z0 - 3.7, Math.PI, '#ffd23f');
+  loadCity(game, stagedSave(7, { bounties: ['contadora'] }), x0, z0, facing);
+  game.player.cash = 31450;
+  game.player.armor = 64;
+  // His crew stands on its corner as soon as Nova is this close; the job panel turns to the hit.
+  play(game, 0.05);
+  game.hud.clearSpeech();
+  const crew = game.gunmen.list.filter((gunman) => gunman.missionTag === `bounty:${capo.id}`);
+  const boss = crew.find((gunman) => gunman.kind === 'capo');
+  const [near, left, right] = crew.filter((gunman) => gunman !== boss);
+  // Where each stands as she opens up, and which way he sidesteps while he shoots (the gunmen's own strafe).
+  const posts = [[near, 0, -5.4, 1], [left, -2.9, -8.2, -1], [boss, 1.5, -9, 1], [right, 2.7, -12.6, 1]];
+  for (const [gunman, x, z, strafe] of posts) {
+    gunman.position.set(x0 + x, 0, z0 + z);
+    gunman.heading = 0;
+    gunman.hostile = true;
+    gunman.strafe = strafe;
+    gunman.strafeClock = 9;
+  }
+  // A citizen's Avocet left at the kerb beside her: in reach, so the game rings it and offers F to steal it.
+  const parked = game.vehicles.spawn('avocet', x0 + 3.4, z0 - 3.2, Math.PI + 0.32, '#ffd23f');
   parked.parked = true;
   parked.ambient = true;
-  // Two of Vane's lookouts have come off the boardwalk into the drive: one a few steps away in her sights, one
-  // further up. The other three are still down by the pier, out of this fight.
-  const lookouts = game.gunmen.list.filter((gunman) => gunman.kind === 'enforcer');
-  const posts = [[x0 - 0.9, z0 - 6.2], [x0 - 2.6, z0 - 13], [x0 - 9, z0 + 62], [x0 - 10, z0 + 68], [x0 - 8, z0 + 74]];
-  posts.forEach(([x, z], index) => {
-    lookouts[index].position.set(x, 0, z);
-    lookouts[index].hostile = index < 2;
-    lookouts[index].heading = 0;
-  });
-  const [near, far] = lookouts;
-  game.wanted.setStars(2, 99);
-  // Saros P.D. answers the shots: one cruiser coming down the drive toward her, lights on.
-  spawnPursuit(game, 'patrol', 'centinela', x0 - 3.6, z0 - 34, 0, 13);
-  // The people who were strolling here are caught in it: the shots send them running or to the ground.
-  for (const [x, z] of [[-4.4, -4.6], [-5.8, -8.4], [5.0, -11]]) spawnStroller(game, x0 + x, z0 + z);
-  game.pedestrians.spawnFleeing(x0 - 3.4, z0 - 9.5, { x: x0, z: z0 });
-  game.hud.say('NOVA', 'Half of Saros is on the boardwalk looking up. Five of them are looking for me.', '#ff9e7a');
-  // Nova holds the aim (right mouse) on the near lookout and drops him, then swings onto the one behind him: the
+  // The crew's black Duna up the road: she has shot it up, it is burning, and it goes up as the frame is taken.
+  clearLane(game, parked, 0, z0 - 60, z0 + 20);
+  const crewCar = game.vehicles.spawn('duna', x0 - 1.4, z0 - 24.5, Math.PI - 0.5, '#17181d');
+  crewCar.parked = true;
+  crewCar.damage(crewCar.maxHealth + 1, true);
+  crewCar.burning = 3.6 - (seconds - 0.3);
+  game.wanted.setStars(3, 99);
+  // Saros P.D. answers the shots: one cruiser has pulled up across the drive and put its two officers on the
+  // street (the dispatcher's own rule for a suspect on foot), and another is coming down the drive behind it.
+  spawnPursuit(game, 'patrol', 'centinela', x0 + 2.0, z0 - 13.4, 0.6, 0);
+  spawnPursuit(game, 'patrol', 'centinela', x0 + 2.8, z0 - 62, 0, 14);
+  // The people out for the eclipse are caught in it, each in their own way: a sprint, hands up, ducked low, on the
+  // ground, and two who would rather film it.
+  const crowd = game.pedestrians;
+  const runner = (x, z, style, awayX) => { const ped = crowd.spawnFleeing(x0 + x, z0 + z, { x: x0 + awayX, z: z0 + z + 1.5 }); ped.fearStyle = style; ped.timid = false; ped.bold = false; ped.heading = Math.atan2(x - awayX, -1.5); return ped; };
+  runner(-5.6, -5.2, 'sprint', 0);
+  runner(-7.4, -11.5, 'handsUp', 0);
+  runner(5.6, -12.5, 'duck', 0);
+  runner(6.4, -19, 'handsUp', 0);
+  const bystander = (x, z, style) => { const ped = spawnStroller(game, x0 + x, z0 + z); ped.timid = false; ped.bold = true; ped.gawkStyle = style; ped.gawk(x0, z0 - 8, 30); ped.heading = Math.atan2(-x, -8 - z); return ped; };
+  bystander(-10.5, -17.5, 'film');
+  bystander(5.2, -24, 'point');
+  const coward = spawnStroller(game, x0 - 4.3, z0 - 3.3);
+  coward.timid = true;
+  coward.cower(x0, z0 - 6, 30);
+  game.hud.say('JAZZ', 'El Anzuelo, live on Penumbra FM. Twenty-five hundred says he never sees the eclipse!', '#f4ecd8');
+  // Nova holds the aim (right mouse) on the near guard and drops him, then swings onto the capo behind him: the
   // frame is her next shot, with the first man down in the road between them.
   play(game, seconds, (t) => {
     const camera = game.camera;
-    const target = near.alive ? near : far;
+    const target = near.alive ? near : boss;
     for (let pass = 0; pass < 2; pass += 1) {
       const focusX = game.player.position.x - Math.cos(camera.yaw) * 1.15;
       const focusZ = game.player.position.z + Math.sin(camera.yaw) * 1.15;
@@ -222,10 +247,10 @@ function standoffScene(game) {
     game.input.buttons[2] = true;
     game.input.buttons[0] = t > seconds - 0.55;
     near.health = t > seconds - 0.5 ? Math.min(near.health, 20) : 400;
-    far.health = 400;
+    for (const gunman of [boss, left, right]) gunman.health = 400;
     if (t > seconds - STEP * 1.5) game.weapons.cooldown = 0;
-    // The lookouts hold their fire until she has shown herself; the far one answers as the frame is taken.
-    for (const gunman of lookouts) if (gunman.alive) gunman.cooldown = gunman === far && t > seconds - STEP * 1.5 ? 0 : 1;
+    // The crew holds its fire until she has shown herself; the three still standing answer as the frame is taken.
+    for (const gunman of game.gunmen.list) if (gunman.alive) gunman.cooldown = gunman !== near && t > seconds - STEP * 2.5 ? 0 : 1;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
     game.player.health = Math.max(game.player.health, 58);
     game.player.invulnerable = 1;
@@ -239,7 +264,7 @@ function workshopScene(game) {
   const bay = LANDMARKS.garage.kerb;
   loadCity(game, stagedSave(8), bay.x - 4, bay.z, Math.PI / 2);
   game.player.cash = 23850;
-  const ride = game.vehicles.spawn('rayo', bay.x, bay.z, -Math.PI / 2, '#ff4b1f');
+  const ride = game.vehicles.spawn('rayo', bay.x, bay.z, -Math.PI / 2, GETAWAY_PAINT);
   ride.parked = true;
   ride.stolen = true;
   tryEnterVehicle(game);
@@ -281,7 +306,7 @@ function pauseScene(game) {
   game.setState('pause');
 }
 
-const SCENES = { chase: chaseScene, standoff: standoffScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
 
 export function stageScreenshot(game, name) {
   (SCENES[name] || titleScene)(game);

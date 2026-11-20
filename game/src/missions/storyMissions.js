@@ -31,7 +31,7 @@ function kerb(i, j, t = 0.5) {
 const node = (i, j) => [i * CITY.pitch, j * CITY.pitch];
 const L = LANDMARKS;
 /** The coat Fresh Coat gives Vane's golden Rayo on Wednesday; the crew drives it to the heist on Friday. */
-const GETAWAY_PAINT = '#ff4b1f';
+export const GETAWAY_PAINT = '#ec2f0a';
 
 /**
  * Each job: who gives it and where, the day of eclipse week it opens on, what it needs done first, its cash and

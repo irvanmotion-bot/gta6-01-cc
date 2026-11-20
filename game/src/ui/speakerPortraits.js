@@ -45,6 +45,7 @@ const PORTRAIT_LOOKS = {
   JAZZ: { skin: '#8d5524', hair: '#ff7eb6', shirt: '#7a2bbf', sky: '#e84393', longHair: true, headset: true, mouth: '#d1335b' },
   'DOC INÉS': { skin: '#e0ac69', hair: '#e8e8e8', shirt: '#eafff8', jacket: '#7be0c3', sky: '#2bb673' },
   'CASSIUS VANE': { skin: '#f1c9a5', hair: '#1b1b1b', shirt: '#f2e9dc', jacket: '#d8c06a', sky: '#5b4a16', shades: true },
+  'VANE CAPO': { skin: '#e0ac69', hair: '#e8e8e8', shirt: '#111318', jacket: '#d8c06a', sky: '#7d1f3a', hat: '#f2e9dc', moustache: true },
   FARE: { skin: '#e0ac69', hair: '#3b2314', shirt: '#ffcc00', sky: '#b98b00' },
   DISPATCH: { skin: '#e0ac69', hair: '#16203a', shirt: '#2e4a7d', sky: '#2e6fd8', hat: '#16203a', headset: true },
   DEFAULT: { skin: '#e0ac69', hair: '#1b1b1b', shirt: '#888888', sky: '#3a4660' },

@@ -196,7 +196,7 @@ export class PoliceHelicopter {
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
-    this.beam.material.opacity = 0.25 + night * 0.05;
+    this.beam.material.opacity = 0.19 + night * 0.11;
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(aim.x, aim.y, aim.z);
     // By day the lamp only warms what it touches; in the dark it is the brightest thing in the street.

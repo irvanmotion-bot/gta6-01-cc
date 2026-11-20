@@ -49,6 +49,31 @@ export class VaneBounties {
     game.saveGame(true);
   }
 
+  /** The capo whose corner Nova is fighting on right now, with the guns still standing round him; null otherwise. */
+  engaged() {
+    const game = this.game;
+    const player = game.player.position;
+    for (const capo of VANE_CAPOS) {
+      const tag = this.present.get(capo.id);
+      if (!tag || this.claimed.has(capo.id) || distance2D(player.x, player.z, capo.x, capo.z) > ENGAGE_RANGE) continue;
+      return { capo, tag, left: game.gunmen.countAlive(tag), total: capo.guards + 1 };
+    }
+    return null;
+  }
+
+  /** What the job panel shows during a bounty hit: the capo's name, the price on him and the guns left standing. */
+  panelInfo() {
+    const hit = this.engaged();
+    if (!hit) return null;
+    const { capo, left, total } = hit;
+    const guards = Math.max(0, left - 1);
+    return {
+      header: `BOUNTY HUNT ${this.claimed.size + 1}/${VANE_CAPOS.length} · JAZZ PAYS $${capo.price.toLocaleString('en-US')}`, title: capo.name, stageLine: `${capo.turf} · ${left} OF ${total} GUNS STANDING`,
+      steps: total, stepsDone: total - left, share: (total - left) / total, face: 'VANE CAPO', faceColor: '#ff6a4d',
+      objective: guards > 0 ? `Take down ${capo.name} and his ${guards} ${guards === 1 ? 'guard' : 'guards'}` : `Take down ${capo.name}`, next: 'Cash and cred on the kill', timer: null, kind: 'bounty',
+    };
+  }
+
   blips() {
     return VANE_CAPOS.filter((capo) => !this.claimed.has(capo.id)).map((capo) => ({ x: capo.x, z: capo.z, color: '#ff3b30', label: '☠' }));
   }
@@ -62,7 +87,8 @@ export class VaneBounties {
       const tag = this.present.get(capo.id);
       if (!tag && distance < 105 && !game.missions.active) this.arrive(capo);
       else if (tag && distance > 190) { game.gunmen.removeTagged(tag); this.present.delete(capo.id); }
-      if (tag && distance < 45) game.hud.hint(`BOUNTY: ${capo.name} · $${capo.price.toLocaleString('en-US')}`);
+      // Coming up on his corner the prompt names him; once Nova is in the fight the job panel carries the hit.
+      if (tag && distance < ENGAGE_RANGE + 30 && distance >= ENGAGE_RANGE) game.hud.hint(`BOUNTY AHEAD: ${capo.name} · $${capo.price.toLocaleString('en-US')}`);
     }
   }
 }
@@ -72,10 +98,16 @@ function corner(i, j, fx, fz) {
   return { x: rect.minX + (rect.maxX - rect.minX) * fx, z: rect.minZ + (rect.maxZ - rect.minZ) * fz };
 }
 
-/** The four capos: their street names, the corner they hold, how many guns stand with them and the price on them. */
+/** Within this many metres of a capo's corner the job panel turns to the hit. */
+const ENGAGE_RANGE = 62;
+
+/**
+ * The four capos: their street names, the corner they hold, how many guns stand with them and the price on them.
+ * El Anzuelo works the south end of the Strand boardwalk, where the eclipse crowds are thickest.
+ */
 export const VANE_CAPOS = [
-  { id: 'anzuelo', name: 'EL ANZUELO', guards: 2, price: 2500, ...corner(1, 8, 0.5, 0.04) },
-  { id: 'contadora', name: 'LA CONTADORA', guards: 3, price: 4000, ...corner(7, 4, 0.96, 0.5) },
-  { id: 'dosDedos', name: 'DOS DEDOS', guards: 3, price: 5000, ...corner(9, 0, 0.5, 0.96) },
-  { id: 'bruma', name: 'CAPITÁN BRUMA', guards: 4, price: 7500, x: 620, z: CITY.depth + 30 },
+  { id: 'contadora', name: 'LA CONTADORA', turf: 'ORRERY SQUARE', guards: 3, price: 4000, ...corner(7, 4, 0.96, 0.5) },
+  { id: 'anzuelo', name: 'EL ANZUELO', turf: 'STRAND BOARDWALK', guards: 3, price: 2500, x: -9.4, z: 498 },
+  { id: 'dosDedos', name: 'DOS DEDOS', turf: 'OBSERVATORY HILL', guards: 3, price: 5000, ...corner(9, 0, 0.5, 0.96) },
+  { id: 'bruma', name: 'CAPITÁN BRUMA', turf: 'CORMORANT DOCKS', guards: 4, price: 7500, x: 620, z: CITY.depth + 30 },
 ];

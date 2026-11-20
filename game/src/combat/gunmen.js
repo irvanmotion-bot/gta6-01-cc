@@ -12,6 +12,7 @@ class Gunman extends CharacterBody {
     this.faction = this.spec.faction;
     this.health = this.spec.health;
     this.armed = true;
+    this.longGun = Boolean(this.spec.longGun);
     this.hostile = false;
     this.cooldown = 0.6 + Math.random();
     this.strafe = Math.random() < 0.5 ? 1 : -1;
@@ -179,8 +180,8 @@ export class Gunmen {
 /** Every kind of gunman: whose side they are on, how tough they are and how well they shoot. */
 const KINDS = {
   officer: { look: 'officer', faction: 'police', health: 90, damage: 7, rate: 0.75, range: 42, accuracy: 0.42, speed: 5.4 },
-  tactical: { look: 'tactical', faction: 'police', health: 160, damage: 9, rate: 0.22, range: 55, accuracy: 0.34, speed: 5 },
+  tactical: { look: 'tactical', faction: 'police', health: 160, damage: 9, rate: 0.22, range: 55, accuracy: 0.34, speed: 5, longGun: true },
   enforcer: { look: 'enforcer', faction: 'gang', health: 100, damage: 8, rate: 0.6, range: 45, accuracy: 0.4, speed: 4.6 },
-  guard: { look: 'guard', faction: 'gang', health: 130, damage: 9, rate: 0.5, range: 45, accuracy: 0.45, speed: 4.4 },
+  guard: { look: 'guard', faction: 'gang', health: 130, damage: 9, rate: 0.5, range: 45, accuracy: 0.45, speed: 4.4, longGun: true },
   capo: { look: 'capo', faction: 'gang', health: 240, damage: 11, rate: 0.4, range: 48, accuracy: 0.5, speed: 4.8 },
 };

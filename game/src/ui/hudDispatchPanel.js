@@ -56,10 +56,10 @@ export class HudDispatchPanel {
     cache.text(this.count, String(summary.total));
     // Wanted with nobody on the road yet: say the units are on their way instead of a bare zero.
     cache.toggle(this.root, 'en-route', summary.total === 0);
-    cache.text(this.label, summary.total === 0 ? 'SAROS P.D. · UNITS EN ROUTE' : summary.total === 1 ? 'UNIT ON YOU' : 'UNITS ON YOU');
+    cache.text(this.label, summary.total === 0 ? 'SAROS P.D. · UNITS EN ROUTE' : `${summary.total === 1 ? 'UNIT' : 'UNITS'} · ${game.wanted.responseTier()}`);
     cache.html(this.rows, this.rosterMarkup(summary));
   }
 }
 
-/** Three rows read at a glance; the rest of the response is counted in the line under them. */
-const MAX_ROWS = 3;
+/** Two rows read at a glance and leave the street in view; the rest of the response is counted in the line under them. */
+const MAX_ROWS = 2;

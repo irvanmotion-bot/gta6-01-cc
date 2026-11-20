@@ -168,7 +168,8 @@ export class SkyAndSun {
     // A soft light from opposite the sun, so shaded walls keep their colour instead of going black.
     this.fill = new THREE.DirectionalLight(0xffffff, 0.5);
     scene.add(this.ambient, this.fill);
-    scene.fog = new THREE.Fog(0xffcf8e, 110, 820);
+    // The haze starts well down the street, so the road ahead and the far blocks keep their detail in the glare.
+    scene.fog = new THREE.Fog(0xffcf8e, 190, 1150);
     this.scene = scene;
     this.scratchA = new THREE.Color();
     this.scratchB = new THREE.Color();
@@ -229,7 +230,8 @@ export class SkyAndSun {
     // car or a wall is a soft violet-blue with its own colour still in it, never a black silhouette.
     this.fill.intensity = this.sun.intensity * 0.26 * (1 - dark) + dark * 0.2;
     this.fill.color.copy(uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
-    this.scene.fog.color.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, dark * 0.55);
+    // The haze is the horizon's colour with a little of the sky's blue in it: distance reads as depth, not as glare.
+    this.scene.fog.color.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, 0.22 + dark * 0.4);
 
     const sunDir = this.sunDirectionAt(hour, uniforms.sunDir.value);
     this.fill.position.set(-sunDir.x, 0.55, -sunDir.z);

@@ -105,7 +105,7 @@ export class PursuitDriver {
     const aimZ = player.position.z - (player.position.z - from.z) * short;
     const to = this.impact.set(aimX + (Math.random() - 0.5) * miss * 2, player.position.y + 0.9 + (Math.random() - 0.5) * miss * 0.6, aimZ + (Math.random() - 0.5) * miss * 2);
     game.particles.tracer(from, to, 0xbfd8ff);
-    game.particles.muzzleFlash(from.x, from.y, from.z);
+    game.particles.muzzleFlash(from.x, from.y, from.z, 0.6);
     game.audio.gunshot('distant', Math.max(0.2, 1 - distance / 50));
     this.shotsFired += 1;
     if (!hit) return;

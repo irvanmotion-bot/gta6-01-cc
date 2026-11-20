@@ -1,5 +1,5 @@
 // The heads-up display: builds every panel (job, crew, eclipse countdown, status, dispatch, vehicle, radar) and runs the pieces
-// that belong to no panel: the dialogue box with portraits, banners, notifications, hints and the crosshair.
+// that belong to no panel: the crew's dialogue ribbon with portraits, banners, notifications, hints and the crosshair.
 import { districtNameAt, streetNameAt } from '../world/cityLayout.js';
 import { DomCache, createElement } from './domBuilder.js';
 import { HudEclipsePanel } from './hudEclipsePanel.js';
@@ -20,16 +20,17 @@ export class Hud {
     this.root = root;
     const left = createElement('div', 'hud-column left-column', root);
     const right = createElement('div', 'hud-column right-column', root);
+    const radar = this.buildRadar(root);
     this.jobPanel = new HudJobPanel(game, left, this.cache);
     this.crewPanel = new HudCrewPanel(game, left, this.cache);
+    this.buildDialogue(left);
     this.eclipsePanel = new HudEclipsePanel(game, right, this.cache);
-    this.statusPanel = new HudStatusPanel(game, right, this.cache);
+    this.statusPanel = new HudStatusPanel(game, right, this.cache, radar);
     this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);
     // Bottom right: the weapon bar, with the car's dial under it at the wheel or the GPS list over it on a quiet walk.
     const corner = createElement('div', 'corner-stack', root);
     this.weaponBar = new HudWeaponBar(game, corner, this.cache);
     this.vehiclePanel = new HudVehiclePanel(game, corner, this.cache);
-    this.buildRadar(root);
     this.buildOverlays(root);
     this.speech = [];
     this.speechClock = 0;
@@ -54,15 +55,31 @@ export class Hud {
     style.height = `${100 / scale}vh`;
   }
 
-  /** The radar frame in the bottom-left corner: the minimap canvas, then the clock, district and street under it. */
+  /**
+   * The radar block in the bottom-left corner, one frame: the minimap with the district's name across its foot,
+   * the street and the clock under it, and room at the bottom for the health and armor bars. Returns the block.
+   */
   buildRadar(root) {
     const radar = createElement('div', 'radar', root);
-    const canvas = createElement('canvas', '', radar);
+    const frame = createElement('div', 'radar-frame', radar);
+    const canvas = createElement('canvas', '', frame);
     canvas.id = 'minimap';
-    const place = createElement('div', 'hud-panel place-panel', radar);
+    this.district = createElement('div', 'place-district', frame);
+    const place = createElement('div', 'place-line', radar);
+    this.street = createElement('span', 'place-street', place);
     this.clock = createElement('b', 'place-clock', place);
-    this.district = createElement('div', 'place-district', place);
-    this.street = createElement('div', 'place-street', place);
+    return radar;
+  }
+
+  /** The crew's ribbon under the job panel: whoever is talking, their portrait and their line. */
+  buildDialogue(column) {
+    this.dialogue = createElement('div', 'dialogue', column);
+    this.portrait = createElement('canvas', 'dialogue-portrait', this.dialogue);
+    this.portrait.width = 96;
+    this.portrait.height = 96;
+    const text = createElement('div', 'dialogue-text', this.dialogue);
+    this.speaker = createElement('b', 'dialogue-speaker', text);
+    this.line = createElement('div', 'dialogue-line', text);
   }
 
   buildOverlays(root) {
@@ -71,13 +88,6 @@ export class Hud {
     this.hintBox = createElement('div', 'hint', root);
     this.hintKey = createElement('b', 'hint-key', this.hintBox);
     this.hintLine = createElement('span', 'hint-line', this.hintBox);
-    this.dialogue = createElement('div', 'dialogue', root);
-    this.portrait = createElement('canvas', 'dialogue-portrait', this.dialogue);
-    this.portrait.width = 96;
-    this.portrait.height = 96;
-    const text = createElement('div', 'dialogue-text', this.dialogue);
-    this.speaker = createElement('b', 'dialogue-speaker', text);
-    this.line = createElement('div', 'dialogue-line', text);
     this.damageFlash = createElement('div', 'damage-flash', root);
     this.bannerBox = createElement('div', 'banner', root);
     this.bannerTitle = createElement('div', 'banner-title', this.bannerBox);

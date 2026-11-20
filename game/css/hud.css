@@ -20,7 +20,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 /* Shared panel pieces */
 .hud-column { position: absolute; top: 1.6vh; display: flex; flex-direction: column; gap: 0.8vh; }
 .left-column { left: 1.6vh; width: 39vh; }
-.right-column { right: 1.6vh; width: 31vh; align-items: stretch; }
+.right-column { right: 1.6vh; width: 30vh; align-items: stretch; }
 .hud-panel { background: var(--panel); border-top: 0.35vh solid var(--amber); border-radius: 0 0 0.7vh 0.7vh; padding: 0.8vh 1.2vh; box-sizing: border-box; }
 .panel-caption { font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.16vh; color: var(--amber); margin-bottom: 0.3vh; white-space: nowrap; }
 .meter { margin-top: 0.6vh; }
@@ -29,37 +29,51 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .meter-track { height: 0.9vh; background: rgba(244, 236, 216, 0.16); border-radius: 0.5vh; overflow: hidden; }
 .meter-fill { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.2s; }
 
-/* Job panel, top left */
+/* Job panel, top left: the giver's face beside the job's name, then one bar cut into the job's steps */
+.job-top { display: flex; align-items: center; gap: 1vh; }
+.job-face { width: 6.6vh; height: 6.6vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
+.job-name { flex: 1; min-width: 0; }
 .job-head { display: flex; justify-content: space-between; align-items: baseline; }
-.job-header { font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.16vh; color: var(--amber); }
-.job-timer { font-family: var(--display); font-weight: 400; font-size: 3.4vh; line-height: 1; }
+.job-header { font-family: var(--display); font-size: 1.75vh; letter-spacing: 0.14vh; color: var(--amber); white-space: nowrap; }
+.job-timer { font-family: var(--display); font-weight: 400; font-size: 3vh; line-height: 1; }
 .job-timer.urgent { color: var(--coral); animation: pulse 0.5s infinite alternate; }
-.job-title { font-family: var(--display); font-size: 4.6vh; line-height: 1.02; font-style: italic; letter-spacing: 0.1vh; color: #fff; }
-.job-stage { font-size: 1.75vh; font-weight: 800; letter-spacing: 0.08vh; color: var(--amber); margin-top: 0.2vh; }
+.job-title { font-family: var(--display); font-size: 4.4vh; line-height: 1.02; font-style: italic; letter-spacing: 0.1vh; color: #fff; white-space: nowrap; }
+.job-track { display: flex; gap: 0.45vh; height: 1.3vh; margin: 0.7vh 0 0.35vh; }
+.job-track i { flex: 1; display: block; background: rgba(244, 236, 216, 0.2); border-radius: 0.35vh; overflow: hidden; }
+.job-track i.done { background: var(--amber); }
+.job-track i.now { box-shadow: inset 0 0 0 0.2vh var(--cream); }
+.job-track u { display: block; height: 100%; background: var(--cream); transition: width 0.3s; }
+.job-track i.whole u { background: var(--amber); }
+.job-stage { font-family: var(--display); font-size: 1.7vh; letter-spacing: 0.1vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
 .job-stage.empty { display: none; }
-.job-track { height: 1.1vh; margin: 0.4vh 0 0.5vh; background: rgba(244, 236, 216, 0.16); border-radius: 0.6vh; overflow: hidden; }
-.job-track i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.3s; }
-.job-objective { font-size: 2.3vh; font-weight: 700; line-height: 1.2; color: #fff; }
-/* What comes after this stage is said by the crew when it comes; only free roam keeps its line of pointers. */
+.job-objective { font-size: 2.2vh; font-weight: 700; line-height: 1.2; color: #fff; margin-top: 0.2vh; }
+/* What comes after this step is said by the crew when it comes; only free roam keeps its line of pointers. */
 .job-next { display: none; font-size: 1.6vh; font-weight: 700; color: var(--dim); margin-top: 0.25vh; letter-spacing: 0.05vh; }
 .job-panel.roam .job-next { display: block; }
 
-/* Crew favors, a row of three chips under the job panel */
-.crew-panel { display: flex; gap: 0.6vh; padding: 0.6vh; border-top: none; border-radius: 0.7vh; width: 36vh; }
-.crew-panel .panel-caption { display: none; }
-.favor { flex: 1; display: grid; grid-template-columns: 2.6vh 1fr; column-gap: 0.6vh; align-items: center; min-width: 0; }
-.favor-key { grid-row: span 2; width: 2.6vh; height: 2.6vh; display: grid; place-items: center; font-family: var(--display); font-weight: 400; font-size: 2vh; color: var(--ink); background: var(--amber); border-radius: 0.4vh; }
-.favor-text { min-width: 0; line-height: 1; }
-.favor-name { font-family: var(--display); font-size: 1.45vh; letter-spacing: 0.06vh; white-space: nowrap; }
-.favor-who { display: none; }
+/* The crew, a row of three under the job panel: each member's face and name, their favor and the key that calls it */
+.crew-panel { display: flex; gap: 0.6vh; padding: 0.6vh; border-top: none; border-radius: 0.7vh; }
+.favor { position: relative; flex: 1 1 auto; display: flex; align-items: center; gap: 0.6vh; min-width: 0; }
+.favor-face { width: 4.8vh; height: 4.8vh; flex: none; image-rendering: pixelated; border-radius: 0.4vh; }
+.favor-key { position: absolute; left: 3.2vh; top: 3.1vh; width: 2.1vh; height: 2.1vh; display: grid; place-items: center; font-family: var(--display); font-weight: 400; font-size: 1.6vh; color: var(--ink); background: var(--amber); border-radius: 0.4vh; box-shadow: 0 0 0 0.2vh var(--ink); }
+.favor-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.08; }
+.favor-who { font-family: var(--display); font-size: 1.7vh; letter-spacing: 0.04vh; color: #fff; white-space: nowrap; }
+.favor-name { font-size: 1.1vh; font-weight: 800; letter-spacing: 0; color: var(--cream); white-space: nowrap; }
 .favor-track { display: none; }
-.favor-state { font-family: var(--display); font-style: normal; font-size: 1.5vh; color: var(--dim); line-height: 1; }
+.favor-state { font-family: var(--display); font-style: normal; font-size: 1.4vh; color: var(--dim); }
 .favor.ready .favor-state { color: var(--amber); }
 .favor.locked { opacity: 0.5; }
 
+/* The crew's ribbon, under the crew row: who is talking, and what they say */
+.dialogue { display: flex; gap: 1vh; align-items: center; background: rgba(23, 18, 43, 0.86); border-left: 0.45vh solid var(--amber); border-radius: 0 0.7vh 0.7vh 0; padding: 0.6vh 1.2vh 0.6vh 0.6vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; }
+.dialogue.visible { opacity: 1; }
+.dialogue-portrait { width: 7.6vh; height: 7.6vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
+.dialogue-speaker { display: block; font-family: var(--display); font-weight: 400; font-size: 1.9vh; letter-spacing: 0.14vh; }
+.dialogue-line { font-size: 1.85vh; font-weight: 600; line-height: 1.2; color: #fff; }
+
 /* Eclipse panel, top right: the sun as it stands, and the countdown to totality */
 .eclipse-panel { display: flex; align-items: center; gap: 1vh; padding: 0.5vh 1.2vh 0.6vh 0.6vh; }
-.eclipse-disc { width: 7.6vh; height: 7.6vh; flex: none; }
+.eclipse-disc { width: 7.2vh; height: 7.2vh; flex: none; }
 .eclipse-text { flex: 1; min-width: 0; }
 .eclipse-caption { font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.12vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
 .eclipse-row { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.9vh; white-space: nowrap; }
@@ -73,14 +87,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .eclipse-cover.visible { display: block; }
 .eclipse-cover.lit { color: var(--coral); }
 
-/* Status panel, under the eclipse panel */
+/* Status panel, under the eclipse panel: stars and cash, then the rank on one thin line */
+.status-panel { padding: 0.6vh 1.2vh 0.7vh; }
 .status-top { display: flex; justify-content: space-between; align-items: center; }
-.wanted-stars { font-size: 3.8vh; line-height: 1; letter-spacing: 0; }
+.wanted-stars { font-size: 3.6vh; line-height: 1; letter-spacing: 0; }
 .wanted-stars i { font-style: normal; color: rgba(244, 236, 216, 0.2); }
 .wanted-stars i.on { color: var(--amber); text-shadow: 0 0 1.6vh rgba(255, 181, 71, 0.9); }
-.cash-readout { font-family: var(--display); font-size: 3.4vh; line-height: 1; color: #fff; letter-spacing: 0.08vh; }
-.wanted-tier { display: none; font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.14vh; color: var(--ink); background: var(--coral); padding: 0.1vh 0.8vh; margin-top: 0.4vh; border-radius: 0.3vh; text-align: center; }
-.wanted-tier.visible { display: block; }
+.cash-readout { font-family: var(--display); font-size: 3.2vh; line-height: 1; color: #fff; letter-spacing: 0.08vh; }
+/* The response tier is named in the head of the dispatch panel, beside the count of units. */
+.wanted-tier { display: none; }
 .escape-meter { display: none; }
 .escape-meter.visible { display: block; }
 .escape-meter .meter-fill { background: var(--cream); }
@@ -90,36 +105,40 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .health-meter.low .meter-fill { animation: pulse 0.5s infinite alternate; }
 .armor-meter .meter-fill { background: var(--cream); }
 /* The rank is one thin line: its name, then the bar to the next rank. */
-.rank-meter { display: flex; align-items: center; gap: 1vh; }
-.rank-meter .meter-head { flex: none; }
+.rank-meter { display: flex; align-items: center; gap: 1vh; margin-top: 0.3vh; }
+.rank-meter .meter-head { flex: none; font-size: 1.45vh; }
 .rank-meter .meter-label { color: var(--amber); }
 .rank-meter .meter-value { display: none; }
-.rank-meter .meter-track { flex: 1; }
+.rank-meter .meter-track { flex: 1; height: 0.7vh; }
 
 /* Weapon bar, bottom right: five silhouettes, the one in hand lit, its rounds in big figures */
-.weapon-bar { order: 2; padding: 0.5vh 0.8vh 0.8vh; }
-.weapon-line { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); font-size: 2vh; letter-spacing: 0.08vh; white-space: nowrap; }
-.weapon-ammo { font-weight: 400; font-size: 3.1vh; line-height: 1; color: var(--amber); }
+.weapon-bar { order: 2; padding: 0.4vh 0.8vh 0.7vh; }
+.weapon-line { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.08vh; white-space: nowrap; }
+.weapon-ammo { font-weight: 400; font-size: 2.9vh; line-height: 1; color: var(--amber); }
 .weapon-slots { display: flex; gap: 0.5vh; margin-top: 0.3vh; }
-.weapon-slot { position: relative; flex: 1; height: 4.4vh; display: grid; place-items: center; background: rgba(244, 236, 216, 0.12); border-radius: 0.5vh; opacity: 0.28; }
+.weapon-slot { position: relative; flex: 1; height: 3.9vh; display: grid; place-items: center; background: rgba(244, 236, 216, 0.12); border-radius: 0.5vh; opacity: 0.28; }
 .weapon-slot.owned { opacity: 1; }
 .weapon-slot.current { background: var(--amber); box-shadow: 0 0 1.4vh rgba(255, 181, 71, 0.7); }
-.weapon-key { position: absolute; left: 0.4vh; top: 0; font-size: 1.25vh; color: var(--amber); }
+.weapon-key { position: absolute; left: 0.4vh; top: 0; font-size: 1.2vh; color: var(--amber); }
 .weapon-slot.current .weapon-key { color: var(--ink); }
-.weapon-icon { width: 94%; height: auto; display: block; margin-top: 0.5vh; }
+.weapon-icon { width: 94%; height: auto; display: block; margin-top: 0.4vh; }
 
-/* Dispatch panel and race board, under the status panel */
+/* Dispatch panel, joined to the foot of the status panel: the count of units and the response tier, then the
+   nearest two by callsign. The race board takes the same place during a street race. */
 .dispatch-panel, .race-board { display: none; border-top-color: var(--coral); }
 .dispatch-panel.visible, .race-board.visible { display: block; }
-.dispatch-head { display: flex; align-items: center; gap: 1vh; margin-bottom: 0.3vh; }
-.dispatch-count { font-family: var(--display); font-weight: 400; font-size: 4.4vh; line-height: 1; min-width: 4.6vh; padding: 0.2vh 0.6vh; box-sizing: border-box; text-align: center; color: var(--ink); background: var(--coral); border-radius: 0.5vh; }
-.dispatch-label { font-family: var(--display); font-size: 2.5vh; letter-spacing: 0.14vh; color: var(--coral); white-space: nowrap; }
-.unit { display: grid; grid-template-columns: 2vh 9.6vh 1fr 5.2vh; align-items: baseline; gap: 0.4vh; font-size: 1.8vh; line-height: 2.55vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); white-space: nowrap; }
+.status-panel:has(+ .dispatch-panel.visible) { border-radius: 0; }
+.dispatch-panel { margin-top: -0.8vh; border-top: 0.14vh solid rgba(244, 236, 216, 0.16); padding: 0.6vh 1.2vh 0.5vh; }
+.dispatch-head { display: flex; align-items: center; gap: 0.8vh; margin-bottom: 0.3vh; }
+.dispatch-count { font-family: var(--display); font-weight: 400; font-size: 3.2vh; line-height: 1; min-width: 3.6vh; padding: 0.15vh 0.5vh; box-sizing: border-box; text-align: center; color: var(--ink); background: var(--coral); border-radius: 0.5vh; }
+.dispatch-label { font-family: var(--display); font-size: 1.85vh; letter-spacing: 0.05vh; color: var(--coral); white-space: nowrap; }
+.unit { display: grid; grid-template-columns: 1.9vh 9.4vh 1fr 5vh; align-items: baseline; gap: 0.4vh; font-size: 1.65vh; line-height: 2.25vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); white-space: nowrap; }
 .unit i { font-style: normal; color: var(--coral); }
-.unit b { font-family: var(--display); font-weight: 400; font-size: 2vh; letter-spacing: 0.08vh; color: #fff; }
-.unit em { font-family: var(--display); font-style: normal; font-size: 1.85vh; color: var(--amber); letter-spacing: 0.06vh; }
+.unit b { font-family: var(--display); font-weight: 400; font-size: 1.85vh; letter-spacing: 0.08vh; color: #fff; }
+.unit em { font-family: var(--display); font-style: normal; font-size: 1.7vh; color: var(--amber); letter-spacing: 0.06vh; }
 .unit u { text-decoration: none; text-align: right; font-weight: 800; }
-.unit-more b, .unit-more em { color: var(--dim); }
+.unit-more { line-height: 1.9vh; font-size: 1.4vh; }
+.unit-more b, .unit-more em { color: var(--dim); font-size: 1.5vh; }
 .dispatch-panel.en-route .dispatch-count { display: none; }
 .race-board { border-top-color: var(--amber); }
 .racer { display: flex; gap: 1.2vh; font-family: var(--display); font-size: 2.1vh; line-height: 2.7vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); }
@@ -127,25 +146,33 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .racer b { font-weight: 400; letter-spacing: 0.1vh; }
 .racer.me b { color: var(--amber); }
 
-/* Radar, bottom left */
-.radar { position: absolute; left: 1.6vh; bottom: 1.6vh; display: flex; align-items: flex-end; gap: 0.8vh; }
-#minimap { width: 23vh; height: 23vh; display: block; border-radius: 50%; box-shadow: 0 0 0 0.35vh var(--amber), 0 0.6vh 2vh rgba(18, 14, 36, 0.6); }
-.place-panel { padding: 0.5vh 1.1vh; min-width: 19vh; border-top: none; border-left: 0.35vh solid var(--amber); border-radius: 0 0.7vh 0.7vh 0; }
-.place-clock { font-family: var(--display); font-weight: 400; font-size: 2.1vh; color: var(--amber); letter-spacing: 0.1vh; }
-.place-district { font-family: var(--display); font-size: 2.3vh; letter-spacing: 0.1vh; line-height: 1.1; color: #fff; }
-.place-street { font-size: 1.6vh; font-weight: 700; color: var(--cream); }
+/* Radar block, bottom left: the minimap with the district across its foot, the street and the clock, then health and armor */
+.radar { position: absolute; left: 1.6vh; bottom: 1.6vh; width: 28vh; padding: 0.5vh 0.5vh 0.7vh; box-sizing: border-box; background: var(--panel); border-radius: 1vh; box-shadow: 0 0.6vh 2vh rgba(18, 14, 36, 0.45); }
+.radar-frame { position: relative; border-radius: 0.7vh; overflow: hidden; box-shadow: 0 0 0 0.3vh var(--amber); }
+#minimap { width: 100%; height: 22vh; display: block; }
+.place-district { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.2vh 0.9vh 0.3vh; font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.12vh; line-height: 1; color: #fff; white-space: nowrap; background: linear-gradient(rgba(18, 14, 36, 0), rgba(18, 14, 36, 0.88) 55%); }
+.place-line { display: flex; justify-content: space-between; align-items: baseline; padding: 0.6vh 0.4vh 0; }
+.place-clock { font-family: var(--display); font-weight: 400; font-size: 1.8vh; color: var(--amber); letter-spacing: 0.1vh; white-space: nowrap; }
+.place-street { font-size: 1.6vh; font-weight: 700; color: var(--cream); white-space: nowrap; overflow: hidden; }
+.radar .vitals { padding: 0 0.4vh; }
+.radar .meter { margin-top: 0.3vh; }
+.radar .meter-head { font-size: 1.35vh; }
+.radar .meter-value { font-size: 1.6vh; }
 
 /* Vehicle panel and GPS, bottom right */
-.corner-stack { position: absolute; right: 1.6vh; bottom: 1.6vh; width: 31vh; display: flex; flex-direction: column; gap: 0.8vh; }
+.corner-stack { position: absolute; right: 1.6vh; bottom: 1.6vh; width: 30vh; display: flex; flex-direction: column; gap: 0.8vh; }
 .vehicle-panel, .gps-panel { display: none; }
 .vehicle-panel.visible, .gps-panel.visible { display: block; }
 .gps-panel { order: 1; }
-.vehicle-panel { order: 3; }
-.vehicle-name { font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.12vh; color: var(--amber); text-align: right; }
+/* At the wheel the dial hangs from the weapon bar as one panel: the car's name beside the gear, then the speed. */
+.vehicle-panel { order: 3; position: relative; margin-top: -0.8vh; border-top: 0.14vh solid rgba(244, 236, 216, 0.16); padding: 0.5vh 1.2vh 0.7vh; }
+.weapon-bar:has(~ .vehicle-panel.visible) { border-radius: 0; }
+.vehicle-name { position: absolute; left: 5.6vh; top: 1.3vh; width: 9vh; font-family: var(--display); font-size: 1.6vh; line-height: 1.15; letter-spacing: 0.1vh; color: var(--amber); }
 .speed-row { display: flex; align-items: baseline; justify-content: flex-end; gap: 0.8vh; }
 .gear-box { font-family: var(--display); font-size: 2.6vh; width: 3.4vh; height: 3.4vh; display: grid; place-items: center; background: var(--amber); color: var(--ink); border-radius: 0.5vh; align-self: center; margin-right: auto; }
-.speed-value { font-family: var(--display); font-weight: 400; font-size: 7.4vh; line-height: 0.95; font-style: italic; color: #fff; }
+.speed-value { font-family: var(--display); font-weight: 400; font-size: 6.6vh; line-height: 0.95; font-style: italic; color: #fff; }
 .speed-row small { font-family: var(--display); font-size: 2vh; color: var(--amber); }
+.vehicle-panel .meter { margin-top: 0.3vh; }
 .condition-meter .meter-fill { background: var(--cream); }
 .condition-meter.low .meter-fill { background: var(--coral); }
 .condition-meter.low .meter-value { color: var(--coral); }
@@ -155,7 +182,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .gps-rows b { flex: 1; font-family: var(--display); font-weight: 400; letter-spacing: 0.08vh; white-space: nowrap; overflow: hidden; }
 .gps-rows u { text-decoration: none; font-weight: 800; }
 
-/* Feed, prompts and dialogue in the middle */
+/* Feed and prompts in the middle */
 .notifications { position: absolute; left: 50%; top: 1.6vh; transform: translateX(-50%); width: 52vh; display: flex; flex-direction: column; gap: 0.5vh; align-items: center; }
 .note { font-size: 1.8vh; font-weight: 700; background: var(--panel); padding: 0.4vh 1.4vh; border-radius: 0.5vh; animation: slide-in 0.25s; transition: opacity 0.6s; max-width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .note.gone { opacity: 0; }
@@ -165,18 +192,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
   filter: drop-shadow(0 0 0.2vh #000); }
 .crosshair.visible { opacity: 0.95; }
 .crosshair.hit { filter: drop-shadow(0 0 0.3vh #ff3b30) hue-rotate(0deg) saturate(8); transform: scale(1.35); }
-.hint { position: absolute; left: 50%; bottom: 17vh; transform: translateX(-50%); display: flex; align-items: center; gap: 1.2vh; font-size: 2vh; font-weight: 700; background: var(--panel); padding: 0.6vh 1.8vh; border-radius: 0.5vh; border-bottom: 0.35vh solid var(--amber); opacity: 0; white-space: nowrap; }
+.hint { position: absolute; left: 50%; bottom: 10vh; transform: translateX(-50%); display: flex; align-items: center; gap: 1.2vh; font-size: 2vh; font-weight: 700; background: var(--panel); padding: 0.6vh 1.8vh; border-radius: 0.5vh; border-bottom: 0.35vh solid var(--amber); opacity: 0; white-space: nowrap; }
 .hint.visible { opacity: 1; }
 /* A prompt with a key: the key as a big amber cap, what it does in the display face beside it. */
 .hint-key { display: none; }
 .hint.keyed { padding: 0.8vh 2.2vh 0.8vh 0.9vh; background: rgba(23, 18, 43, 0.86); }
 .hint.keyed .hint-key { display: grid; place-items: center; width: 5.2vh; height: 5.2vh; font-family: var(--display); font-weight: 400; font-size: 4vh; color: var(--ink); background: var(--amber); border-radius: 0.8vh; box-shadow: 0 0.5vh 0 #b9772a; }
 .hint.keyed .hint-line { font-family: var(--display); font-weight: 400; font-size: 3.5vh; letter-spacing: 0.14vh; color: #fff; }
-.dialogue { position: absolute; left: 50%; bottom: 1.6vh; transform: translateX(-50%); width: 56vh; display: flex; gap: 1.2vh; align-items: center; background: var(--panel); border-top: 0.35vh solid var(--amber); border-radius: 0 0 0.7vh 0.7vh; padding: 0.7vh 1.4vh 0.7vh 0.8vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; }
-.dialogue.visible { opacity: 1; }
-.dialogue-portrait { width: 8vh; height: 8vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
-.dialogue-speaker { display: block; font-family: var(--display); font-weight: 400; font-size: 2.1vh; letter-spacing: 0.14vh; }
-.dialogue-line { font-size: 2.05vh; font-weight: 600; line-height: 1.22; color: #fff; }
 
 .banner { position: absolute; left: 0; right: 0; top: 21vh; text-align: center; opacity: 0; transform: scale(0.9); transition: 0.35s; }
 .banner.visible { opacity: 1; transform: none; }

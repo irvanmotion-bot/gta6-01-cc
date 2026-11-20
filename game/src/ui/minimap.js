@@ -2,6 +2,7 @@
 // and, on the atlas, the path the moon's shadow takes across the city.
 import { CITY } from '../core/config.js';
 import { blockRect, districtOfBlock, DISTRICTS, LANDMARKS, AVENUES, STREETS } from '../world/cityLayout.js';
+import { routeAlongStreets } from './minimapRoute.js';
 
 const MAP_MIN_X = -130;
 const MAP_MIN_Z = -60;
@@ -56,76 +57,142 @@ export class Minimap {
     const game = this.game;
     const blips = [...game.shops.blips(), ...game.races.blips(), ...game.bounties.blips(), ...game.missions.blips(), ...game.activities.blips()];
     const flash = Math.floor(game.time * 5) % 2 === 0;
+    // The helicopter goes under the cars it flies over, so a cruiser beside Nova is never hidden by it.
+    const chopper = game.police.helicopter;
+    if (chopper.active) blips.push({ x: chopper.mesh.position.x, z: chopper.mesh.position.z, color: '#ffffff', label: '✕', size: 1.05 });
     for (const vehicle of game.vehicles.list) {
       if (vehicle.spec.police && !vehicle.dead && vehicle.siren) blips.push({ x: vehicle.position.x, z: vehicle.position.z, color: flash ? '#ff3b30' : '#3a7bff', label: '', size: 1.25 });
     }
     for (const gunman of game.gunmen.list) {
       if (gunman.alive && gunman.faction === 'police') blips.push({ x: gunman.position.x, z: gunman.position.z, color: flash ? '#3a7bff' : '#ff3b30', label: '', size: 0.8 });
     }
-    const chopper = game.police.helicopter;
-    if (chopper.active) blips.push({ x: chopper.mesh.position.x, z: chopper.mesh.position.z, color: '#ffffff', label: '✕', size: 1.3 });
     return blips;
   }
 
-  /** The round radar: the map turns with the camera so that ahead is always up. */
+  /** Where the route line leads: the objective of the job, race or fare in hand, else the next job on offer. */
+  routeTarget() {
+    const game = this.game;
+    const pinned = [...game.missions.blips(), ...game.races.blips(), ...game.activities.blips()].filter((blip) => blip.pinned);
+    return pinned[0] || null;
+  }
+
+  /**
+   * The radar: the map turns with the camera so that ahead is always up. On it, the route to the objective along
+   * the streets, every blip, the objective with a ring round it and how far it is, and north on the rim.
+   */
   draw() {
     const game = this.game;
     const canvas = this.canvas;
-    const size = canvas.clientWidth * Math.min(window.devicePixelRatio || 1, 2);
-    if (size < 8) return;
-    if (canvas.width !== Math.round(size)) { canvas.width = Math.round(size); canvas.height = Math.round(size); }
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.round(canvas.clientWidth * ratio);
+    const height = Math.round(canvas.clientHeight * ratio);
+    if (width < 8 || height < 8) return;
+    if (canvas.width !== width || canvas.height !== height) { canvas.width = width; canvas.height = height; }
     const c = this.context;
-    const half = canvas.width / 2;
+    const halfX = width / 2;
+    // The player stands a little below the middle, so more of the road ahead is on the map than of the road behind.
+    const halfY = height * 0.56;
     const player = game.player;
     const vehicle = player.vehicle;
-    const targetZoom = vehicle ? 0.85 - Math.min(Math.abs(vehicle.speed) / 60, 1) * 0.3 : 1.05;
+    const targetZoom = vehicle ? 1.05 - Math.min(Math.abs(vehicle.speed) / 60, 1) * 0.3 : 1.2;
     this.zoom += (targetZoom - this.zoom) * 0.05;
-    const scale = (this.zoom * canvas.width) / 220;
+    const unit = height / 220;
+    const scale = this.zoom * unit;
     const angle = game.camera.yaw - Math.PI;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
+    const toMap = (x, z) => {
+      const dx = (x - player.position.x) * scale;
+      const dz = (z - player.position.z) * scale;
+      return { x: dx * cos - dz * sin, y: dx * sin + dz * cos };
+    };
 
     c.setTransform(1, 0, 0, 1, 0, 0);
-    c.clearRect(0, 0, canvas.width, canvas.height);
-    c.save();
-    c.beginPath();
-    c.arc(half, half, half - 2, 0, Math.PI * 2);
-    c.clip();
     c.fillStyle = '#2f9fcb';
-    c.fillRect(0, 0, canvas.width, canvas.height);
-    c.translate(half, half);
+    c.fillRect(0, 0, width, height);
+    c.save();
+    c.translate(halfX, halfY);
     c.rotate(angle);
     c.scale(scale, scale);
     c.drawImage(this.cityMap, MAP_MIN_X - player.position.x, MAP_MIN_Z - player.position.z);
     c.restore();
 
-    const unit = canvas.width / 220;
-    const edge = half - 12 * unit;
+    const target = this.routeTarget();
+    if (target) this.drawRoute(c, routeAlongStreets(player.position, target), toMap, halfX, halfY, unit, target.color);
+
+    const edgeX = halfX - 11 * unit;
+    const edgeTop = halfY - 11 * unit;
+    const edgeBottom = height - halfY - 26 * unit;
     for (const blip of this.collectBlips()) {
-      const dx = (blip.x - player.position.x) * scale;
-      const dz = (blip.z - player.position.z) * scale;
-      let x = dx * cos - dz * sin;
-      let y = dx * sin + dz * cos;
-      const distance = Math.hypot(x, y);
-      if (distance > edge) {
-        if (!blip.pinned) continue;
-        x *= edge / distance;
-        y *= edge / distance;
-      }
-      this.drawBlip(c, half + x, half + y, blip, unit);
+      const spot = toMap(blip.x, blip.z);
+      const reach = Math.min(1, edgeX / Math.abs(spot.x || 1e-6), (spot.y < 0 ? edgeTop : edgeBottom) / Math.abs(spot.y || 1e-6));
+      if (reach < 1 && !blip.pinned) continue;
+      const x = halfX + spot.x * reach;
+      const y = halfY + spot.y * reach;
+      if (blip === target || (target && blip.pinned && blip.x === target.x && blip.z === target.z)) this.drawObjective(c, x, y, blip, unit, Math.hypot(blip.x - player.position.x, blip.z - player.position.z));
+      else this.drawBlip(c, x, y, blip, unit);
     }
-    // North marker on the rim, and the player's arrow in the middle.
-    c.fillStyle = '#ffffff';
-    c.font = `900 ${13 * unit}px Arial, sans-serif`;
-    c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.fillText('N', half + sin * (half - 11 * unit), half - cos * (half - 11 * unit));
-    this.drawArrow(c, half, half, player.heading - angle, 9 * unit);
-    c.lineWidth = 4 * unit;
-    c.strokeStyle = game.wanted.stars > 0 && Math.floor(game.time * 4) % 2 === 0 ? '#ff6a4d' : 'rgba(23,18,43,0.9)';
+    // North marker on the rim, and the player's arrow.
+    const north = Math.min(edgeX / Math.abs(sin || 1e-6), edgeTop / Math.abs(cos || 1e-6));
+    const northY = halfY - cos * north;
+    if (northY < halfY + edgeBottom) {
+      c.fillStyle = 'rgba(18,14,36,0.85)';
+      c.beginPath();
+      c.arc(halfX + sin * north, northY, 8 * unit, 0, Math.PI * 2);
+      c.fill();
+      c.fillStyle = '#ffffff';
+      c.font = `900 ${11 * unit}px Arial, sans-serif`;
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      c.fillText('N', halfX + sin * north, northY + unit * 0.5);
+    }
+    this.drawArrow(c, halfX, halfY, player.heading - angle, 10 * unit);
+    // The frame flashes coral while the police are on her.
+    if (game.wanted.stars > 0 && Math.floor(game.time * 4) % 2 === 0) {
+      c.lineWidth = 5 * unit;
+      c.strokeStyle = '#ff6a4d';
+      c.strokeRect(0, 0, width, height);
+    }
+  }
+
+  /** The route as a bright line with a dark edge, from the player's arrow to the objective. */
+  drawRoute(c, corners, toMap, halfX, halfY, unit, color) {
+    c.save();
+    c.lineJoin = 'round';
+    c.lineCap = 'round';
+    for (const [lineWidth, style] of [[7.5 * unit, 'rgba(18,14,36,0.9)'], [4 * unit, color || '#ffb547']]) {
+      c.beginPath();
+      corners.forEach((corner, index) => {
+        const spot = toMap(corner.x, corner.z);
+        if (index === 0) c.moveTo(halfX + spot.x, halfY + spot.y); else c.lineTo(halfX + spot.x, halfY + spot.y);
+      });
+      c.lineWidth = lineWidth;
+      c.strokeStyle = style;
+      c.stroke();
+    }
+    c.restore();
+  }
+
+  /** The objective: a ringed marker that pulses, with the metres to it written beside it. */
+  drawObjective(c, x, y, blip, unit, metres) {
+    const pulse = 1 + Math.sin(this.game.time * 5) * 0.12;
     c.beginPath();
-    c.arc(half, half, half - 2 * unit, 0, Math.PI * 2);
+    c.arc(x, y, 11 * unit * pulse, 0, Math.PI * 2);
+    c.lineWidth = 2.4 * unit;
+    c.strokeStyle = blip.color;
     c.stroke();
+    this.drawBlip(c, x, y, { ...blip, size: 1.25 }, unit);
+    const label = `${Math.round(metres)} m`;
+    c.font = `900 ${11.5 * unit}px Arial, sans-serif`;
+    c.textAlign = x > c.canvas.width * 0.6 ? 'right' : 'left';
+    c.textBaseline = 'middle';
+    const labelX = x + (c.textAlign === 'right' ? -14 : 14) * unit;
+    c.lineWidth = 3.4 * unit;
+    c.lineJoin = 'round';
+    c.strokeStyle = 'rgba(18,14,36,0.92)';
+    c.strokeText(label, labelX, y);
+    c.fillStyle = '#ffffff';
+    c.fillText(label, labelX, y);
   }
 
   drawBlip(c, x, y, blip, unit) {

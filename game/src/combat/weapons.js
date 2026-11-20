@@ -88,6 +88,7 @@ export class Weapons {
     if (input.wasPressed('KeyQ')) this.cycle(1);
     const spec = WEAPONS[this.current];
     player.armed = !spec.melee;
+    player.longGun = this.current !== 'pistol';
 
     if (this.reloading > 0) {
       this.reloading -= dt;
@@ -151,7 +152,7 @@ export class Weapons {
     if (!player.vehicle) player.heading = camera.yaw;
     // On foot the shot leaves the gun in her right hand, a forearm's length ahead of her; in a car, the window.
     const side = player.vehicle ? 0 : 0.33;
-    const ahead = player.vehicle ? 0.7 : 1.2;
+    const ahead = player.vehicle ? 0.7 : player.longGun ? 1.66 : 1.2;
     this.muzzle.set(player.position.x + Math.sin(camera.yaw) * ahead - Math.cos(camera.yaw) * side, player.position.y + (player.vehicle ? 1.2 : 1.43), player.position.z + Math.cos(camera.yaw) * ahead + Math.sin(camera.yaw) * side);
     for (let pellet = 0; pellet < spec.pellets; pellet += 1) {
       const dx = camera.direction.x + (Math.random() - 0.5) * spec.spread * 2;
@@ -161,7 +162,8 @@ export class Weapons {
       this.castShot(spec, dx / length, dy / length, dz / length);
     }
     game.particles.lightFlash(this.muzzle.x, this.muzzle.y, this.muzzle.z, 9, 0.06);
-    game.particles.muzzleFlash(this.muzzle.x, this.muzzle.y, this.muzzle.z);
+    // Her own flash is a camera's length away, so it is drawn small: it must not hide who she is shooting at.
+    game.particles.muzzleFlash(this.muzzle.x, this.muzzle.y, this.muzzle.z, player.vehicle ? 0.6 : 0.3);
     game.audio.gunshot(spec.sound);
     camera.pitch -= 0.006;
     camera.shake(0.05);

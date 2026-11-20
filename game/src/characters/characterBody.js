@@ -17,12 +17,20 @@ const HAIR = ['#1b1b1b', '#3b2314', '#6f4e37', '#d9b380', '#b03a2e', '#e8e8e8', 
 
 /** A random citizen's colours. */
 export function randomLook(rng) {
+  const outfit = rng.pick(OUTFITS);
   return {
     skin: rng.pick(SKINS), shirt: rng.pick(SHIRTS), pants: rng.pick(PANTS), hair: rng.pick(HAIR),
     hat: rng.chance(0.2) ? rng.pick(['#f5f0e1', '#e63946', '#1d3557', '#ffb703']) : null,
-    shorts: rng.chance(0.55), scale: rng.range(0.94, 1.06), longHair: rng.chance(0.4), shoes: rng.pick(['#f4f1e8', '#2b2d33', '#ff6b6b', '#3a86ff', '#ffd93d']),
+    shorts: outfit === 'beach' || rng.chance(0.45), scale: rng.range(0.88, 1.1), longHair: outfit === 'dress' || rng.chance(0.35), shoes: rng.pick(['#f4f1e8', '#2b2d33', '#ff6b6b', '#3a86ff', '#ffd93d']),
+    // Slim to heavy-set, and what they threw on this morning: a sundress, a vest, long sleeves, a pack, a sun hat.
+    build: rng.range(0.84, 1.24), dress: outfit === 'dress', sleeves: outfit === 'beach' ? 'none' : outfit === 'office' ? 'long' : 'short',
+    backpack: outfit === 'tourist' ? rng.pick(['#2d3142', '#e63946', '#3a86ff', '#588157']) : null, sunHat: outfit === 'tourist' || (outfit === 'dress' && rng.chance(0.5)) ? '#f5e6c4' : null,
+    shades: rng.chance(0.3), afro: rng.chance(0.14),
   };
 }
+
+/** The wardrobes of Saros; a citizen's outfit decides the cut of their clothes, not the colours. */
+const OUTFITS = ['street', 'street', 'beach', 'dress', 'office', 'tourist'];
 
 export const LOOKS = {
   nova: { skin: '#c68642', shirt: '#ff5e5b', pants: '#27324a', hair: '#2a1a12', hat: null, shorts: false, scale: 1, jacket: '#1fb5a6', longHair: true },
@@ -47,23 +55,40 @@ export function buildCharacterModel(look) {
   // Hair comes down the back of the head (to the shoulders on some), so nobody is a bare block from behind.
   block(look.hair, 0.29, look.longHair ? 0.36 : 0.2, 0.08, 0, 1.66, -0.125);
   if (look.jacket) block(look.jacket, 0.53, 0.5, 0.2, 0, 1.2, -0.06);
-  if (look.hat) {
+  if (look.afro) block(look.hair, 0.4, 0.3, 0.4, 0, 1.86, -0.02);
+  if (look.sunHat) {
+    block(look.sunHat, 0.33, 0.1, 0.34, 0, 1.85, 0);
+    block(look.sunHat, 0.66, 0.03, 0.66, 0, 1.78, 0);
+  } else if (look.hat) {
     block(look.hat, 0.31, 0.1, 0.32, 0, 1.84, 0);
     block(look.hat, 0.3, 0.03, 0.2, 0, 1.8, 0.2);
   }
+  // A sundress flares from the waist to the knee; a tourist carries a day pack.
+  if (look.dress) {
+    trunkParts.addBox(0, 0.5, 0, 0.62, 0.42, 0.44, look.shirt);
+    trunkParts.taperLastBox(0.8, 0.68);
+  }
+  if (look.backpack) block(look.backpack, 0.36, 0.42, 0.16, 0, 1.4, -0.21);
+  if (look.shades) block('#15161a', 0.24, 0.06, 0.02, 0, 1.565, 0.14);
   // A face: two eyes and a mouth on the front of the head, and a neck under it.
   for (const side of [-1, 1]) block('#1b1b1b', 0.05, 0.055, 0.02, side * 0.065, 1.56, 0.137);
   block('#7a3b2e', 0.1, 0.022, 0.02, 0, 1.43, 0.137);
   block(look.skin, 0.14, 0.08, 0.14, 0, 1.36, 0);
   const trunk = trunkParts.build(trunkMaterial, { receiveShadow: false });
+  trunk.matrixAutoUpdate = true;
   // Short sleeves over bare forearms unless a jacket covers them; shorts end above the knee; everyone wears shoes.
   const sleeve = look.jacket || look.shirt;
+  const sleeveShare = look.jacket || look.sleeves === 'long' ? 0 : look.sleeves === 'none' ? 0.12 : 0.42;
+  const forearm = look.jacket || look.sleeves === 'long' ? sleeve : look.skin;
   // Uniforms and suits come with dark shoes; Nova and anyone unnamed wear pale trainers unless their look says so.
   const shoes = look.shoes || (look.hat && !look.shorts ? '#17181c' : '#f4f1e8');
-  const legL = limb(look.shorts ? look.pants : legColor, legColor, look.shorts ? 0.3 : 0, shoes, 0.2, 0.84, 0.22, 0.14, 0.84);
-  const legR = limb(look.shorts ? look.pants : legColor, legColor, look.shorts ? 0.3 : 0, shoes, 0.2, 0.84, 0.22, -0.14, 0.84);
-  const armL = limb(sleeve, look.jacket ? sleeve : look.skin, look.jacket ? 0 : 0.42, look.skin, 0.15, 0.64, 0.17, 0.33, 1.45);
-  const armR = limb(sleeve, look.jacket ? sleeve : look.skin, look.jacket ? 0 : 0.42, look.skin, 0.15, 0.64, 0.17, -0.33, 1.45);
+  const bareLegs = look.shorts || look.dress;
+  const thigh = look.dress ? look.skin : look.pants;
+  const shin = bareLegs ? look.skin : legColor;
+  const legL = limb(thigh, shin, look.shorts && !look.dress ? 0.3 : 0, shoes, 0.2, 0.84, 0.22, 0.14, 0.84);
+  const legR = limb(thigh, shin, look.shorts && !look.dress ? 0.3 : 0, shoes, 0.2, 0.84, 0.22, -0.14, 0.84);
+  const armL = limb(sleeve, forearm, sleeveShare, look.skin, 0.15, 0.64, 0.17, 0.33, 1.45);
+  const armR = limb(sleeve, forearm, sleeveShare, look.skin, 0.15, 0.64, 0.17, -0.33, 1.45);
   armL.castShadow = false;
   armR.castShadow = false;
   group.add(trunk, legL, legR, armL, armR);
@@ -74,9 +99,28 @@ export function buildCharacterModel(look) {
   gunParts.addBox(0, -0.66, 0.13, 0.07, 0.1, 0.16, '#5a3d2a');
   const gun = gunParts.build(trunkMaterial, { receiveShadow: false });
   gun.visible = false;
-  armR.add(gun);
-  group.scale.setScalar(look.scale || 1);
-  return { group, trunk, legL, legR, armL, armR, gun };
+  // A long gun (rifle, shotgun, sub-machine gun): a stock back to the elbow, a magazine and a barrel twice as long.
+  const longParts = new MeshBatcher();
+  longParts.addBox(0, -1.12, 0.06, 0.1, 0.72, 0.15, '#16181b');
+  longParts.addBox(0, -1.62, 0.07, 0.055, 0.52, 0.065, '#3a3f47');
+  longParts.addBox(0, -0.46, 0.05, 0.085, 0.36, 0.12, '#5a3d2a');
+  longParts.addBox(0, -0.98, -0.1, 0.075, 0.12, 0.26, '#2b2f36');
+  longParts.addBox(0, -0.7, 0.14, 0.07, 0.1, 0.16, '#5a3d2a');
+  const longGun = longParts.build(trunkMaterial, { receiveShadow: false });
+  longGun.visible = false;
+  // A phone, for the citizens who would rather film a gunfight than run from it.
+  const phoneParts = new MeshBatcher();
+  phoneParts.addBox(0, -0.82, 0.06, 0.1, 0.2, 0.03, '#14161a');
+  phoneParts.addBox(0, -0.8, 0.045, 0.08, 0.16, 0.012, '#9fd8ff');
+  const phone = phoneParts.build(trunkMaterial, { receiveShadow: false });
+  phone.visible = false;
+  armR.add(gun, longGun, phone);
+  const scale = look.scale || 1;
+  const build = look.build || 1;
+  group.scale.set(scale * build, scale, scale * (0.82 + build * 0.18));
+  // The body turns about its own axes: first the heading, then a lean forward (a sprint) or a fall onto its back.
+  group.rotation.order = 'YXZ';
+  return { group, trunk, legL, legR, armL, armR, gun, longGun, phone };
 }
 
 /**
@@ -169,6 +213,9 @@ export class CharacterBody {
   animate(dt) {
     const m = this.model;
     this.mesh.rotation.y = this.heading;
+    m.gun.visible = this.armed && !this.longGun;
+    m.longGun.visible = this.armed && Boolean(this.longGun);
+    m.phone.visible = this.alive && Boolean(this.filming);
     if (!this.alive) {
       this.crouch(0);
       this.deadTime += dt;
@@ -193,16 +240,36 @@ export class CharacterBody {
     // Eclipse watchers shade their eyes with one hand, and throw both arms up when the sun goes out.
     if (this.gazing) m.armL.rotation.x = -2.35 + Math.sin(this.stride + this.deadTime) * 0.04;
     if (this.cheering) { m.armL.rotation.x = -2.9 + Math.sin(this.game.time * 9 + this.stride) * 0.25; m.armR.rotation.x = -2.9 - Math.sin(this.game.time * 9 + this.stride) * 0.25; }
-    // Citizens in fear: running with both hands in the air, or down on their heels with their arms over their head.
-    if (this.panicking) { m.armL.rotation.x = -2.75 + Math.sin(this.stride * 1.3) * 0.3; m.armR.rotation.x = -2.75 - Math.sin(this.stride * 1.3) * 0.3; }
-    this.crouch(this.cowering ? COWER_DROP : 0);
+    // Citizens in fear, each in their own way: hands in the air, a flat-out sprint, or ducked low with an arm over the head.
+    let lean = 0;
+    let drop = this.cowering ? COWER_DROP : 0;
+    let spreadL = this.cowering ? 0.55 : 0;
+    let spreadR = this.cowering ? -0.55 : 0;
+    if (this.panicking) {
+      const style = this.fearStyle || 'handsUp';
+      if (style === 'handsUp') {
+        m.armL.rotation.x = -2.75 + Math.sin(this.stride * 1.3) * 0.3; m.armR.rotation.x = -2.75 - Math.sin(this.stride * 1.3) * 0.3;
+        spreadL = 0.3; spreadR = -0.3;
+      } else if (style === 'sprint') {
+        lean = 0.3;
+        m.armL.rotation.x = -0.5 - swing * 1.5; m.armR.rotation.x = -0.5 + swing * 1.5;
+      } else {
+        lean = 0.5; drop = 0.2;
+        m.armL.rotation.x = -2.5; spreadL = 0.7;
+        m.armR.rotation.x = swing * 1.2;
+      }
+    }
+    // The bold ones stand their ground: one films it on a phone held up in front of the face, another points it out.
+    if (this.filming) { m.armR.rotation.x = -1.95 + Math.sin(this.game.time * 2 + this.stride) * 0.04; m.armL.rotation.x = -1.5; spreadL = 0.5; spreadR = -0.25; }
+    if (this.pointing) { m.armR.rotation.x = -1.62; m.armL.rotation.x = -2.2; spreadL = 0.9; }
+    this.crouch(drop);
     if (this.cowering) {
       m.legL.rotation.x = -1.35; m.legR.rotation.x = -1.35;
       m.armL.rotation.x = -2.6; m.armR.rotation.x = -2.6;
     }
-    m.armL.rotation.z = this.cowering ? 0.55 : 0;
-    m.armR.rotation.z = this.cowering ? -0.55 : 0;
-    m.gun.visible = this.armed;
+    m.armL.rotation.z = spreadL;
+    m.armR.rotation.z = spreadR;
+    this.mesh.rotation.x += (lean - this.mesh.rotation.x) * Math.min(1, dt * 10);
   }
 
   /** Lower the whole body by `drop` metres over its feet (0 stands it back up). */
@@ -220,6 +287,6 @@ export class CharacterBody {
   dispose() {
     this.game.scene.remove(this.mesh);
     const m = this.model;
-    for (const mesh of [m.trunk, m.legL, m.legR, m.armL, m.armR, m.gun]) mesh.geometry.dispose();
+    for (const mesh of [m.trunk, m.legL, m.legR, m.armL, m.armR, m.gun, m.longGun, m.phone]) mesh.geometry.dispose();
   }
 }
