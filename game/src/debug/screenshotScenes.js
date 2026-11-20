@@ -411,9 +411,10 @@ const SCENES = {
  */
 const SCENE_HUD = { chase: 'large' };
 
-export function stageScreenshot(game, name) {
+export function stageScreenshot(game, name, hudSize = null) {
   // The game's own settings, as a player would set them for a small window: a legible HUD and a supersampled city.
-  game.settings = { ...game.settings, hudSize: SCENE_HUD[name] || 'huge', renderScale: 2 };
+  // `hudSize` (from &hud= in the address) takes the scene at another HUD SIZE than the one it is listed with.
+  game.settings = { ...game.settings, hudSize: hudSize || SCENE_HUD[name] || 'huge', renderScale: 2 };
   game.applySettings();
   (SCENES[name] || titleScene)(game);
   game.input.held.clear();

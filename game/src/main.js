@@ -473,8 +473,9 @@ const TITLE_HOUR = 16.72;
 
 const game = new Game();
 window.totality = game;
-const shot = new URLSearchParams(window.location.search).get('shot');
-if (shot) stageScreenshot(game, shot);
+const query = new URLSearchParams(window.location.search);
+const shot = query.get('shot');
+if (shot) stageScreenshot(game, shot, query.get('hud'));
 else game.showTitle();
 document.getElementById('loading').classList.add('done');
 game.run();
