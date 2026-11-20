@@ -9,6 +9,7 @@ import { HudDispatchPanel } from './hudDispatchPanel.js';
 import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
+import { HudFoeBars } from './hudFoeBars.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
 import { speakerJob } from '../missions/storyMissions.js';
 
@@ -44,6 +45,7 @@ export class Hud {
     const corner = createElement('div', 'corner-stack', root);
     this.weaponBar = new HudWeaponBar(game, corner, this.cache);
     this.vehiclePanel = new HudVehiclePanel(game, corner, this.cache);
+    this.foeBars = new HudFoeBars(game, root, this.cache);
     this.buildOverlays(root);
     this.speech = [];
     this.speechClock = 0;
@@ -229,6 +231,7 @@ export class Hud {
     this.crewPanel.update(dt);
     this.weaponBar.update(dt);
     this.vehiclePanel.update(dt);
+    this.foeBars.update(dt);
     cache.text(this.clock, `${game.calendar.dayName()} ${game.calendar.clockText()}`);
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
     cache.text(this.street, streetNameAt(player.position.x, player.position.z));

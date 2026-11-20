@@ -262,4 +262,4 @@ const ORBIT_RADIUS = 46;
  * Its station over a car chase: the ring it circles on, how high, and how many seconds of the car's travel it aims
  * ahead. It eases toward that point and so trails it by most of a second, which leaves it a little ahead of the car.
  */
-const CHASE_ORBIT = { radius: 26, height: 17, lead: 1.2 };
+const CHASE_ORBIT = { radius: 26, height: 17, lead: 1.8 };

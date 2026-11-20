@@ -27,6 +27,8 @@ export class VaneBounties {
     const tag = `bounty:${capo.id}`;
     const boss = game.gunmen.spawn('capo', capo.x, capo.z, tag);
     boss.bountyId = capo.id;
+    // His name floats over his health bar while Nova fights him.
+    boss.nameTag = capo.name;
     for (let k = 0; k < capo.guards; k += 1) {
       const angle = (k / capo.guards) * Math.PI * 2;
       game.gunmen.spawn('enforcer', capo.x + Math.cos(angle) * 3, capo.z + Math.sin(angle) * 3, tag);
