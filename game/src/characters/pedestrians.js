@@ -28,6 +28,8 @@ class Pedestrian extends CharacterBody {
     this.fearX = 0;
     this.fearZ = 0;
     this.boardwalk = false;
+    // One citizen in three is timid: close gunfire puts them on the ground instead of on the run.
+    this.timid = Math.random() < 0.34;
   }
 
   /** Pick the next sidewalk corner: usually on round the block, sometimes across the street. */
@@ -60,7 +62,13 @@ class Pedestrian extends CharacterBody {
       dirX = this.position.x - this.fearX;
       dirZ = this.position.z - this.fearZ;
       speed = 5.6;
-      if (this.timer <= 0) this.state = 'walk';
+      if (this.timer <= 0) this.calmDown();
+    } else if (this.state === 'cower') {
+      // Too close to the gunfire to run: down on their heels, arms over the head, until it has been quiet a while.
+      this.timer -= dt;
+      speed = 0;
+      this.turnToward(Math.atan2(this.position.x - this.fearX, this.position.z - this.fearZ), dt, 6);
+      if (this.timer <= 0) { this.cowering = false; this.scare(this.fearX, this.fearZ, 6); }
     } else if (this.state === 'idle') {
       this.timer -= dt;
       speed = 0;
@@ -98,14 +106,37 @@ class Pedestrian extends CharacterBody {
     if (this.state === 'watch') this.state = 'walk';
   }
 
+  /** Run from a danger at (x, z) with both hands in the air. */
   scare(x, z, seconds) {
     if (!this.alive) return;
     this.gazing = false;
     this.cheering = false;
+    this.cowering = false;
+    this.panicking = true;
     this.state = 'flee';
     this.fearX = x;
     this.fearZ = z;
     this.timer = seconds;
+  }
+
+  /** Drop to the ground where they stand: what the timid do when the shots are close. */
+  cower(x, z, seconds) {
+    if (!this.alive) return;
+    this.gazing = false;
+    this.cheering = false;
+    this.panicking = false;
+    this.cowering = true;
+    this.state = 'cower';
+    this.fearX = x;
+    this.fearZ = z;
+    this.timer = seconds;
+  }
+
+  /** The danger has passed: hands down, back to the stroll. */
+  calmDown() {
+    this.panicking = false;
+    this.cowering = false;
+    this.state = 'walk';
   }
 
   takeDamage(amount, byPlayer = false) {
@@ -197,10 +228,27 @@ export class PedestrianCrowd {
     return ped;
   }
 
-  scareNear(x, z, radius, seconds = 9) {
+  /**
+   * Frighten everyone within `radius` of (x, z): most run with their hands up; the timid who are within
+   * `cowerWithin` metres (gunfire passes one) drop where they stand instead.
+   */
+  scareNear(x, z, radius, seconds = 9, cowerWithin = 0) {
     for (const ped of this.list) {
-      if (ped.alive && distance2D(x, z, ped.position.x, ped.position.z) < radius) ped.scare(x, z, seconds);
+      if (!ped.alive) continue;
+      const distance = distance2D(x, z, ped.position.x, ped.position.z);
+      if (distance >= radius) continue;
+      if (ped.timid && distance < cowerWithin) { if (ped.state !== 'cower') ped.cower(x, z, 5 + ped.pace * 2); else ped.timer = Math.max(ped.timer, 3); } else ped.scare(x, z, seconds);
     }
+  }
+
+  /** How the crowd is taking it right now, for the playthrough check: running, cowering, strolling. */
+  moodCount() {
+    const mood = { fleeing: 0, cowering: 0, calm: 0 };
+    for (const ped of this.list) {
+      if (!ped.alive) continue;
+      if (ped.state === 'flee') mood.fleeing += 1; else if (ped.state === 'cower') mood.cowering += 1; else mood.calm += 1;
+    }
+    return mood;
   }
 
   clear() {

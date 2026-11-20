@@ -45,7 +45,7 @@ export class Particles {
 
     this.tracers = [];
     // A streak that is thickest in the middle and fine at both ends, so a round passing the camera stays a line.
-    const tracerGeometry = new THREE.BoxGeometry(0.08, 0.08, 1, 1, 1, 2);
+    const tracerGeometry = new THREE.BoxGeometry(0.11, 0.11, 1, 1, 1, 2);
     const corners = tracerGeometry.attributes.position;
     for (let k = 0; k < corners.count; k += 1) {
       if (Math.abs(corners.getZ(k)) > 0.4) corners.setXY(k, corners.getX(k) * 0.12, corners.getY(k) * 0.12);
@@ -99,8 +99,8 @@ export class Particles {
 
   /** The burst at a gun's muzzle: a white-hot heart in a short yellow flare, gone in a few frames. */
   muzzleFlash(x, y, z) {
-    this.emit(x, y, z, 0, 0, 0, 0.09, 0.75, 0.3, 1, 0.78, 0.25, 0.95);
-    this.emit(x, y, z, 0, 0, 0, 0.07, 0.36, 0.1, 1, 0.97, 0.8, 1);
+    this.emit(x, y, z, 0, 0, 0, 0.1, 1.0, 0.3, 1, 0.78, 0.25, 0.95);
+    this.emit(x, y, z, 0, 0, 0, 0.08, 0.55, 0.1, 1, 0.97, 0.8, 1);
   }
 
   sparks(x, y, z, count) {

@@ -234,13 +234,13 @@ export class EclipseCalendar {
     const weekShare = clamp((this.day - 1 + this.hour / 24) / ECLIPSE_DAY, 0, 1);
     if (phase === 'week') {
       const days = this.daysToTotality();
-      return { caption: `ECLIPSE WEEK · ${this.dayName()} · DAY ${this.day}/${ECLIPSE_DAY}`, big: `${days} ${days === 1 ? 'DAY' : 'DAYS'}`, line: 'TO TOTALITY · FRI 17:12', share: weekShare, ticking: false };
+      return { caption: `ECLIPSE WEEK · DAY ${this.day}/${ECLIPSE_DAY}`, big: `${days} ${days === 1 ? 'DAY' : 'DAYS'}`, line: 'TO TOTALITY · FRI 17:12', share: weekShare, ticking: false };
     }
     if (phase === 'eclipseDay' || phase === 'partial') {
-      return { caption: phase === 'partial' ? `ECLIPSE DAY · SUN ${covered}% COVERED` : 'ECLIPSE DAY · FIRST CONTACT 16:12', big: formatCountdown(this.secondsToTotality()), line: 'TO TOTALITY', share: phase === 'partial' ? this.coverage() : weekShare, ticking: true };
+      return { caption: phase === 'partial' ? `SUN ${covered}% COVERED` : 'FIRST CONTACT 16:12', big: formatCountdown(this.secondsToTotality()), line: 'TO TOTALITY', share: phase === 'partial' ? this.coverage() : weekShare, ticking: true };
     }
-    if (phase === 'totality') return { caption: 'TOTALITY · THE CITY IS DARK', big: formatCountdown(this.secondsOfTotalityLeft()), line: 'OF DARKNESS LEFT', share: 1 - this.secondsOfTotalityLeft() / ECLIPSE_SECONDS.totality, ticking: true };
-    if (phase === 'waning') return { caption: `THIRD CONTACT · SUN ${covered}% COVERED`, big: `${100 - covered}%`, line: 'OF THE SUN IS BACK', share: 1 - this.coverage(), ticking: false };
+    if (phase === 'totality') return { caption: 'TOTALITY · CITY IS DARK', big: formatCountdown(this.secondsOfTotalityLeft()), line: 'OF DARKNESS LEFT', share: 1 - this.secondsOfTotalityLeft() / ECLIPSE_SECONDS.totality, ticking: true };
+    if (phase === 'waning') return { caption: `SUN ${covered}% COVERED`, big: `${100 - covered}%`, line: 'OF THE SUN IS BACK', share: 1 - this.coverage(), ticking: false };
     return { caption: 'AFTER THE ECLIPSE', big: 'SAROS', line: 'NEXT TOTALITY: 18 YEARS, 11 DAYS', share: 1, ticking: false };
   }
 }

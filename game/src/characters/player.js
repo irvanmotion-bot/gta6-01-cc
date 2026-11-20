@@ -1,7 +1,7 @@
 // Nova Reyes, the player: running, jumping and driving from the keyboard, health and armor, cash and dying.
 import { PLAYER, GRAVITY } from '../core/config.js';
 import { CharacterBody, LOOKS } from './characterBody.js';
-import { tryEnterVehicle, leaveVehicle } from '../vehicles/carjacking.js';
+import { tryEnterVehicle, leaveVehicle, promptCarInReach } from '../vehicles/carjacking.js';
 
 export class Player extends CharacterBody {
   constructor(game, x, z) {
@@ -70,9 +70,7 @@ export class Player extends CharacterBody {
     if (this.aiming) this.turnToward(camera.yaw, dt, 18);
     this.moveSpeed = speed;
     if (input.wasPressed('Space') && this.airborne === 0) this.velY = PLAYER.jumpSpeed;
-    const car = this.game.vehicles.nearest(this.position.x, this.position.z, PLAYER.enterRange);
-    if (car) this.game.hud.hint(car.driver === 'ai' ? `Press F to pull the driver out of the ${car.spec.name}` : `Press F to take the ${car.spec.name}`);
-    else if (!input.locked && !input.lockUnavailable) this.game.hud.hint('Click to look around with the mouse');
+    if (!promptCarInReach(this.game) && !input.locked && !input.lockUnavailable) this.game.hud.hint('Click to look around with the mouse');
     this.fall(dt, GRAVITY);
     this.animate(dt);
   }

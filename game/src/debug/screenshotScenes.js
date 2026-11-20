@@ -80,6 +80,23 @@ function spawnPursuit(game, role, model, x, z, heading, speed, tactic = null) {
   return cruiser;
 }
 
+/** A citizen's car on the road with a traffic driver at the wheel; `panics` floors it, as a near miss would. */
+function spawnCivilianCar(game, model, x, z, heading, paint, panics = false) {
+  const car = game.vehicles.spawn(model, x, z, heading, paint);
+  car.driver = 'ai';
+  car.ambient = true;
+  car.controller = createTrafficDriverFor(game, car, game.traffic.rng);
+  car.velX = Math.sin(heading) * 9;
+  car.velZ = Math.cos(heading) * 9;
+  if (panics) car.controller.panic(6);
+  return car;
+}
+
+/** One more citizen out for the eclipse, on the pavement or (with `boardwalk`) on the boards by the beach. */
+function spawnStroller(game, x, z, boardwalk = false) {
+  return game.pedestrians.spawnAt(boardwalk ? { x, z, boardwalk: true } : { x, z, goal: { i: 0, j: Math.floor(z / 80), corner: 0 }, clockwise: z % 2 < 1 });
+}
+
 function clearLane(game, keep, x, zFrom, zTo) {
   for (const other of [...game.vehicles.list]) {
     if (other !== keep && Math.abs(other.position.x - x) < 8 && other.position.z > zFrom && other.position.z < zTo) game.vehicles.remove(other);
@@ -91,56 +108,64 @@ function clearLane(game, keep, x, zFrom, zTo) {
  * Orrery Trust in the getaway Rayo down Corona Drive at five stars, with the whole response around her.
  */
 function chaseScene(game) {
-  const z0 = 225;
+  const z0 = 227;
   const seconds = 0.9;
   const zEnd = z0 + 43;
-  loadCity(game, stagedSave(9), -0.4, z0 - 4, 0);
+  // Nova is on the wrong side of the drive, in the oncoming lane, with the ocean and the sun to her right.
+  const lane = 1.6;
+  loadCity(game, stagedSave(9), lane, z0 - 4, 0);
   startHeist(game, 'steal');
   const rayo = game.missions.active.vehicle;
-  rayo.position.set(-0.4, 0, z0);
+  rayo.position.set(lane, 0, z0);
   rayo.heading = 0;
   tryEnterVehicle(game);
   play(game, 0.05);
   game.hud.clearSpeech();
-  game.calendar.setHour(hourOfCoverage(0.62));
+  game.calendar.setHour(hourOfCoverage(0.42));
   rayo.velZ = 44;
   rayo.health = rayo.maxHealth * 0.78;
   clearLane(game, rayo, 0, z0 - 90, z0 + 130);
   game.wanted.setStars(5, 99);
-  // The pack: one interceptor on her rear quarter, one drawing level on the ocean side, a cruiser cutting across
-  // her nose further up the drive.
-  spawnPursuit(game, 'interceptor', 'lince', 4.3, z0 - 0.4, 0, 49, 'flankRight');
-  spawnPursuit(game, 'interceptor', 'lince', -4.0, z0 + 3.4, 0, 49, 'flankLeft');
-  spawnPursuit(game, 'patrol', 'centinela', 4.6, z0 + 21, 0, 46, 'cutOff');
+  // The pack: one interceptor turning in on her ocean side, one on her rear quarter by the kerb, a cruiser
+  // cutting across her nose further up the drive. From three stars all of them shoot from the window.
+  const pack = [
+    spawnPursuit(game, 'interceptor', 'lince', lane - 4.7, z0 - 0.4, 0, 49, 'flankLeft'),
+    spawnPursuit(game, 'interceptor', 'lince', 4.7, z0 + 9, 0, 45, 'flankLeft'),
+    spawnPursuit(game, 'patrol', 'centinela', -2.4, z0 + 20, 0, 46, 'cutOff'),
+  ];
   // At the junction ahead: a blockade with a spike strip, and a tactical van swinging in from Umbra Street.
   game.police.roadblocks.deploy({ x: 0, z: 337, alongX: false, direction: 1 }, true);
   spawnPursuit(game, 'tactical', 'bastion', 22, 322.6, -Math.PI / 2, 9, 'ram');
-  // Everyone else on Corona Drive: a cab diving for the kerb, traffic held up behind the blockade, and people
-  // scattering off the pavement.
-  const traffic = [['sarosCab', -4.9, zEnd + 14, 0, null, true], ['toro', 2.8, 349, Math.PI, '#ff7eb6', false], ['avocet', 2.8, 358, Math.PI, '#1abc9c', false], ['duna', -2.8, 352, 0, '#e67e22', false]];
-  for (const [model, x, z, heading, paint, panics] of traffic) {
-    const bystander = game.vehicles.spawn(model, x, z, heading, paint);
-    bystander.driver = 'ai';
-    bystander.ambient = true;
-    bystander.controller = createTrafficDriverFor(game, bystander, game.traffic.rng);
-    if (panics) bystander.controller.panic(6);
+  // Everyone else on Corona Drive: the cars she is overtaking in their own lane, the ones coming at her in
+  // theirs and diving for the kerb, traffic held up behind the blockade.
+  const traffic = [
+    ['sarosCab', -2.9, zEnd + 12, 0, null, true], ['caravana', -2.7, zEnd + 27, 0, '#f4ecd8', false], ['estela', -2.6, zEnd + 43, 0, '#3a86ff', false],
+    ['toro', 4.4, zEnd + 21, Math.PI - 0.16, '#ff7eb6', true], ['avocet', 2.9, zEnd + 44, Math.PI, '#1abc9c', true], ['coyote', 2.7, zEnd + 62, Math.PI, '#ffd93d', false],
+    ['duna', -2.8, 352, 0, '#e67e22', false],
+  ];
+  for (const [model, x, z, heading, paint, panics] of traffic) spawnCivilianCar(game, model, x, z, heading, paint, panics);
+  // The pavement and the boardwalk are full on eclipse afternoon; the people nearest the chase are already running.
+  for (const [x, z] of [[7.3, 4], [8.1, 8], [7.6, 13], [8.4, 17], [7.2, 22], [8.0, 28], [7.5, 35], [8.3, 43], [7.4, 52]]) {
+    if (z < 24) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
   }
-  for (const z of [5, 9, 14, 18, 27, 31]) game.pedestrians.spawnFleeing(7.4 + (z % 3) * 0.5, zEnd + z, { x: 0, z: zEnd });
+  for (const z of [3, 7, 12, 18, 25, 33, 42]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);
   // A cruiser that lost the corner burns against the kerb and goes up as she passes.
-  const wreck = game.vehicles.spawn('centinela', 6.1, zEnd + 15, 0.6);
+  const wreck = game.vehicles.spawn('centinela', 6.3, zEnd + 13, 0.6);
   wreck.health = 0;
   wreck.hitByPlayer = true;
   wreck.burning = 3.6 - (seconds - 0.13);
   game.police.helicopter.scramble();
   game.police.helicopter.orbit = Math.PI / 2 - 0.25;
-  game.police.helicopter.mesh.position.set(12, 25, zEnd + 46);
+  game.police.helicopter.mesh.position.set(14, 25, zEnd + 46);
   game.crew.cooldowns.jam = 96;
   game.hud.say('JAZZ', 'They made the car, baby. Get to the square before the sun goes!', '#f4ecd8');
   play(game, seconds, (t) => {
     game.input.held.add('KeyW');
     if (t > seconds - 0.4) game.input.held.add('ShiftLeft');
-    // The gunship's next burst is due as the frame is taken, so its tracer is in the air.
+    // The gunship's next burst is due as the frame is taken, so its tracer is in the air; so are the bursts of
+    // the officers leaning out of the two interceptors.
     if (t > seconds - 0.05 && game.police.helicopter.cooldown > 0.05) game.police.helicopter.cooldown = 0;
+    if (t > seconds - 0.08) for (const cruiser of pack) if (cruiser.controller && cruiser.controller.isPursuit) cruiser.controller.windowClock = Math.min(cruiser.controller.windowClock, 0.01);
     // No hit in the last moments, so the red damage vignette does not tint the frame.
     if (t > seconds - 0.6) game.player.invulnerable = 1;
     // The mouse is left alone: the chase camera settles behind the car by itself.
@@ -154,45 +179,68 @@ function chaseScene(game) {
  * sun behind Nova, a burning car going up, tracers both ways and the police coming down the drive.
  */
 function standoffScene(game) {
-  const seconds = 1.4;
-  const x0 = 1.2;
+  const seconds = 1.0;
+  const x0 = 2.4;
   const z0 = 351;
-  const aim = Math.PI + 0.2;
-  loadCity(game, stagedSave(9), x0, z0, aim);
+  const facing = Math.PI + 0.12;
+  loadCity(game, stagedSave(9), x0, z0, facing);
   game.player.cash = 61200;
   startHeist(game, 'eliminate');
   game.calendar.setHour(hourOfCoverage(0.34));
   game.weapons.select('rifle');
-  // Vane's lookouts come off the boardwalk and the kerb, between the watch parties: one already down, three
-  // trading fire with Nova up the drive.
+  // A citizen's Duna left at the kerb beside her: in reach, so the game rings it and offers F to steal it.
+  const parked = game.vehicles.spawn('avocet', x0 + 3.2, z0 - 3.5, Math.PI, '#ffd23f');
+  parked.parked = true;
+  parked.ambient = true;
+  // Vane's lookouts come off the boardwalk and the kerb, between the watch parties: one already down at her feet,
+  // one a few steps up the drive in her sights, the others further back by the boards.
   const lookouts = game.gunmen.list.filter((gunman) => gunman.kind === 'enforcer');
-  const posts = [[x0 - 1.6, z0 - 6], [x0 - 4.6, z0 - 9.4], [x0 + 2.2, z0 - 12.2], [x0 - 1.4, z0 - 15.6]];
+  const posts = [[x0 + 1.5, z0 - 4.4], [x0 + 2.1, z0 - 7.2], [x0 - 1.4, z0 - 11.5], [x0 - 5.5, z0 - 15], [x0 - 7.5, z0 - 20]];
   posts.forEach(([x, z], index) => {
     lookouts[index].position.set(x, 0, z);
     lookouts[index].hostile = true;
     lookouts[index].heading = 0;
   });
   lookouts[0].takeDamage(999, true);
-  const wreck = game.vehicles.spawn('duna', x0 + 3.6, z0 - 25, 0.5, '#3498db');
+  const target = lookouts[1];
+  // He is sidestepping across her sights, toward the middle of the drive.
+  target.strafe = 1;
+  target.strafeClock = 9;
+  const wreck = game.vehicles.spawn('estela', x0 - 2.2, z0 - 27, 0.5, '#3498db');
   wreck.health = 0;
   wreck.hitByPlayer = false;
   wreck.burning = 3.6 - (seconds - 0.16);
   game.wanted.setStars(3, 99);
-  spawnPursuit(game, 'patrol', 'centinela', x0 - 2.4, z0 - 46, 0, 13);
-  spawnPursuit(game, 'interceptor', 'lince', x0 + 3.2, z0 - 62, 0, 15);
+  // Saros P.D. arrives: one cruiser already stopped across the drive with its two officers out and shooting,
+  // another coming down it with an interceptor behind.
+  const first = spawnPursuit(game, 'patrol', 'centinela', x0 - 1.2, z0 - 13.5, 1.1, 0);
+  first.controller.deploy(first);
+  spawnPursuit(game, 'patrol', 'centinela', x0 - 2.6, z0 - 44, 0, 13);
+  spawnPursuit(game, 'interceptor', 'lince', x0 + 0.2, z0 - 60, 0, 15);
   game.police.helicopter.scramble();
   game.police.helicopter.orbit = -Math.PI / 2 + 0.3;
-  game.police.helicopter.mesh.position.set(x0 + 9, 25, z0 - 44);
+  game.police.helicopter.mesh.position.set(x0 - 2, 22, z0 - 42);
+  // The people who were strolling here are caught in it: the shots send them running or to the ground.
+  for (const [x, z] of [[-2.6, -5.2], [-3.8, -6.6], [-5.2, -5.4], [-4.6, -9.4], [-6.6, -8], [-7.4, -12], [4.9, -9.5], [5.4, -12.5]]) spawnStroller(game, x0 + x, z0 + z);
   game.hud.say('NOVA', 'Half of Saros is on the boardwalk looking up. Five of them are looking for me.', '#ff9e7a');
-  // Nova holds the aim (right mouse) on the nearest lookout and fires as the burning Duna goes off behind them.
-  const guards = lookouts;
+  // Nova holds the aim (right mouse) on the nearest lookout, as a player tracking him would, and opens fire as the
+  // burning Estela goes off behind them.
   play(game, seconds, (t) => {
-    game.camera.yaw = aim;
-    game.camera.pitch = 0.02;
+    const camera = game.camera;
+    for (let pass = 0; pass < 2; pass += 1) {
+      const focusX = game.player.position.x - Math.cos(camera.yaw) * 1.15;
+      const focusZ = game.player.position.z + Math.sin(camera.yaw) * 1.15;
+      camera.yaw = Math.atan2(target.position.x - focusX, target.position.z - focusZ);
+    }
+    camera.pitch = 0.03;
     game.input.buttons[2] = true;
-    game.input.buttons[0] = t > seconds - 0.09;
-    // The three guards facing her are due to fire as the frame is taken, so their tracers are in the air.
-    if (t > seconds - 0.07) for (const guard of guards.slice(1, 4)) guard.cooldown = Math.min(guard.cooldown, 0.01);
+    game.input.buttons[0] = t > seconds - 0.3;
+    // Her burst drops him as the frame is taken, and the others and the officers are due to fire, so their
+    // tracers are in the air.
+    const lastShots = t > seconds - 0.075;
+    target.health = lastShots ? Math.min(target.health, 30) : 400;
+    if ((lastShots && target.alive) || t > seconds - STEP * 1.5) game.weapons.cooldown = 0;
+    if (t > seconds - 0.07) for (const gunman of game.gunmen.list) if (gunman.alive && gunman !== target) gunman.cooldown = Math.min(gunman.cooldown, 0.01);
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
     game.player.health = Math.max(game.player.health, 58);
     if (t > seconds - 0.7) game.player.invulnerable = 1;

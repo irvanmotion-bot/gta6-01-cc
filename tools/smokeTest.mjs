@@ -153,6 +153,42 @@ export function playWholeGame() {
   const bounty = { capoSpawned, tally: game.bounties.tally() };
   game.gunmen.clear();
 
+  // On foot beside a parked car: the game rings it and offers F to steal it; then a shot fired in a full street
+  // sends the citizens running with their hands up, or to the ground.
+  game.wanted.reset();
+  run(2);
+  const kerbCar = game.vehicles.spawn('estela', player.position.x + 2.6, player.position.z, 0);
+  kerbCar.parked = true;
+  run(3);
+  const hintBox = document.querySelector('.hint');
+  const street = {
+    prompt: `[${document.querySelector('.hint-key').textContent}] ${document.querySelector('.hint-line').textContent}`,
+    promptShown: hintBox.classList.contains('visible') && hintBox.classList.contains('keyed'), ringsOnCar: game.markers.used,
+  };
+  if (!street.promptShown || !street.prompt.startsWith('[F] STEAL THE')) failures.push(`no steal prompt beside a parked car: "${street.prompt}"`);
+  if (street.ringsOnCar < 1) failures.push('no ring marks the car in reach');
+  game.vehicles.remove(kerbCar);
+  game.pedestrians.populate();
+  street.calmBefore = game.pedestrians.moodCount();
+  game.weapons.give('pistol', 48);
+  const shotsBefore = game.stats.shotsFired;
+  game.input.locked = true;
+  game.input.buttons[0] = true;
+  game.input.buttonPressed[0] = true;
+  run(1);
+  game.input.buttons[0] = false;
+  game.input.locked = false;
+  street.shots = game.stats.shotsFired - shotsBefore;
+  street.afterShot = game.pedestrians.moodCount();
+  street.handsUp = game.pedestrians.list.filter((ped) => ped.alive && ped.panicking).length;
+  run(30);
+  if (street.shots < 1) failures.push('the pistol did not fire');
+  if (street.afterShot.fleeing + street.afterShot.cowering < 1 || street.handsUp < 1) failures.push(`citizens did not react to gunfire: ${JSON.stringify(street.afterShot)}`);
+  street.weaponIcons = [...document.querySelectorAll('.weapon-icon')].filter((icon) => icon.getContext('2d').getImageData(0, 0, icon.width, icon.height).data.some((value, index) => index % 4 === 3 && value > 0)).length;
+  if (street.weaponIcons !== 5) failures.push(`weapon bar drew ${street.weaponIcons} of 5 icons`);
+  game.wanted.reset();
+  game.gunmen.clear();
+
   // Taxi fares in a Saros Cab.
   const cab = game.vehicles.spawn('sarosCab', player.position.x + 2.4, player.position.z, 0);
   cab.parked = true;
@@ -173,6 +209,8 @@ export function playWholeGame() {
   const tactics = new Set();
   const kinds = new Set();
   let roadblocks = 0;
+  /** Shots each pursuit car has fired from its window, by car. */
+  const windowShots = new Map();
   // The dispatch panel's big number must be the units really after Nova: counted three ways at every sample (the
   // world itself, the roster's rows, and what the panel wrote on screen), with the listed rows plus "+N MORE"
   // adding up to it.
@@ -211,11 +249,14 @@ export function playWholeGame() {
     cab.health = cab.maxHealth;
     run(8);
     for (const unit of game.police.roster()) { tactics.add(unit.tactic); kinds.add(unit.kind); }
+    for (const cruiser of game.police.pursuitUnits()) windowShots.set(cruiser, cruiser.controller.shotsFired);
     roadblocks = Math.max(roadblocks, game.police.roadblocks.list.length);
     if (k % 5 === 0) checkPanel(`5 stars, sample ${k}`);
   }
   game.input.held.clear();
   const chase = { stars: game.wanted.stars, tier: game.wanted.responseTier(), units: game.police.pursuitUnits().length, chopper: game.police.helicopter.active, roster: game.police.roster().length, tactics: [...tactics], kinds: [...kinds], roadblocks };
+  chase.shotsFromCarWindows = [...windowShots.values()].reduce((sum, shots) => sum + shots, 0);
+  if (chase.shotsFromCarWindows < 1) failures.push('no pursuit car fired from its window at five stars');
   // The same count at every lower wanted level, as units stand down or are lost behind.
   for (const stars of [4, 3, 2, 1]) {
     game.wanted.setStars(stars, 60);
@@ -271,7 +312,7 @@ export function playWholeGame() {
   // still end with every job passed.
   if (!eclipse.storyComplete) failures.push(`the story did not complete: ${missions.filter((result) => !result.endsWith(':passed')).join(', ')}`);
   return {
-    failures, missions, eclipse, afterStory, workshop, race, bounty, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
+    failures, missions, eclipse, afterStory, workshop, race, bounty, street, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
     hud, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
   };
 }

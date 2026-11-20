@@ -1,4 +1,4 @@
-// The HUD's top-left job panel: the story job with its number, stage n of m, progress bar, objective, next stage
+// The HUD's top-left job panel: the story job with its number and stage n of m, its title, progress bar, objective
 // and timer; a street race or taxi fare when one is running; and in free roam, where the next job waits.
 import { completionPercent } from '../progression/completionTracker.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
@@ -27,7 +27,7 @@ export class HudJobPanel {
     const info = missions.stageInfo();
     if (!info) return null;
     return {
-      header: `JOB ${String(info.number).padStart(2, '0')}/${info.total} · ${info.giver}`, title: info.title, stageLine: `STAGE ${info.stage}/${info.count} · ${info.name.toUpperCase()}`,
+      header: `JOB ${String(info.number).padStart(2, '0')}/${info.total} · STAGE ${info.stage}/${info.count}`, title: info.title, stageLine: '',
       share: info.share, objective: missions.objectiveText(), next: info.next, timer: missions.active.timer, counting: 'down', kind: 'story',
     };
   }
@@ -53,6 +53,7 @@ export class HudJobPanel {
     cache.text(this.header, info.header);
     cache.text(this.title, info.title.toUpperCase());
     cache.text(this.stage, info.stageLine);
+    cache.toggle(this.stage, 'empty', !info.stageLine);
     cache.width(this.fill, info.share);
     cache.text(this.objective, `▸ ${info.objective}`);
     cache.text(this.next, info.kind === 'roam' ? info.next : `NEXT ▸ ${info.next}`);

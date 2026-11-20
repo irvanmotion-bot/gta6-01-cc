@@ -86,6 +86,8 @@ class Gunman extends CharacterBody {
     game.particles.tracer(from, to, this.faction === 'police' ? 0xbfd8ff : 0xffc9a8);
     game.particles.muzzleFlash(from.x, from.y, from.z);
     game.audio.gunshot('distant', Math.max(0.15, 1 - distance / 60));
+    // Anyone's gunfire clears the pavement, not only Nova's.
+    game.pedestrians.scareNear(this.position.x, this.position.z, 22, 8, 7);
     if (!hit) return;
     if (player.vehicle) {
       player.vehicle.damage(this.spec.damage * 0.7);

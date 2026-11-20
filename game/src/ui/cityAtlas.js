@@ -1,12 +1,12 @@
 // The city atlas (M): the full map of Saros with its districts and the path of totality on the left; on the right
-// the save's progress: completion, the five days of eclipse week with each day's story jobs, activity tallies, the
-// record of the playthrough and the three save slots.
+// the game's logo and the save's progress: completion, the five days of eclipse week with each day's story jobs,
+// activity tallies and the three save slots as big cards. (The full record is the pause menu's statistics page.)
 import { GAME_TITLE } from '../core/config.js';
 import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { listSaveSlots } from '../core/saveGame.js';
 import { completionPercent, completionRows } from '../progression/completionTracker.js';
 import { createElement, formatCash } from './domBuilder.js';
-import { formatPlayTime, statisticRows } from './menus.js';
+import { formatPlayTime } from './menus.js';
 
 export class CityAtlas {
   constructor(game) {
@@ -41,11 +41,17 @@ export class CityAtlas {
     return completionRows(this.game).map((row) => `<div class="atlas-activity"><span>${row.label}</span><i><u style="width:${Math.round((row.done / row.total) * 100)}%"></u></i><b>${row.done}/${row.total}</b></div>`).join('');
   }
 
+  /**
+   * The three save slots as big cards: the slot's number, how far its week has come as a figure and a bar, the day
+   * and job it stands at, and its rank, cash and hours. The slot being played is lit and tagged.
+   */
   slotsMarkup() {
+    const total = this.game.missions.jobList().length;
     return listSaveSlots().map((card, index) => {
       const active = index + 1 === this.game.saveSlot;
-      if (!card) return `<div class="atlas-slot${active ? ' active' : ''}"><b>SLOT ${index + 1}</b><span>${active ? 'IN USE' : 'EMPTY'}</span><small>${active ? 'not saved yet' : 'a new week starts here'}</small></div>`;
-      return `<div class="atlas-slot${active ? ' active' : ''}"><b>SLOT ${card.slot}</b><span>${card.percent}% · ${card.day || 'MON'}</span><small>RANK ${card.rank} · ${formatCash(card.cash)} · ${formatPlayTime(card.playSeconds)}</small></div>`;
+      const tag = active ? '<strong>PLAYING</strong>' : '';
+      if (!card) return `<div class="atlas-slot empty${active ? ' active' : ''}"><b>${index + 1}</b><span>${active ? 'NEW' : 'EMPTY'}</span><i><u style="width:0"></u></i><em>${active ? 'NOT SAVED YET' : 'A NEW WEEK'}</em><small>Rest at Casa Reyes to save</small>${tag}</div>`;
+      return `<div class="atlas-slot${active ? ' active' : ''}"><b>${card.slot}</b><span>${card.percent}%</span><i><u style="width:${card.percent}%"></u></i><em>${card.day || 'MON'} · JOB ${card.jobs}/${total}</em><small>RANK ${card.rank} · ${formatCash(card.cash)} · ${formatPlayTime(card.playSeconds)}</small>${tag}</div>`;
     }).join('');
   }
 
@@ -54,19 +60,14 @@ export class CityAtlas {
     const percent = completionPercent(game);
     const cred = game.cred;
     const readout = game.calendar.readout();
-    const stats = statisticRows(game).filter(([label]) => RECORD_ROWS.includes(label)).map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
     this.caption.textContent = 'CITY ATLAS OF SAROS · M or Esc to close';
     this.side.innerHTML = `
-      <div class="atlas-head"><div><h2>${GAME_TITLE}</h2><p>RANK ${cred.rank} · ${cred.title().toUpperCase()} · ${cred.points.toLocaleString('en-US')} CRED · ${formatCash(game.player.cash)}</p></div>
+      <div class="atlas-head"><div class="atlas-logo"><i class="atlas-disc"></i><h2>${GAME_TITLE}</h2><p>RANK ${cred.rank} · ${cred.title().toUpperCase()} · ${formatCash(game.player.cash)}</p></div>
         <div class="atlas-percent"><b>${percent}%</b><span>COMPLETE</span></div></div>
       <div class="atlas-bar"><i style="width:${percent}%"></i></div>
-      <h3>ECLIPSE WEEK · ${game.calendar.dayName()} ${game.calendar.clockText()} · ${readout.big} ${readout.line} · STORY ${game.missions.completed.size}/${game.missions.jobList().length}</h3>
+      <h3>ECLIPSE WEEK · ${game.calendar.dayName()} ${game.calendar.clockText()} · ${readout.big} ${readout.line}</h3>
       <div class="atlas-week">${this.weekMarkup()}</div>
       <h3>ACTIVITIES</h3><div class="atlas-activities">${this.activitiesMarkup()}</div>
-      <h3>RECORD</h3><div class="atlas-stats">${stats}</div>
-      <h3>SAVE SLOTS</h3><div class="atlas-slots">${this.slotsMarkup()}</div>`;
+      <h3>SAVE SLOTS · REST AT CASA REYES TO SAVE</h3><div class="atlas-slots">${this.slotsMarkup()}</div>`;
   }
 }
-
-/** The statistics the atlas has room for; the pause menu's statistics page shows them all. */
-const RECORD_ROWS = ['Cash earned', 'Cars stolen', 'Distance driven', 'Highest wanted level', 'Police escapes', 'Officers downed', 'Vane guns downed', 'Time played'];

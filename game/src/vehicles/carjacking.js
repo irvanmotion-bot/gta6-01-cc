@@ -1,10 +1,31 @@
 // Getting into and out of cars: stealing a parked one, pulling a driver out, and bailing from a moving one.
 import { PLAYER } from '../core/config.js';
 
+/** The car F would take right now: the nearest one in reach that is not a wreck. */
+export function carInReach(game) {
+  const player = game.player;
+  return game.vehicles.nearest(player.position.x, player.position.z, PLAYER.enterRange, (v) => v.driver !== 'cop' || v.spec.police);
+}
+
+/**
+ * Point out the car in reach of a player on foot: an amber ring on the road round it and the key prompt that says
+ * what F will do to it: take a parked car, steal one, or pull its driver out.
+ */
+export function promptCarInReach(game) {
+  const car = carInReach(game);
+  if (!car) return null;
+  const mine = car.stolen || car.missionOwned;
+  const crewOut = car.controller && car.controller.deployed;
+  if (car.driver === 'cop' && !crewOut) game.hud.hint(`${car.spec.name}: officers inside`);
+  else game.hud.hint(car.driver === 'ai' ? `Press F to carjack the ${car.spec.name}` : mine ? `Press F to drive the ${car.spec.name}` : `Press F to steal the ${car.spec.name}`);
+  game.markers.show(car.position.x, car.position.z, car.driver === 'cop' && !crewOut ? '#ff6a4d' : '#ffb547', car.spec.length * 0.62, 2.2);
+  return car;
+}
+
 /** Enter the nearest car in reach; an AI driver is thrown out and runs, which the police count as a crime. */
 export function tryEnterVehicle(game) {
   const player = game.player;
-  const vehicle = game.vehicles.nearest(player.position.x, player.position.z, PLAYER.enterRange, (v) => v.driver !== 'cop' || v.spec.police);
+  const vehicle = carInReach(game);
   if (!vehicle) return false;
   const crewOut = vehicle.controller && vehicle.controller.deployed;
   if (vehicle.driver === 'cop' && !crewOut) { game.hud.notify('The officers inside are not giving this one up.'); return false; }

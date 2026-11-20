@@ -24,6 +24,8 @@ function part(geometry, color, sx, sy, sz, x, y, z) {
   return mesh;
 }
 
+/** How far a cowering citizen sinks onto their heels, in metres. */
+const COWER_DROP = 0.46;
 const SKINS = ['#f1c9a5', '#e0ac69', '#c68642', '#8d5524', '#6b3e1e', '#ffdbac'];
 const SHIRTS = ['#ff6b6b', '#ffd93d', '#4ecdc4', '#ff9f1c', '#f15bb5', '#ffffff', '#3a86ff', '#8ac926', '#9b5de5', '#00bbf9', '#fb5607', '#e9c46a'];
 const PANTS = ['#2d3142', '#3d5a80', '#e0d5c1', '#5c4d3c', '#1b263b', '#c9ada7', '#588157', '#ef8354'];
@@ -153,6 +155,7 @@ export class CharacterBody {
     const m = this.model;
     this.mesh.rotation.y = this.heading;
     if (!this.alive) {
+      this.crouch(0);
       this.deadTime += dt;
       this.mesh.rotation.x += (-Math.PI / 2 - this.mesh.rotation.x) * Math.min(1, dt * 9);
       this.mesh.position.y = Math.max(this.mesh.position.y, groundHeight(this.position.x, this.position.z) + 0.14);
@@ -175,7 +178,28 @@ export class CharacterBody {
     // Eclipse watchers shade their eyes with one hand, and throw both arms up when the sun goes out.
     if (this.gazing) m.armL.rotation.x = -2.35 + Math.sin(this.stride + this.deadTime) * 0.04;
     if (this.cheering) { m.armL.rotation.x = -2.9 + Math.sin(this.game.time * 9 + this.stride) * 0.25; m.armR.rotation.x = -2.9 - Math.sin(this.game.time * 9 + this.stride) * 0.25; }
+    // Citizens in fear: running with both hands in the air, or down on their heels with their arms over their head.
+    if (this.panicking) { m.armL.rotation.x = -2.75 + Math.sin(this.stride * 1.3) * 0.3; m.armR.rotation.x = -2.75 - Math.sin(this.stride * 1.3) * 0.3; }
+    this.crouch(this.cowering ? COWER_DROP : 0);
+    if (this.cowering) {
+      m.legL.rotation.x = -1.35; m.legR.rotation.x = -1.35;
+      m.armL.rotation.x = -2.6; m.armR.rotation.x = -2.6;
+    }
+    m.armL.rotation.z = this.cowering ? 0.55 : 0;
+    m.armR.rotation.z = this.cowering ? -0.55 : 0;
     m.gun.visible = this.armed;
+  }
+
+  /** Lower the whole body by `drop` metres over its feet (0 stands it back up). */
+  crouch(drop) {
+    if (drop === this.crouched) return;
+    this.crouched = drop;
+    const m = this.model;
+    m.trunk.position.y = -drop;
+    m.legL.position.y = 0.84 - drop;
+    m.legR.position.y = 0.84 - drop;
+    m.armL.position.y = 1.45 - drop;
+    m.armR.position.y = 1.45 - drop;
   }
 
   dispose() {

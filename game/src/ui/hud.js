@@ -8,6 +8,7 @@ import { HudStatusPanel } from './hudStatusPanel.js';
 import { HudDispatchPanel } from './hudDispatchPanel.js';
 import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
+import { HudWeaponBar } from './hudWeaponBar.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
 
 export class Hud {
@@ -24,7 +25,10 @@ export class Hud {
     this.eclipsePanel = new HudEclipsePanel(game, right, this.cache);
     this.statusPanel = new HudStatusPanel(game, right, this.cache);
     this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);
-    this.vehiclePanel = new HudVehiclePanel(game, root, this.cache);
+    // Bottom right: the weapon bar, with the car's dial under it at the wheel or the GPS list over it on a quiet walk.
+    const corner = createElement('div', 'corner-stack', root);
+    this.weaponBar = new HudWeaponBar(game, corner, this.cache);
+    this.vehiclePanel = new HudVehiclePanel(game, corner, this.cache);
     this.buildRadar(root);
     this.buildOverlays(root);
     this.speech = [];
@@ -65,6 +69,8 @@ export class Hud {
     this.notifications = createElement('div', 'notifications', root);
     this.crosshair = createElement('div', 'crosshair', root);
     this.hintBox = createElement('div', 'hint', root);
+    this.hintKey = createElement('b', 'hint-key', this.hintBox);
+    this.hintLine = createElement('span', 'hint-line', this.hintBox);
     this.dialogue = createElement('div', 'dialogue', root);
     this.portrait = createElement('canvas', 'dialogue-portrait', this.dialogue);
     this.portrait.width = 96;
@@ -120,6 +126,15 @@ export class Hud {
     this.hintClock = 0.15;
   }
 
+  /** Write a prompt into its box; "Press F to steal the Duna" becomes a key cap F beside STEAL THE DUNA. */
+  showHint(message) {
+    const cache = this.cache;
+    const press = /^Press (\w) (?:to |for )?(.*)$/.exec(message);
+    cache.toggle(this.hintBox, 'keyed', Boolean(press));
+    cache.text(this.hintKey, press ? press[1] : '');
+    cache.text(this.hintLine, press ? press[2].toUpperCase() : message);
+  }
+
   hitMarker() {
     this.hitClock = 0.12;
   }
@@ -167,6 +182,7 @@ export class Hud {
     this.statusPanel.update(dt);
     this.dispatchPanel.update(dt);
     this.crewPanel.update(dt);
+    this.weaponBar.update(dt);
     this.vehiclePanel.update(dt);
     cache.text(this.clock, `${game.calendar.dayName()} ${game.calendar.clockText()}`);
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
@@ -178,7 +194,7 @@ export class Hud {
     cache.toggle(this.damageFlash, 'visible', player.hurtFlash > 0);
     this.hintClock -= dt;
     cache.toggle(this.hintBox, 'visible', this.hintClock > 0);
-    if (this.hintClock > 0) cache.text(this.hintBox, this.hintText);
+    if (this.hintClock > 0) this.showHint(this.hintText);
     if (this.bannerClock > 0) {
       this.bannerClock -= dt;
       if (this.bannerClock <= 0) this.bannerBox.classList.remove('visible');

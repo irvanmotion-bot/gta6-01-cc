@@ -1,5 +1,7 @@
 // How one police vehicle hunts the player: it tails, rams, flanks for a side-swipe or cuts the road off ahead,
-// follows the street grid when it has no line of sight, and puts its officers on the street when the player stops.
+// follows the street grid when it has no line of sight, shoots from its window at three stars and up, and puts its
+// officers on the street when the player stops.
+import * as THREE from 'three';
 import { nearestNode, nodePosition, stepToward } from '../world/roadNetwork.js';
 import { angleDelta, clamp, distance2D } from '../core/random.js';
 
@@ -16,6 +18,11 @@ export class PursuitDriver {
     this.reversing = 0;
     this.reverseSteer = 0;
     this.swerving = false;
+    this.windowClock = 0.4 + Math.random() * 0.8;
+    this.burstLeft = 0;
+    this.shotsFired = 0;
+    this.muzzle = new THREE.Vector3();
+    this.impact = new THREE.Vector3();
   }
 
   /** What the dispatch panel prints for this unit right now. */
@@ -53,6 +60,7 @@ export class PursuitDriver {
       return;
     }
     const direct = distance < 70 && game.collision.hasLineOfSight(position.x, position.z, player.position.x, player.position.z, 1);
+    if (direct) this.fireFromWindow(vehicle, player, distance, dt);
     const aim = direct ? this.aimInSight(vehicle, player, distance) : this.aimByRoad(vehicle, player);
     const turn = angleDelta(vehicle.heading, Math.atan2(aim.x - position.x, aim.z - position.z));
     const sharp = Math.abs(turn) > 0.85;
@@ -67,6 +75,40 @@ export class PursuitDriver {
       this.reversing = 1.3;
       this.reverseSteer = turn > 0 ? -1 : 1;
     }
+  }
+
+  /**
+   * From three stars the officer riding shotgun leans out and shoots while the car is still chasing: short bursts
+   * from the window on the player's side, wild at speed, that chip at the player's car or at Nova on foot.
+   */
+  fireFromWindow(vehicle, player, distance, dt) {
+    const game = this.game;
+    if (game.wanted.stars < WINDOW_FIRE.fromStars || distance > WINDOW_FIRE.range || !player.alive) return;
+    this.windowClock -= dt;
+    if (this.windowClock > 0) return;
+    this.burstLeft = this.burstLeft > 0 ? this.burstLeft - 1 : WINDOW_FIRE.burst - 1;
+    this.windowClock = this.burstLeft > 0 ? WINDOW_FIRE.rate : WINDOW_FIRE.pause * (0.7 + Math.random() * 0.6);
+    const position = vehicle.position;
+    // The window on whichever side of the car the player is.
+    const leftX = vehicle.forwardZ();
+    const leftZ = -vehicle.forwardX();
+    const side = (player.position.x - position.x) * leftX + (player.position.z - position.z) * leftZ > 0 ? 1 : -1;
+    const reach = vehicle.spec.width / 2 + 0.25;
+    const from = this.muzzle.set(position.x + leftX * side * reach + vehicle.forwardX() * 0.5, position.y + vehicle.spec.height * 0.72, position.z + leftZ * side * reach + vehicle.forwardZ() * 0.5);
+    const fast = Math.abs(vehicle.speed) > 14 || (player.vehicle ? Math.abs(player.vehicle.speed) > 14 : player.moveSpeed > 5);
+    const hit = Math.random() < WINDOW_FIRE.accuracy * (1 - (distance / WINDOW_FIRE.range) * 0.5) * (fast ? 0.6 : 1);
+    const miss = hit ? 0.3 : 2.2;
+    const to = this.impact.set(player.position.x + (Math.random() - 0.5) * miss * 2, player.position.y + 0.9 + (Math.random() - 0.5) * miss * 0.6, player.position.z + (Math.random() - 0.5) * miss * 2);
+    game.particles.tracer(from, to, 0xbfd8ff);
+    game.particles.muzzleFlash(from.x, from.y, from.z);
+    game.audio.gunshot('distant', Math.max(0.2, 1 - distance / 50));
+    this.shotsFired += 1;
+    if (!hit) return;
+    if (player.vehicle) {
+      player.vehicle.damage(WINDOW_FIRE.damage * 0.7);
+      game.particles.sparks(to.x, to.y, to.z, 3);
+    }
+    player.takeDamage(WINDOW_FIRE.damage, 'bullet');
   }
 
   /** The point to steer at with the player in view, by tactic. */
@@ -150,5 +192,7 @@ export function assignPursuitTactics(units, stars, playerDriving) {
   }
 }
 
-const PACK_PATTERN = ['ram', 'flankLeft', 'flankRight', 'cutOff', 'ram', 'cutOff'];
+/** Shooting from a moving cruiser: the wanted level it starts at, reach in metres, shots a burst and their odds. */
+const WINDOW_FIRE = { fromStars: 3, range: 40, burst: 3, rate: 0.12, pause: 1.5, accuracy: 0.22, damage: 5 };
+const PACK_PATTERN =['ram', 'flankLeft', 'flankRight', 'cutOff', 'ram', 'cutOff'];
 const TACTIC_LABELS = { respond: 'RESPOND', tail: 'TAIL', ram: 'RAM', flankLeft: 'FLANK LEFT', flankRight: 'FLANK RIGHT', cutOff: 'CUT OFF' };

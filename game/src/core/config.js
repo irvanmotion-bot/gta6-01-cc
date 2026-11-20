@@ -44,7 +44,7 @@ export const PLAYER = {
   radius: 0.42,
   maxHealth: 100,
   maxArmor: 100,
-  enterRange: 3.6,
+  enterRange: 4.2,
 };
 
 /** A day of the eclipse week takes about this long to play; eclipseCalendar.js stretches the golden afternoon. */

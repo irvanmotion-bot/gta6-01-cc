@@ -58,7 +58,8 @@ export class HudEclipsePanel {
     const readout = calendar.readout();
     cache.text(this.caption, readout.caption);
     cache.text(this.big, readout.big);
-    cache.text(this.line, readout.line);
+    // The panel has room for the first words of the line; the atlas prints it whole.
+    cache.text(this.line, readout.line.split(/ · |: /)[0]);
     cache.width(this.fill, readout.share);
     cache.toggle(this.root, 'ticking', readout.ticking);
     cache.toggle(this.root, 'totality', calendar.isTotality());

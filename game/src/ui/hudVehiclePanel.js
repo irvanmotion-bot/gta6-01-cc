@@ -1,5 +1,6 @@
-// The HUD's bottom-right panel. In a car: its name and class, the speedometer, gear, condition and nitro meters and
-// the radio station playing. On foot: the GPS list of the nearest places with their distance.
+// The HUD's bottom-right panel. In a car: its name and class, the speedometer and gear, and the body and nitro
+// gauges (the radio names its station in the feed when it changes). On foot and not wanted: the GPS list of the
+// nearest places with their distance.
 import { distance2D } from '../core/random.js';
 import { LANDMARKS } from '../world/cityLayout.js';
 import { createElement, createMeter } from './domBuilder.js';
@@ -15,9 +16,9 @@ export class HudVehiclePanel {
     this.gear = createElement('span', 'gear-box', dial);
     this.speed = createElement('b', 'speed-value', dial);
     createElement('small', '', dial, 'km/h');
-    this.condition = createMeter(this.root, 'condition-meter', 'CONDITION');
-    this.nitro = createMeter(this.root, 'nitro-meter', 'NITRO');
-    this.radio = createElement('div', 'radio-line', this.root);
+    const gauges = createElement('div', 'vitals', this.root);
+    this.condition = createMeter(gauges, 'condition-meter', 'BODY');
+    this.nitro = createMeter(gauges, 'nitro-meter', 'NITRO');
     this.gps = createElement('div', 'hud-panel gps-panel', parent);
     createElement('div', 'panel-caption', this.gps, 'GPS · NEAREST');
     this.gpsRows = createElement('div', 'gps-rows', this.gps);
@@ -30,10 +31,10 @@ export class HudVehiclePanel {
     return String(Math.min(5, 1 + Math.floor((vehicle.speed / (vehicle.spec.maxSpeed * 1.05)) * 5)));
   }
 
-  /** The four nearest landmarks with their distance, for a player on foot. */
+  /** The three nearest landmarks with their distance, for a player on foot. */
   gpsMarkup() {
     const p = this.game.player.position;
-    const places = Object.values(LANDMARKS).map((place) => ({ place, distance: distance2D(p.x, p.z, place.x, place.z) })).sort((a, b) => a.distance - b.distance).slice(0, 4);
+    const places = Object.values(LANDMARKS).map((place) => ({ place, distance: distance2D(p.x, p.z, place.x, place.z) })).sort((a, b) => a.distance - b.distance).slice(0, 3);
     return places.map(({ place, distance }) => `<div><i style="background:${place.color}">${place.icon}</i><b>${place.name}</b><u>${Math.round(distance)} m</u></div>`).join('');
   }
 
@@ -42,7 +43,8 @@ export class HudVehiclePanel {
     const cache = this.cache;
     const vehicle = game.player.vehicle;
     cache.toggle(this.root, 'visible', Boolean(vehicle));
-    cache.toggle(this.gps, 'visible', !vehicle);
+    // The GPS list is for a quiet walk: with the police on her, the dispatch panel has the screen instead.
+    cache.toggle(this.gps, 'visible', !vehicle && game.wanted.stars === 0);
     if (!vehicle) {
       this.gpsClock -= dt;
       if (this.gpsClock <= 0) { this.gpsClock = 0.5; cache.html(this.gpsRows, this.gpsMarkup()); }
@@ -53,13 +55,11 @@ export class HudVehiclePanel {
     cache.text(this.gear, this.gearFor(vehicle));
     const condition = vehicle.conditionPercent();
     cache.width(this.condition.fill, condition / 100);
-    cache.text(this.condition.value, vehicle.tiresShredded ? `${condition}% · TYRES OUT` : `${condition}%`);
+    cache.text(this.condition.value, vehicle.tiresShredded ? 'TYRES OUT' : `${condition}%`);
     cache.toggle(this.condition.root, 'low', condition < 35 || vehicle.tiresShredded);
     const workshop = game.workshop;
     cache.toggle(this.nitro.root, 'empty', !workshop.hasNitro());
     cache.width(this.nitro.fill, workshop.hasNitro() ? workshop.nitroCharge : 0);
-    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NOT FITTED' : vehicle.boosting ? 'BURNING' : workshop.nitroCharge >= 1 ? 'SHIFT' : 'CHARGING');
-    const station = game.audio.radio.current();
-    cache.text(this.radio, station ? `♪ ${station.name}${station.host ? ` · ${station.host}` : ''}` : '♪ RADIO OFF');
+    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURN' : workshop.nitroCharge >= 1 ? 'SHIFT' : '···');
   }
 }

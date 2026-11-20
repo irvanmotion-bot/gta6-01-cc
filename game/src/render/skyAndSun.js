@@ -52,6 +52,14 @@ vec3 coronaLight(vec3 dir, float moonAngle) {
   float crown = exp(-beyond * (2.6 - streamers * 1.4)) * 0.75 * streamers;
   return vec3(1.0, 0.95, 0.86) * (ring + crown) * step(moonRadius, moonAngle);
 }
+/* The rays of the low sun: a wide soft star round the disc, some spokes longer than others. */
+vec3 sunRays(vec3 dir, float sunAngle) {
+  vec3 offset = dir - sunDir;
+  float around = atan(dot(offset, discUp), dot(offset, discRight));
+  float reach = max(1.0 - sunAngle / (sunRadius * 4.6), 0.0);
+  float spokes = 0.5 + 0.3 * sin(around * 12.0 + 0.6) + 0.2 * sin(around * 5.0 + 1.9);
+  return vec3(1.0, 0.7, 0.3) * reach * reach * (0.3 + 0.7 * spokes) * 0.5;
+}
 void main() {
   vec3 dir = normalize(vDir);
   float h = clamp(dir.y, 0.0, 1.0);
@@ -78,12 +86,17 @@ void main() {
   float moon = 1.0 - smoothstep(moonRadius - edge, moonRadius + edge, moonAngle);
   float disc = 1.0 - smoothstep(sunRadius - edge, sunRadius + edge, sunAngle);
   // A thin bright halo hugs the limb of the sun, so the crescent stands out from the haze around it.
-  float halo = (1.0 - smoothstep(sunRadius, sunRadius * 1.5, sunAngle)) * (1.0 - disc) * sunGlow;
-  color += vec3(1.0, 0.8, 0.45) * halo * 0.3;
-  color = mix(color, vec3(1.0, 0.98, 0.82), disc);
-  // The moon is a disc of deep indigo: against the sun it cuts the crescent, beside it it fades into the sky.
-  float overSun = 1.0 - smoothstep(sunRadius, sunRadius + moonRadius * 1.6, sunAngle);
-  color = mix(color, moonColor, moon * moonShade * mix(0.5, 1.0, overSun));
+  // The halo and the rays belong to the crescent: the moon's disc stands in front of them on its own side.
+  float clearOfMoon = 1.0 - moon * moonShade * 0.9;
+  float halo = (1.0 - smoothstep(sunRadius, sunRadius * 1.9, sunAngle)) * (1.0 - disc) * sunGlow * clearOfMoon;
+  color += vec3(1.0, 0.66, 0.26) * halo * 0.4;
+  // Long uneven rays stand out from the limb, so even a thin crescent blazes in the haze.
+  color += sunRays(dir, sunAngle) * sunGlow * (1.0 - disc) * (1.0 - corona) * clearOfMoon;
+  color = mix(color, vec3(1.0, 0.99, 0.9), disc);
+  // Where the moon has the sun behind it, it is a clean bite of deep indigo. Beside the sun it is a round dusk-violet
+  // shade in the haze, plain enough to read as the moon and no darker, until totality brings the whole black disc out.
+  float overSun = 1.0 - smoothstep(sunRadius * 0.97, sunRadius * 1.1, sunAngle);
+  color = mix(color, moonColor, moon * moonShade * mix(0.5, 1.0, max(overSun, corona)));
   color += coronaLight(dir, moonAngle) * corona;
   gl_FragColor = vec4(color, 1.0);
   #include <colorspace_fragment>

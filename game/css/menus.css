@@ -48,8 +48,12 @@
 .atlas-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6vh 1.4vh; background: rgba(23, 18, 43, 0.86); font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.25vh; color: var(--amber); }
 .atlas-side { position: absolute; right: 2vh; top: 2vh; bottom: 2vh; width: 64vh; overflow: hidden; }
 .atlas-head { display: flex; justify-content: space-between; align-items: flex-end; }
-.atlas-head h2 { margin: 0; font-family: var(--display); font-style: italic; font-size: 8.4vh; line-height: 0.9; color: var(--cream); letter-spacing: 0.3vh; text-shadow: 0 0.5vh 0 var(--coral); }
-.atlas-head p { margin: 1vh 0 0; font-size: 1.75vh; font-weight: 800; letter-spacing: 0.06vh; color: var(--amber); }
+/* The logo, as on the start screen: the title set across a sun with the moon most of the way over it. */
+.atlas-logo { position: relative; padding-top: 0.6vh; }
+.atlas-disc { position: absolute; left: 22vh; top: -1vh; width: 13vh; height: 13vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 4vh rgba(255, 181, 71, 0.75); overflow: hidden; }
+.atlas-disc::after { content: ""; position: absolute; left: 2.9vh; top: 2.2vh; width: 13.4vh; height: 13.4vh; border-radius: 50%; background: #17122b; }
+.atlas-head h2 { position: relative; margin: 0; font-family: var(--display); font-style: italic; font-size: 10.5vh; line-height: 0.9; color: var(--cream); letter-spacing: 0.3vh; text-shadow: 0 0.5vh 0 var(--coral), 0 1vh 0 var(--ink); }
+.atlas-head p { position: relative; margin: 1.2vh 0 0; font-size: 1.9vh; font-weight: 800; letter-spacing: 0.06vh; color: var(--amber); }
 .atlas-percent { text-align: right; }
 .atlas-percent b { display: block; font-family: var(--display); font-weight: 400; font-size: 8.4vh; line-height: 0.9; color: var(--amber); }
 .atlas-percent span { font-size: 1.7vh; font-weight: 800; letter-spacing: 0.2vh; }
@@ -57,7 +61,7 @@
 .atlas-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
 .atlas-side h3 { margin: 1.3vh 0 0.5vh; font-family: var(--display); font-weight: 400; font-size: 2.1vh; letter-spacing: 0.16vh; color: var(--amber); border-bottom: 0.2vh solid rgba(255, 181, 71, 0.4); white-space: nowrap; overflow: hidden; }
 .atlas-week { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.6vh; }
-.atlas-day { background: rgba(244, 236, 216, 0.06); border-top: 0.5vh solid var(--dim); border-radius: 0 0 0.6vh 0.6vh; padding: 0.4vh 0.6vh 0.6vh; min-height: 21vh; }
+.atlas-day { background: rgba(244, 236, 216, 0.06); border-top: 0.5vh solid var(--dim); border-radius: 0 0 0.6vh 0.6vh; padding: 0.4vh 0.6vh 0.6vh; min-height: 24vh; }
 .atlas-day h4 { margin: 0 0 0.4vh; font-family: var(--display); font-weight: 400; font-size: 2.6vh; letter-spacing: 0.14vh; color: var(--dim); }
 .atlas-day.past { border-top-color: var(--amber); }
 .atlas-day.past h4 { color: var(--amber); }
@@ -74,20 +78,23 @@
 .atlas-job.open { box-shadow: inset 0 0 0 0.2vh var(--amber); }
 .atlas-job.open u { color: var(--amber); }
 .atlas-job.locked { opacity: 0.5; }
-.atlas-activity { display: grid; grid-template-columns: 19vh 1fr 6vh; align-items: center; gap: 1.2vh; font-size: 1.7vh; font-weight: 700; line-height: 2.35vh; }
-.atlas-activity i { display: block; height: 1vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.5vh; overflow: hidden; }
+.atlas-activities { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2.4vh; }
+.atlas-activity { display: grid; grid-template-columns: 13.5vh 1fr 4.6vh; align-items: center; gap: 0.8vh; font-size: 1.7vh; font-weight: 700; line-height: 2.6vh; white-space: nowrap; }
+.atlas-activity i { display: block; height: 1.2vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.6vh; overflow: hidden; }
 .atlas-activity i u { display: block; height: 100%; background: var(--amber); }
 .atlas-activity b { text-align: right; font-family: var(--display); font-weight: 400; }
-.atlas-stats { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2.4vh; font-size: 1.6vh; line-height: 2.3vh; }
-.atlas-stats div { display: flex; justify-content: space-between; border-bottom: 0.12vh solid rgba(244, 236, 216, 0.1); }
-.atlas-stats span { font-weight: 600; color: var(--dim); }
-.atlas-stats b { font-family: var(--display); font-weight: 400; color: var(--amber); letter-spacing: 0.05vh; }
-.atlas-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6vh; }
-.atlas-slot { display: flex; flex-direction: column; padding: 0.5vh 0.9vh; background: rgba(244, 236, 216, 0.07); border-left: 0.6vh solid var(--dim); border-radius: 0 0.5vh 0.5vh 0; }
-.atlas-slot b { font-family: var(--display); font-weight: 400; font-size: 2.2vh; letter-spacing: 0.1vh; }
-.atlas-slot span { font-family: var(--display); font-size: 1.9vh; color: var(--amber); }
-.atlas-slot small { font-size: 1.35vh; font-weight: 700; color: var(--cream); }
-.atlas-slot.active { border-left-color: var(--amber); background: rgba(255, 181, 71, 0.16); }
+/* Save slots: three big cards, the slot's number, its completion as a figure and a bar, where its week stands */
+.atlas-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vh; }
+.atlas-slot { position: relative; display: grid; grid-template-columns: auto 1fr; column-gap: 1vh; align-items: end; padding: 1.2vh 1.3vh 1.3vh; background: rgba(244, 236, 216, 0.08); border-top: 0.8vh solid var(--dim); border-radius: 0 0 0.9vh 0.9vh; }
+.atlas-slot b { font-family: var(--display); font-weight: 400; font-style: italic; font-size: 13vh; line-height: 0.86; color: var(--cream); }
+.atlas-slot span { font-family: var(--display); font-size: 5.4vh; line-height: 1; text-align: right; color: var(--amber); }
+.atlas-slot i { grid-column: span 2; display: block; height: 1.6vh; margin: 1vh 0 0.8vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.8vh; overflow: hidden; }
+.atlas-slot i u { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
+.atlas-slot em { grid-column: span 2; font-family: var(--display); font-style: normal; font-size: 2.5vh; letter-spacing: 0.1vh; color: #fff; }
+.atlas-slot small { grid-column: span 2; font-size: 1.5vh; font-weight: 700; color: var(--dim); white-space: nowrap; }
+.atlas-slot strong { position: absolute; right: 0; top: -0.8vh; padding: 0.1vh 0.9vh 0.2vh; font-family: var(--display); font-weight: 400; font-size: 1.7vh; letter-spacing: 0.12vh; color: var(--ink); background: var(--amber); border-radius: 0 0 0 0.6vh; }
+.atlas-slot.active { border-top-color: var(--amber); background: rgba(255, 181, 71, 0.2); box-shadow: 0 0 2.4vh rgba(255, 181, 71, 0.35); }
+.atlas-slot.empty b, .atlas-slot.empty span { color: var(--dim); }
 
 /* Shop counter: Ammo Amigo's card in the middle of the screen */
 #shop-menu { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(18, 14, 36, 0.6); }
