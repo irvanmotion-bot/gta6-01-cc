@@ -44,7 +44,12 @@ export class Particles {
     scene.add(this.points);
 
     this.tracers = [];
-    const tracerGeometry = new THREE.BoxGeometry(0.07, 0.07, 1);
+    // A streak that is thickest in the middle and fine at both ends, so a round passing the camera stays a line.
+    const tracerGeometry = new THREE.BoxGeometry(0.08, 0.08, 1, 1, 1, 2);
+    const corners = tracerGeometry.attributes.position;
+    for (let k = 0; k < corners.count; k += 1) {
+      if (Math.abs(corners.getZ(k)) > 0.4) corners.setXY(k, corners.getX(k) * 0.12, corners.getY(k) * 0.12);
+    }
     for (let k = 0; k < 24; k += 1) {
       const mesh = new THREE.Mesh(tracerGeometry, new THREE.MeshBasicMaterial({ color: 0xfff1a8, transparent: true }));
       mesh.visible = false;
