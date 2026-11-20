@@ -22,7 +22,6 @@ export class Vehicle {
     this.mesh = model.group;
     this.model = model;
     this.mesh.rotation.order = 'YXZ';
-    this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
     this.lights = attachVehicleLights(model, this.spec);
     this.position = this.mesh.position;
     this.position.set(x, groundHeight(x, z), z);
@@ -139,7 +138,6 @@ export class Vehicle {
     this.mesh.rotation.set(this.pitch, this.heading, this.roll);
     for (const wheel of this.model.wheels) {
       wheel.children[0].rotation.x += (vf / 0.36) * dt;
-      wheel.children[1].rotation.x = wheel.children[0].rotation.x;
       if (wheel.userData.front) wheel.rotation.y = steerAngle;
     }
     this.model.tailMaterial.color.setHex(braking ? TAIL_LAMP.braking : TAIL_LAMP.idle);
@@ -257,22 +255,22 @@ export class Vehicle {
   /** A respray: rebuild the body in a new colour where it stands. */
   repaint(paint) {
     const old = this.mesh;
+    const oldGeometries = this.model.ownGeometries;
     this.paint = paint;
     this.model = buildVehicleModel(this.spec, paint);
     this.mesh = this.model.group;
     this.mesh.rotation.order = 'YXZ';
-    this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
     this.lights = attachVehicleLights(this.model, this.spec);
     this.mesh.position.copy(old.position);
     this.mesh.rotation.copy(old.rotation);
     this.position = this.mesh.position;
     this.game.scene.remove(old);
-    old.children[0].geometry.dispose();
+    for (const geometry of oldGeometries) geometry.dispose();
     this.game.scene.add(this.mesh);
   }
 
   dispose() {
     this.game.scene.remove(this.mesh);
-    this.mesh.children[0].geometry.dispose();
+    for (const geometry of this.model.ownGeometries) geometry.dispose();
   }
 }

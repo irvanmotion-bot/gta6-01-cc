@@ -44,7 +44,7 @@ export class Particles {
     scene.add(this.points);
 
     this.tracers = [];
-    const tracerGeometry = new THREE.BoxGeometry(0.09, 0.09, 1);
+    const tracerGeometry = new THREE.BoxGeometry(0.07, 0.07, 1);
     for (let k = 0; k < 24; k += 1) {
       const mesh = new THREE.Mesh(tracerGeometry, new THREE.MeshBasicMaterial({ color: 0xfff1a8, transparent: true }));
       mesh.visible = false;
@@ -90,6 +90,12 @@ export class Particles {
     for (let k = 0; k < 2; k += 1) {
       this.emit(x + (Math.random() - 0.5) * 0.7, y, z + (Math.random() - 0.5) * 0.7, vx * 0.55, 0.4, vz * 0.55, 0.22, 0.55, 0.5, 0.35, 0.75, 1, 0.95);
     }
+  }
+
+  /** The burst at a gun's muzzle: a white-hot heart in a short yellow flare, gone in a few frames. */
+  muzzleFlash(x, y, z) {
+    this.emit(x, y, z, 0, 0, 0, 0.09, 0.75, 0.3, 1, 0.78, 0.25, 0.95);
+    this.emit(x, y, z, 0, 0, 0, 0.07, 0.36, 0.1, 1, 0.97, 0.8, 1);
   }
 
   sparks(x, y, z, count) {

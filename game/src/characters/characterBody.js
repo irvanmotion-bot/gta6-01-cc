@@ -3,11 +3,13 @@ import * as THREE from 'three';
 import { WORLD_BOUNDS } from '../core/config.js';
 import { angleDelta, clamp } from '../core/random.js';
 import { groundHeight } from '../world/cityLayout.js';
+import { MeshBatcher } from '../render/meshBatcher.js';
 
 const limbGeometry = new THREE.BoxGeometry(1, 1, 1);
 limbGeometry.translate(0, -0.5, 0);
 const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
 const materials = new Map();
+const trunkMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
 
 function materialOf(color) {
   if (!materials.has(color)) materials.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.85 }));
@@ -49,20 +51,26 @@ export const LOOKS = {
 export function buildCharacterModel(look) {
   const group = new THREE.Group();
   const legColor = look.shorts ? look.skin : look.pants;
-  const torso = part(blockGeometry, look.shirt, 0.5, 0.62, 0.28, 0, 1.16, 0);
-  const hips = part(blockGeometry, look.pants, 0.5, 0.24, 0.29, 0, 0.84, 0);
-  const head = part(blockGeometry, look.skin, 0.26, 0.28, 0.27, 0, 1.63, 0);
-  const hair = part(blockGeometry, look.hair, 0.29, 0.12, 0.3, 0, 1.76, -0.01);
+  // Everything that never bends (torso, hips, head, hair, jacket, hat) is one mesh; only the limbs swing on their own.
+  const trunkParts = new MeshBatcher();
+  const block = (color, sx, sy, sz, x, y, z) => trunkParts.addBox(x, y - sy / 2, z, sx, sy, sz, color);
+  block(look.shirt, 0.5, 0.62, 0.28, 0, 1.16, 0);
+  block(look.pants, 0.5, 0.24, 0.29, 0, 0.84, 0);
+  block(look.skin, 0.26, 0.28, 0.27, 0, 1.63, 0);
+  block(look.hair, 0.29, 0.12, 0.3, 0, 1.76, -0.01);
+  if (look.jacket) block(look.jacket, 0.53, 0.5, 0.2, 0, 1.2, -0.06);
+  if (look.hat) {
+    block(look.hat, 0.31, 0.1, 0.32, 0, 1.84, 0);
+    block(look.hat, 0.3, 0.03, 0.2, 0, 1.8, 0.2);
+  }
+  const trunk = trunkParts.build(trunkMaterial, { receiveShadow: false });
   const legL = part(limbGeometry, legColor, 0.2, 0.84, 0.22, 0.14, 0.84, 0);
   const legR = part(limbGeometry, legColor, 0.2, 0.84, 0.22, -0.14, 0.84, 0);
   const armL = part(limbGeometry, look.jacket || look.shirt, 0.15, 0.64, 0.17, 0.33, 1.45, 0);
   const armR = part(limbGeometry, look.jacket || look.shirt, 0.15, 0.64, 0.17, -0.33, 1.45, 0);
-  group.add(torso, hips, head, hair, legL, legR, armL, armR);
-  if (look.jacket) group.add(part(blockGeometry, look.jacket, 0.53, 0.5, 0.2, 0, 1.2, -0.06));
-  if (look.hat) {
-    group.add(part(blockGeometry, look.hat, 0.31, 0.1, 0.32, 0, 1.84, 0));
-    group.add(part(blockGeometry, look.hat, 0.3, 0.03, 0.2, 0, 1.8, 0.2));
-  }
+  armL.castShadow = false;
+  armR.castShadow = false;
+  group.add(trunk, legL, legR, armL, armR);
   // The gun is a child of the right arm, so it follows the aim; scaled against the arm's own scale.
   const gun = new THREE.Mesh(blockGeometry, materialOf('#16181b'));
   gun.scale.set(0.62, 0.8, 0.75);
@@ -70,7 +78,7 @@ export function buildCharacterModel(look) {
   gun.visible = false;
   armR.add(gun);
   group.scale.setScalar(look.scale || 1);
-  return { group, legL, legR, armL, armR, head, gun };
+  return { group, trunk, legL, legR, armL, armR, gun };
 }
 
 export class CharacterBody {
@@ -169,5 +177,6 @@ export class CharacterBody {
 
   dispose() {
     this.game.scene.remove(this.mesh);
+    this.model.trunk.geometry.dispose();
   }
 }

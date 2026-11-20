@@ -38,6 +38,9 @@ export function flashSirenFlares(lights, phase) {
 export function setVehicleLightsNight(night) {
   beamMaterial.opacity = night * 0.4;
   tailFlareMaterial.opacity = night * 0.45;
+  // By day the beams and tail glows are not drawn at all.
+  beamMaterial.visible = night > 0.02;
+  tailFlareMaterial.visible = night > 0.02;
   redFlareMaterial.opacity = 0.72 + night * 0.28;
   blueFlareMaterial.opacity = 0.72 + night * 0.28;
 }

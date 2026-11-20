@@ -21,9 +21,9 @@ CITY.depth = (CITY.roadsZ - 1) * CITY.pitch;
 export const WORLD_BOUNDS = { minX: -76, maxX: CITY.width + 22, minZ: -22, maxZ: CITY.depth + 44 };
 
 export const POPULATION = {
-  movingCars: 20,
-  parkedCars: 11,
-  pedestrians: 64,
+  movingCars: 26,
+  parkedCars: 16,
+  pedestrians: 84,
   pedestrianFar: 115,
   spawnNear: 55,
   spawnFar: 150,

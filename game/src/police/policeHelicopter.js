@@ -30,7 +30,8 @@ export class PoliceHelicopter {
     this.rotor.add(rotorB);
     this.tailRotor = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.5, 0.16), new THREE.MeshBasicMaterial({ color: 0x15171a }));
     this.tailRotor.position.set(0.2, 0.2, -6.3);
-    const beamGeometry = new THREE.ConeGeometry(7, HOVER_HEIGHT, 18, 1, true);
+    // A narrow shaft: the walking camera stays outside it, so it reads as a beam on Nova and never as a haze round the lens.
+    const beamGeometry = new THREE.ConeGeometry(2.7, HOVER_HEIGHT, 20, 1, true);
     beamGeometry.translate(0, -HOVER_HEIGHT / 2, 0);
     this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
     this.mesh.add(body, this.rotor, this.tailRotor);
@@ -41,7 +42,7 @@ export class PoliceHelicopter {
     // The searchlight really lights the street: a spot lamp on the nose and a bright pool on the ground under it.
     this.lamp = new THREE.SpotLight(0xfff3c4, 0, 90, 0.3, 0.5, 1.2);
     this.lamp.visible = false;
-    this.pool = new THREE.Mesh(new THREE.CircleGeometry(6.5, 28), new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.pool = new THREE.Mesh(new THREE.CircleGeometry(3.4, 28), new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.pool.rotation.x = -Math.PI / 2;
     this.pool.visible = false;
     this.pool.renderOrder = 3;

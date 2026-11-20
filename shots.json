@@ -1,6 +1,6 @@
 [
   { "name": "1-police-chase.jpg", "query": "?shot=chase", "wait": 4800 },
-  { "name": "2-bank-shootout.jpg", "query": "?shot=shootout" },
+  { "name": "2-bank-shootout.jpg", "query": "?shot=shootout", "wait": 4800 },
   { "name": "3-city-atlas.jpg", "query": "?shot=atlas" },
-  { "name": "4-night-race.jpg", "query": "?shot=race" }
+  { "name": "4-sunset-race.jpg", "query": "?shot=race", "wait": 4800 }
 ]

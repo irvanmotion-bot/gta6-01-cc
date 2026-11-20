@@ -60,7 +60,8 @@ export class ChaseCamera {
 
     const cosPitch = Math.cos(this.pitch);
     this.direction.set(Math.sin(this.yaw) * cosPitch, -Math.sin(this.pitch), Math.cos(this.yaw) * cosPitch);
-    const shoulder = vehicle ? 0 : player.aiming ? 0.9 : 0.5;
+    // On foot the camera sits over Nova's right shoulder, further out while she aims so the target stays clear of her.
+    const shoulder = vehicle ? 0 : player.aiming ? 1.15 : 0.5;
     const focusX = player.position.x - Math.cos(this.yaw) * shoulder;
     const focusY = player.position.y + height;
     const focusZ = player.position.z + Math.sin(this.yaw) * shoulder;

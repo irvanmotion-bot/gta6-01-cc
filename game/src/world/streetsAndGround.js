@@ -14,7 +14,7 @@ export function buildStreetsAndGround(scene) {
   surface.repeat.set((CITY.width + CITY.road) / ASPHALT_TILE, (CITY.depth + CITY.road) / ASPHALT_TILE);
   const asphalt = new THREE.Mesh(
     new THREE.PlaneGeometry(CITY.width + CITY.road, CITY.depth + CITY.road),
-    new THREE.MeshStandardMaterial({ map: surface, color: 0xd6d8de, roughness: 0.9 }),
+    new THREE.MeshStandardMaterial({ map: surface, color: 0xf2f2f4, roughness: 0.9 }),
   );
   asphalt.rotation.x = -Math.PI / 2;
   asphalt.position.set(CITY.width / 2, 0, CITY.depth / 2);
@@ -49,10 +49,10 @@ function paintAsphaltTexture() {
   canvas.width = size;
   canvas.height = size;
   const c = canvas.getContext('2d');
-  c.fillStyle = '#41444b';
+  c.fillStyle = '#676a72';
   c.fillRect(0, 0, size, size);
   for (let k = 0; k < 5200; k += 1) {
-    const shade = rng.int(48, 96);
+    const shade = rng.int(78, 128);
     c.fillStyle = `rgba(${shade},${shade},${shade + 6},${rng.range(0.25, 0.7)})`;
     c.fillRect(rng.int(0, size), rng.int(0, size), rng.int(1, 3), rng.int(1, 3));
   }

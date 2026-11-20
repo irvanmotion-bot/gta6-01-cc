@@ -29,6 +29,7 @@ import { CityBuildings } from './world/buildings.js';
 import { buildStreetsAndGround } from './world/streetsAndGround.js';
 import { OceanAndBeach } from './world/oceanAndBeach.js';
 import { StreetProps } from './world/streetProps.js';
+import { StreetFurniture } from './world/streetFurniture.js';
 import { CityLights } from './world/cityLights.js';
 import { BoatsAtSea } from './world/boatsAtSea.js';
 import { PlayerHeadlamp, setVehicleLightsNight } from './vehicles/vehicleLights.js';
@@ -78,6 +79,7 @@ class Game {
     this.buildings = new CityBuildings(this.scene, this.collision);
     this.ocean = new OceanAndBeach(this.scene, this.collision);
     this.props = new StreetProps(this.scene);
+    this.furniture = new StreetFurniture(this.scene);
     this.cityLights = new CityLights(this.scene, this.props.lampSpots, this.buildings.fronts.neonSpots);
     this.boats = new BoatsAtSea(this.scene);
     this.headlamp = new PlayerHeadlamp(this.scene);

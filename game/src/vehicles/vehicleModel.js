@@ -2,12 +2,20 @@
 import * as THREE from 'three';
 import { MeshBatcher } from '../render/meshBatcher.js';
 
-const wheelGeometry = new THREE.CylinderGeometry(0.36, 0.36, 0.28, 12);
-wheelGeometry.rotateZ(Math.PI / 2);
-const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.9 });
-const hubGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.3, 8);
-hubGeometry.rotateZ(Math.PI / 2);
-const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.4, metalness: 0.6 });
+const wheelGeometry = buildWheelGeometry();
+const wheelMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+const lightBarGeometry = new THREE.BoxGeometry(1, 0.2, 0.32);
+
+/** One wheel as a single shape: the tyre, a bright rim and a cross of spokes that shows it turning. */
+function buildWheelGeometry() {
+  const parts = new MeshBatcher();
+  const turned = new THREE.Matrix4().makeRotationZ(Math.PI / 2);
+  parts.addGeometry(new THREE.CylinderGeometry(0.36, 0.36, 0.28, 12), turned, '#15171a');
+  parts.addGeometry(new THREE.CylinderGeometry(0.22, 0.22, 0.3, 10), turned, '#c8ccd0');
+  parts.addBox(0, -0.27, 0, 0.32, 0.54, 0.09, '#8d949b');
+  parts.addBox(0, -0.045, 0, 0.32, 0.09, 0.54, '#8d949b');
+  return parts.build(null).geometry;
+}
 /** Every car body shares this lacquer; main.js hands it the sky to reflect. */
 export const bodyMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.26, metalness: 0.3 });
 const GLASS = '#16242f';
@@ -115,22 +123,21 @@ export function buildVehicleModel(spec, paint) {
   // Lights are their own meshes so they can glow: head lamps, tail lamps that brighten on braking.
   const headMaterial = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
   const tailMaterial = new THREE.MeshBasicMaterial({ color: TAIL_LAMP.idle });
-  const lampGeometry = new THREE.BoxGeometry(width * 0.27, shellHeight * 0.24, 0.08);
+  const headLamps = new MeshBatcher();
+  const tailLamps = new MeshBatcher();
   for (const side of [-1, 1]) {
-    const head = new THREE.Mesh(lampGeometry, headMaterial);
-    head.position.set(side * width * 0.33, clearance + shellHeight * 0.68, at(1) + 0.01);
-    const tail = new THREE.Mesh(lampGeometry, tailMaterial);
-    tail.position.set(side * width * 0.33, clearance + shellHeight * 0.7, at(0) - 0.01);
-    group.add(head, tail);
+    headLamps.addBox(side * width * 0.33, clearance + shellHeight * 0.56, at(1) + 0.01, width * 0.27, shellHeight * 0.24, 0.08, '#ffffff');
+    tailLamps.addBox(side * width * 0.33, clearance + shellHeight * 0.58, at(0) - 0.01, width * 0.27, shellHeight * 0.24, 0.08, '#ffffff');
   }
+  const lampOptions = { castShadow: false, receiveShadow: false };
+  const lamps = [headLamps.build(headMaterial, lampOptions), tailLamps.build(tailMaterial, lampOptions)];
+  group.add(...lamps);
 
   const wheels = [];
   for (const [t, isFront] of [[0.82, true], [0.18, false]]) {
     for (const side of [-1, 1]) {
       const wheel = new THREE.Group();
-      const tire = new THREE.Mesh(wheelGeometry, wheelMaterial);
-      tire.castShadow = true;
-      wheel.add(tire, new THREE.Mesh(hubGeometry, hubMaterial));
+      wheel.add(new THREE.Mesh(wheelGeometry, wheelMaterial));
       wheel.position.set(side * (width / 2 - 0.1), 0.36, at(t));
       wheel.userData.front = isFront;
       group.add(wheel);
@@ -141,12 +148,13 @@ export function buildVehicleModel(spec, paint) {
   let lightBar = null;
   if (spec.police) {
     lightBar = [new THREE.MeshBasicMaterial({ color: 0xff2020 }), new THREE.MeshBasicMaterial({ color: 0x2060ff })];
-    const barGeometry = new THREE.BoxGeometry(width * 0.34, 0.16, 0.3);
     lightBar.forEach((material, index) => {
-      const lamp = new THREE.Mesh(barGeometry, material);
-      lamp.position.set((index ? 1 : -1) * width * 0.2, height + 0.09, cabinCenter);
+      const lamp = new THREE.Mesh(lightBarGeometry, material);
+      lamp.scale.x = width * 0.36;
+      lamp.position.set((index ? 1 : -1) * width * 0.2, height + 0.14, cabinCenter + roofShift);
       group.add(lamp);
     });
   }
-  return { group, wheels, lightBar, tailMaterial, headMaterial };
+  body.castShadow = true;
+  return { group, body, wheels, lightBar, tailMaterial, headMaterial, ownGeometries: [body.geometry, lamps[0].geometry, lamps[1].geometry] };
 }

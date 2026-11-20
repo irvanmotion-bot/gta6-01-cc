@@ -48,7 +48,7 @@ void main() {
   vec2 plane = dir.xz / (dir.y + 0.16) * 1.7 + vec2(cloudTime * 0.012, cloudTime * 0.005);
   float cover = smoothstep(0.58, 0.8, cloudCover(plane)) * smoothstep(0.02, 0.22, dir.y);
   vec3 cloudLit = mix(horizonColor, vec3(1.0), 0.86) + sunColor * (0.14 + pow(sunAmount, 5.0) * 0.5);
-  vec3 cloudColor = mix(cloudLit, topColor * 0.55 + horizonColor * 0.3, starAmount * 0.85);
+  vec3 cloudColor = mix(cloudLit, topColor * 0.8 + horizonColor * 0.3, starAmount * 0.96);
   color = mix(color, cloudColor, cover * 0.88);
   gl_FragColor = vec4(color, 1.0);
   #include <colorspace_fragment>
@@ -56,16 +56,16 @@ void main() {
 
 /** Colour keys through the day: [hour, sky top, horizon, sun light, sun strength, ambient strength]. */
 const KEYS = [
-  [0, '#0c1438', '#24346a', '#9fb3e8', 0.75, 0.66],
-  [5, '#0e1638', '#2f2d55', '#9fb3e8', 0.75, 0.66],
+  [0, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.95],
+  [5, '#0c1232', '#2f2d55', '#9fb3e8', 0.9, 0.95],
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
   [9, '#2a8ae6', '#bfe6f5', '#fff0d0', 3.0, 0.7],
   [13, '#1578ee', '#c4ebf8', '#fff3da', 3.5, 0.72],
   [16.5, '#1c74e6', '#ffe4bd', '#ffd9a0', 3.4, 0.66],
-  [18.6, '#35529e', '#ff9460', '#ff9a52', 1.9, 0.62],
-  [19.8, '#1a2152', '#d4577a', '#c86a8c', 0.6, 0.5],
-  [21, '#0c1438', '#2a3a72', '#9fb3e8', 0.75, 0.66],
-  [24, '#0c1438', '#24346a', '#9fb3e8', 0.75, 0.66],
+  [18.6, '#3a56b4', '#ff9a5a', '#ff9a52', 2.3, 0.62],
+  [19.8, '#231d66', '#ee5f7c', '#d8708c', 0.8, 0.7],
+  [21, '#0a1030', '#2a3a72', '#9fb3e8', 0.9, 0.95],
+  [24, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.95],
 ];
 
 export class SkyAndSun {
@@ -156,6 +156,9 @@ export class SkyAndSun {
     this.fill.position.set(-this.uniforms.sunDir.value.x, 0.55, -this.uniforms.sunDir.value.z);
     this.night = clamp(this.hour < 12 ? (6.6 - this.hour) / 1.2 : (this.hour - 18.7) / 1.3, 0, 1);
     this.uniforms.starAmount.value = this.night;
+    // With the sun on the horizon or gone the sky itself is the lamp: lift the ambient light so that streets in
+    // long shadow, and the asphalt most of all, stay readable through dusk and night.
+    this.ambient.intensity *= 1 + clamp(1 - height / 0.5, 0, 1) * 0.9;
   }
 
   /** The clock as HH:MM for the HUD. */

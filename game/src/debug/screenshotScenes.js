@@ -132,32 +132,49 @@ function chaseScene(game) {
 /** The Sundown Heist's gunfight outside Banco Marlin: guards, tracers, a burning car and the police arriving. */
 function shootoutScene(game) {
   const bank = LANDMARKS.bank;
-  loadCity(game, stagedSave(9), 16.4, bank.x - 25, bank.z + 6, Math.PI / 2);
+  const seconds = 1.4;
+  const x0 = bank.x - 22;
+  const z0 = bank.z + 5;
+  loadCity(game, stagedSave(9), 16.2, x0, z0, Math.PI / 2);
   game.player.cash = 61200;
   game.missions.start(missionById('sundownHeist'));
+  play(game, 0.3);
   game.hud.clearSpeech();
-  const wreck = game.vehicles.spawn('duna', bank.x - 6, bank.z + 8.5, Math.PI / 2, '#3498db');
+  // Marlin's guards close in along Calle Cinco: one already down at Nova's feet, three trading fire with her.
+  const guards = game.gunmen.list.filter((gunman) => gunman.kind === 'guard');
+  const posts = [[x0 + 5.2, z0 + 2.6], [x0 + 8.5, z0 + 2.4], [x0 + 11, z0 - 0.4], [x0 + 13.5, z0 + 4.6]];
+  posts.forEach(([x, z], index) => {
+    guards[index].position.set(x, 0, z);
+    guards[index].hostile = true;
+    guards[index].heading = -Math.PI / 2;
+  });
+  guards[0].takeDamage(999, true);
+  const wreck = game.vehicles.spawn('duna', x0 + 21, z0 + 3.6, Math.PI / 2 + 0.5, '#3498db');
   wreck.health = 0;
   wreck.hitByPlayer = false;
-  wreck.burning = 2.3;
+  wreck.burning = 3.6 - (seconds - 0.16);
+  for (const [dx, dz] of [[9, -5.6], [15, -5.2], [19, -6], [25, -5.4], [17, 9.8], [24, 10.4]]) game.pedestrians.spawnFleeing(x0 + dx, z0 + dz, { x: x0 + 6, z: z0 });
   game.wanted.setStars(3, 99);
-  spawnPursuit(game, 'patrol', 'centinela', bank.x + 30, bank.z + 5, -Math.PI / 2, 12);
-  spawnPursuit(game, 'interceptor', 'lince', bank.x + 52, bank.z + 9, -Math.PI / 2, 14);
+  spawnPursuit(game, 'patrol', 'centinela', x0 + 42, z0 + 6.4, -Math.PI / 2, 13);
+  spawnPursuit(game, 'interceptor', 'lince', x0 + 58, z0 + 1.5, -Math.PI / 2, 15);
   game.police.helicopter.scramble();
-  game.police.helicopter.orbit = 0.2;
-  game.police.helicopter.mesh.position.set(bank.x + 40, 27, bank.z + 2);
+  game.police.helicopter.orbit = 0.1;
+  game.police.helicopter.mesh.position.set(x0 + 46, 25, z0 + 1);
   game.hud.say('NOVA', 'Guards on every corner. Marlin was expecting company.', '#ff7b6b');
-  // Nova runs at the guards, then opens up with the rifle as the burning Duna goes off.
-  play(game, 1.5, (t) => {
-    game.camera.yaw = Math.PI / 2 + 0.2;
-    game.camera.pitch = 0.07;
-    if (t < 1.3) game.input.held.add('KeyW'); else game.input.held.delete('KeyW');
-    game.input.buttons[0] = t > 1.36;
+  // Nova holds the aim (right mouse) on the nearest guard and fires as the burning Duna goes off behind them.
+  play(game, seconds, (t) => {
+    game.camera.yaw = Math.PI / 2 + 0.05;
+    game.camera.pitch = 0.05;
+    game.input.buttons[2] = true;
+    game.input.buttons[0] = t > seconds - 0.09;
+    // The three guards facing her are due to fire as the frame is taken, so their tracers are in the air.
+    if (t > seconds - 0.07) for (const guard of guards.slice(1, 4)) guard.cooldown = Math.min(guard.cooldown, 0.01);
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
     game.player.health = Math.max(game.player.health, 58);
-    if (t > 0.9) game.player.invulnerable = 1;
+    if (t > seconds - 0.7) game.player.invulnerable = 1;
   });
   game.input.buttons[0] = false;
+  game.input.buttons[2] = false;
 }
 
 /** The city atlas mid-story: three save slots on file, the second one loaded and its map and progress open. */
@@ -175,7 +192,7 @@ function atlasScene(game) {
 /** The Centro Circuit after dark: the grid away under the neon, nitro lit, rivals door to door. */
 function raceScene(game) {
   const event = STREET_RACES.find((entry) => entry.id === 'centroCircuit');
-  loadCity(game, stagedSave(7), 21.6, event.x - 4, event.z, event.heading);
+  loadCity(game, stagedSave(7), 19.05, event.x - 4, event.z, event.heading);
   const ride = game.vehicles.spawn('marlinGT', event.x, event.z, event.heading, '#ff3b30');
   ride.parked = true;
   ride.stolen = true;
@@ -185,9 +202,7 @@ function raceScene(game) {
   play(game, 3.1, (t) => {
     game.input.held.add('KeyW');
     if (t > 2.2) game.input.held.add('ShiftLeft');
-    game.camera.yaw = event.heading + 0.1;
-    game.camera.pitch = 0.13;
-    game.camera.idleLook = 0;
+    game.camera.idleLook = 2;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
   });
 }

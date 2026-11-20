@@ -158,6 +158,7 @@ export class Weapons {
       this.castShot(spec, dx / length, dy / length, dz / length);
     }
     game.particles.lightFlash(this.muzzle.x, this.muzzle.y, this.muzzle.z, 9, 0.06);
+    game.particles.muzzleFlash(this.muzzle.x, this.muzzle.y, this.muzzle.z);
     game.audio.gunshot(spec.sound);
     camera.pitch -= 0.006;
     camera.shake(0.05);
