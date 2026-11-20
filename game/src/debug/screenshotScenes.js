@@ -1,7 +1,8 @@
-// The scenes behind ?shot=chase|bounty|workshop|atlas|title: each loads a save, stages a moment with the game's
-// own systems, plays the real simulation forward for a few seconds with keys held down, then freezes the frame.
+// The scenes behind ?shot=chase|bounty|race|workshop|atlas|title|pause: each loads a save, stages a moment with the
+// game's own systems, plays the real simulation forward for a few seconds with keys held down, then freezes the frame.
 import { LANDMARKS } from '../world/cityLayout.js';
 import { VANE_CAPOS } from '../activities/vaneBounties.js';
+import { STREET_RACES } from '../activities/streetRaces.js';
 import { tryEnterVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { GETAWAY_PAINT, STORY_MISSIONS } from '../missions/storyMissions.js';
@@ -295,6 +296,58 @@ function bountyScene(game, daylight = false) {
   game.input.buttons[2] = false;
 }
 
+/**
+ * The end of the Corona Drive Dash on Thursday afternoon: Nova comes down Limb Street toward the sea front a few
+ * car lengths ahead of the field, crosses the line at the junction with Corona Drive and brakes; the result is on
+ * the job panel as her rivals come past her.
+ */
+function raceScene(game) {
+  const event = STREET_RACES[0];
+  const pace = 24;
+  const street = 80;
+  loadCity(game, stagedSave(6), 44, street + 2, -Math.PI / 2);
+  const ride = game.vehicles.spawn('coronaGT', 42, street, -Math.PI / 2, '#ff3b30');
+  ride.parked = true;
+  ride.stolen = true;
+  tryEnterVehicle(game);
+  play(game, 0.3);
+  game.hud.clearSpeech();
+  game.races.start(event);
+  const race = game.races.active;
+  // The race as it stands on its last leg: every checkpoint but the line behind them, a minute and a half run.
+  race.countdown = 0;
+  race.clock = 93.1;
+  race.index = race.points.length - 1;
+  game.player.frozen = false;
+  const onTheLeg = (car, x, z, speed) => { car.position.set(x, 0, z); car.heading = -Math.PI / 2; car.velX = -speed; car.velZ = 0; };
+  onTheLeg(ride, 40, street - 0.4, pace);
+  [[52, street + 3.2, 30], [51.5, street - 3.6, 27], [60, street + 0.4, pace]].forEach(([x, z, speed], index) => {
+    onTheLeg(race.rivals[index], x, z, speed);
+    race.rivals[index].controller.index = race.points.length - 1;
+  });
+  // The street and the junction ahead are clear of traffic, as a marshalled finish would be.
+  for (const other of [...game.vehicles.list]) {
+    if (other === ride || race.rivals.includes(other)) continue;
+    const onTheStreet = Math.abs(other.position.z - street) < 9 && other.position.x > -8 && other.position.x < 120;
+    const atTheJunction = Math.abs(other.position.x) < 9 && Math.abs(other.position.z - street) < 70;
+    if (onTheStreet || atTheJunction) game.vehicles.remove(other);
+  }
+  game.camera.snapBehind(-Math.PI / 2);
+  let sinceLine = 0;
+  for (let guard = 0; guard < 400 && sinceLine < 0.44; guard += 1) {
+    // She holds her pace to the line, then gets hard on the brakes: the junction with the drive is all the room
+    // there is, and the cars she beat go by on either side of her.
+    const racing = Boolean(game.races.active);
+    game.input.held.delete('KeyW');
+    game.input.held.delete('KeyS');
+    if (!racing) game.input.held.add('KeyS'); else if (ride.speed < pace) game.input.held.add('KeyW');
+    game.camera.idleLook = 2;
+    game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
+    game.update(STEP);
+    if (!racing) sinceLine += STEP;
+  }
+}
+
 /** Bravo's workshop on eclipse eve: the Rayo on the turntable, the upgrade list and its prices beside it. */
 function workshopScene(game) {
   const bay = LANDMARKS.garage.kerb;
@@ -350,7 +403,7 @@ function pauseScene(game) {
 }
 
 const SCENES = {
-  chase: chaseScene, bounty: bountyScene, bountyDay: (game) => bountyScene(game, true), workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene,
+  chase: chaseScene, bounty: bountyScene, bountyDay: (game) => bountyScene(game, true), race: raceScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene,
 };
 /**
  * The HUD SIZE each scene is taken at. The cover is seen whole, so it takes the full HUD; the others are seen

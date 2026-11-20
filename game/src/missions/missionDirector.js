@@ -3,6 +3,7 @@
 import { CHARACTERS, SETUP_JOB_COUNT, STORY_MISSIONS } from './storyMissions.js';
 import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { CRED_AWARDS } from '../progression/streetCred.js';
+import { completionPercent } from '../progression/completionTracker.js';
 import { leaveVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { SeededRandom, distance2D } from '../core/random.js';
@@ -13,12 +14,14 @@ export class MissionDirector {
     this.rng = new SeededRandom(60606);
     this.completed = new Set();
     this.active = null;
+    this.passed = null;
     this.cooldown = 0;
   }
 
   reset(completed = []) {
     this.abandon();
     this.completed = new Set(completed);
+    this.passed = null;
   }
 
   /** The jobs on offer now: not yet passed, with everything they require passed, on or after the day they open. */
@@ -77,7 +80,8 @@ export class MissionDirector {
   start(mission) {
     const game = this.game;
     const stages = mission.steps.filter((step) => step.stage).map((step) => step.stage);
-    this.active = { mission, index: -1, step: null, timer: null, vehicle: null, tag: mission.id, remaining: [], targets: [], total: 0, progress: 0, stages, stage: 0, number: STORY_MISSIONS.indexOf(mission) + 1 };
+    this.active = { mission, index: -1, step: null, timer: null, vehicle: null, tag: mission.id, remaining: [], targets: [], total: 0, progress: 0, stages, stage: 0, number: STORY_MISSIONS.indexOf(mission) + 1, elapsed: 0 };
+    this.passed = null;
     // Where the job stops racing the eclipse: the step that waits for the dark.
     this.active.darkStep = mission.steps.findIndex((step) => step.kind === 'awaitTotality');
     if (mission.hour !== undefined) game.calendar.setHour(mission.hour);
@@ -198,6 +202,28 @@ export class MissionDirector {
     return null;
   }
 
+  /**
+   * The job just passed, as the job panel shows it for a few seconds: JOB PASSED over its name and the time it
+   * took, then what it paid in cash and cred, the job that comes next and the slot the autosave went to.
+   */
+  resultInfo() {
+    const done = this.passed;
+    if (!done || this.active || done.age > RESULT_SECONDS) return null;
+    const game = this.game;
+    const giver = CHARACTERS[done.mission.giver];
+    const next = this.offers()[0];
+    const waiting = this.waitingForDay();
+    const nextLine = next ? `${next.title.toUpperCase()} · ${CHARACTERS[next.giver].name}` : waiting ? `${waiting.title.toUpperCase()} · OPENS ${ECLIPSE_WEEK[waiting.day - 1].short}` : 'THE CITY IS YOURS';
+    const minutes = Math.floor(done.seconds / 60);
+    const reward = `+$${done.mission.reward.toLocaleString('en-US')}`;
+    return {
+      header: `STORY JOB ${done.number}/${STORY_MISSIONS.length} · ${giver.name}`, title: 'JOB PASSED', stageLine: `${done.mission.title.toUpperCase()} · DONE IN ${minutes}:${String(Math.floor(done.seconds % 60)).padStart(2, '0')}`,
+      steps: done.steps, stepsDone: done.steps, share: 1, face: giver.name, faceColor: giver.color,
+      rows: [['REWARD', reward], ['CRED', `+${done.mission.cred} · RANK ${game.cred.rank} ${game.cred.title().toUpperCase()}`], ['NEXT JOB', nextLine], ['SAVED', `SLOT ${game.saveSlot} · ${completionPercent(game)}% COMPLETE`]],
+      accent: `${reward} · +${done.mission.cred} CRED`, kind: 'result',
+    };
+  }
+
   /** Everything that fails the step in hand, as the job panel lists it after FAIL IF. */
   failConditions() {
     const run = this.active;
@@ -229,6 +255,7 @@ export class MissionDirector {
     const game = this.game;
     const player = game.player;
     this.cooldown -= dt;
+    if (this.passed) this.passed.age += dt;
     if (!this.active) {
       if (this.cooldown > 0 || !player.alive || game.races.active) return;
       for (const mission of this.offers()) {
@@ -243,6 +270,7 @@ export class MissionDirector {
     const step = run.step;
     const px = player.position.x;
     const pz = player.position.z;
+    run.elapsed += dt;
     if (run.timer !== null) {
       run.timer -= dt;
       if (run.timer <= 0) { this.fail('You ran out of time.'); return; }
@@ -377,6 +405,7 @@ export class MissionDirector {
   pass() {
     const game = this.game;
     const mission = this.active.mission;
+    this.passed = { mission, number: this.active.number, steps: this.active.stages.length, seconds: this.active.elapsed, age: 0 };
     this.completed.add(mission.id);
     this.cleanup();
     this.cooldown = 5;
@@ -395,5 +424,7 @@ export class MissionDirector {
 }
 
 const OBJECTIVE_COLOR = '#ffb547';
+/** How long the job panel keeps JOB PASSED and its rewards up. */
+const RESULT_SECONDS = 9;
 /** How many times faster the clock runs while Nova waits at the door for the dark. */
 const TOTALITY_RUSH = 12;

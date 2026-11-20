@@ -56,6 +56,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .job-row.clock span { color: var(--cream); }
 .job-row.urgent span { color: var(--coral); animation: pulse 0.5s infinite alternate; }
 .job-accent { display: none; }
+/* The panel as a result card: every row kept, and the pay on its own line under them in the display face */
+.job-panel.result .job-accent { display: block; margin-top: 0.4vh; font-family: var(--display); font-weight: 900; font-size: 2.6vh; line-height: 1.2; color: var(--amber); white-space: nowrap; }
 
 /* The dialogue box, under the job panel: who is talking, their part in the story, and what they say */
 .dialogue { display: flex; gap: 1.2vh; align-items: flex-start; background: rgba(13, 10, 30, 0.88); border-left: 0.6vh solid var(--amber); border-radius: 0 0.7vh 0.7vh 0; padding: 0.8vh 1.2vh 0.9vh 0.8vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; }
@@ -257,6 +259,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 #hud.huge .job-row { display: block; }
 #hud.huge .job-row.now span { font-size: 2vh; line-height: 2.4vh; }
 #hud.huge .job-accent { display: block; font-size: 2vh; line-height: 2.5vh; color: var(--amber); }
+#hud.huge .job-panel.result .job-stage { display: block; white-space: normal; }
+#hud.huge .job-panel.result .job-row { display: grid; margin-top: 0; }
+#hud.huge .job-panel.result .job-row.empty { display: none; }
+#hud.huge .job-panel.result .job-row b { display: block; }
+#hud.huge .job-panel.result .job-accent { font-family: var(--display); font-weight: 900; font-size: 2vh; margin-top: 0.2vh; }
 #hud.huge .dialogue { zoom: 0.6; }
 #hud.huge .eclipse-disc, #hud.huge .eclipse-track, #hud.huge .eclipse-caption, #hud.huge .eclipse-line { display: none; }
 #hud.huge .eclipse-panel { padding: 0.5vh 1.2vh 0.7vh; }

@@ -93,6 +93,12 @@ export function playWholeGame() {
       run(2);
     }
     const passed = game.missions.completed.has(offer.id);
+    // A job just passed turns the job panel into its result card for a few seconds: JOB PASSED and what it paid.
+    if (passed && !eclipse.jobResult) {
+      run(2);
+      eclipse.jobResult = { title: document.querySelector('.job-title').textContent, rows: [...document.querySelectorAll('.job-row:not(.empty)')].map((row) => row.textContent), pay: document.querySelector('.job-accent').textContent };
+      if (eclipse.jobResult.title !== 'JOB PASSED' || !eclipse.jobResult.pay.includes(`+$${offer.reward.toLocaleString('en-US')}`) || eclipse.jobResult.rows.length < 4) failures.push(`no result card after a job: ${JSON.stringify(eclipse.jobResult)}`);
+    }
     missions.push(passed ? `${offer.id}:passed` : `${offer.id}:NOT PASSED (${document.querySelector('.banner-sub').textContent}; ${game.down ? game.down.kind : 'standing'})`);
   }
   eclipse.endedOn = `${calendar.dayName()} ${calendar.clockText()}`;
@@ -252,8 +258,13 @@ export function playWholeGame() {
   const heatFromNitroRun = game.wanted.stars;
   game.wanted.reset();
   standDown();
-  teleport(2.7, 100);
-  run(5);
+  // The grid wants her car at a stand: clear the start line of traffic and hold the car on it until it is still.
+  for (const other of [...game.vehicles.list]) if (other !== ride && Math.hypot(other.position.x - 2.7, other.position.z - 100) < 30) game.vehicles.remove(other);
+  for (let k = 0; k < 120; k += 1) {
+    teleport(2.7, 100);
+    run(1);
+    if (Math.abs(ride.speed) < 0.5 && k > 4) break;
+  }
   press('KeyE');
   const raceStarted = Boolean(game.races.active);
   if (!raceStarted) failures.push(`the street race did not start (stars ${game.wanted.stars}, speed ${player.vehicle ? player.vehicle.speed.toFixed(1) : 'on foot'}, heat before ${heatFromNitroRun})`);
@@ -264,7 +275,11 @@ export function playWholeGame() {
     raceRows = Math.max(raceRows, game.races.standings().length);
     run(3);
   }
+  // The race just won stays on the job panel as its result: RACE WON, the finishing order with every gap, the purse.
+  run(2);
   const race = { started: raceStarted, best: game.races.best, raceRows, wins: game.races.winsCount() };
+  race.result = { title: document.querySelector('.job-title').textContent, order: [...document.querySelectorAll('.job-row:not(.empty)')].map((row) => row.textContent), pay: document.querySelector('.job-accent').textContent };
+  if (race.result.title !== 'RACE WON' || race.result.order.length !== 4 || !race.result.order[0].includes('NOVA') || !race.result.pay.includes('+$2,000')) failures.push(`no result card after the race: ${JSON.stringify(race.result)}`);
 
   // A bounty: walk up to a capo's corner and take him down.
   if (player.vehicle) press('KeyF');

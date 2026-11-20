@@ -1,7 +1,9 @@
 // The HUD's top-left job panel: which job of how many and who gave it, its title, one bar cut into the job's steps
 // with the step in hand named under it, then labelled rows: NOW (the objective), NEXT (the step after), TIME LIMIT
 // (the clock and what it runs to) and FAIL IF (everything that fails the step). A street race, a taxi fare or a
-// bounty hit takes the panel over while it runs; in free roam it points at the next job.
+// bounty hit takes the panel over while it runs; for a few seconds after a job is passed or a race is run it is
+// the result card (JOB PASSED with its rewards, RACE WON with the finishing order); in free roam it points at the
+// next job.
 import { completionPercent } from '../progression/completionTracker.js';
 import { CHARACTERS, STORY_MISSIONS } from '../missions/storyMissions.js';
 import { ECLIPSE_WEEK, formatCountdown } from '../eclipse/eclipseCalendar.js';
@@ -84,7 +86,10 @@ export class HudJobPanel {
   update() {
     const game = this.game;
     const cache = this.cache;
-    const info = this.storyInfo() || game.races.panelInfo() || game.activities.panelInfo() || game.bounties.panelInfo() || this.freeRoamInfo();
+    // Whatever is in hand comes first: a job, a race, a fare, a hit. Then, for a few seconds, the result card of the
+    // job or the race just finished; then free roam.
+    const info = this.storyInfo() || game.races.panelInfo() || game.activities.panelInfo() || game.bounties.panelInfo()
+      || game.missions.resultInfo() || game.races.resultInfo() || this.freeRoamInfo();
     cache.text(this.header, info.header);
     cache.text(this.title, info.title.toUpperCase());
     cache.text(this.stage, info.stageLine);
@@ -101,6 +106,7 @@ export class HudJobPanel {
     });
     cache.text(this.accent, info.accent || '');
     cache.toggle(this.root, 'roam', info.kind === 'roam');
+    cache.toggle(this.root, 'result', info.kind === 'result');
     // Whose job it is: the giver of a story job, the capo with a price on him, or Nova herself between jobs.
     const face = info.face || 'NOVA';
     if (face !== this.drawnFace) {

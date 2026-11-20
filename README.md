@@ -41,32 +41,44 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   drop to the ground where they stand. Beside any car, the game rings it and offers F to steal it or pull its
   driver out.
 - **Twelve vehicles to steal and drive**, from the Avocet compact to the Rayo supercar and the Lince police
-  interceptor, with drift, handbrake, crashes, damage, fire and explosions, and three radio stations of generated music.
+  interceptor, with drift, handbrake, crashes, damage, fire and explosions, and three radio stations of generated
+  music, each with its frequency, its DJ and a playlist of named tracks.
 - **A five-star wanted level with a tiered police response**. Every unit has a callsign and a tactic the HUD's
   dispatch panel lists live under a count of every unit on the player: patrol cars that tail for an arrest,
   interceptors that flank for a side-swipe or cut the road off, officers who shoot from the car window from three
   stars, tactical vans that unload a squad, roadblocks with spike strips, and a helicopter that opens fire at four
-  stars. Break line of sight, respray the car, have Jazz jam their radio, or wait for the dark.
+  stars.
+- **Line of sight.** While any unit has eyes on Nova she is SPOTTED, and the HUD counts the units that see her.
+  Put a building between her and every one of them and the force is SEARCHING: it works a zone round the place
+  she was last seen, drawn on the radar, the zone grows, and the stars come off one at a time, faster outside the
+  zone and in the dark. A respray or Jazz's signal jam shortens the wait.
 - **A ten-job story in stages** with dialogue and portraits, timers, deliveries, a race, shoot-outs, chases, a
   clinic to defend at night and the vault job, which runs from first contact through totality.
 - **Progression**: street cred raises Nova through eight ranks; ranks unlock crew favors (Z a getaway car, X a
   signal jam, C a patch-up), guns at Ammo Amigo, workshop tiers, heavier armor and discounts.
 - **Bravo's workshop**: the car goes onto a turntable in Bravo's yard beside its spec sheet; repairs and four
   upgrade lines (engine, plating, tyres, nitro) in three tiers that follow Nova into every car she drives.
-- **Activities**: three street races against AI rivals with a live race board, four bounties on Vane's capos,
-  taxi fares, twelve hidden Corona Tokens and powerslide bonuses.
-- **Combat**: fists and four guns, aiming, headshots, armed enforcers, guards and capos. A bounty hit takes the job
-  panel over: the capo's face and name, the price on him and the guns still standing.
+- **Activities**: three street races against AI rivals with a live race board and a result card (the finishing
+  order, every gap, the purse), four bounties on Vane's capos, taxi fares and twelve hidden Corona Tokens.
+- **Driving stunts**: a near miss (a car passed at speed with under a metre between the doors), a powerslide
+  measured in metres and a flat-out run each pay cash and cred; stunts chained within four seconds build a combo
+  up to five times the pay, and the HUD pops each one up with its pay and the combo's clock.
+- **Combat**: fists and four guns, aiming, headshots, armed enforcers, guards and capos, each with a health bar
+  over his head while he shoots at her. A bounty hit takes the job panel over: the capo's name, the price on him
+  and the guns still standing.
 - **Citizens who react**, each in their own way: some sprint, some run with their hands up, some duck low, the timid
   drop to the ground, and the bold stop at a distance to film it on a phone or point it out.
-- **HUD and menus**: one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating radar with
-  the route to the objective, the district and health and armor under it, a job panel with the giver's face and
-  one bar cut into the job's steps, the crew by name and face with the favor each grants, the crew's dialogue
-  ribbon, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
-  GPS list on a quiet walk, a city atlas with the map, the path of totality, the week's jobs day by day and the
-  three save slots as cards, a start screen and a pause menu with big buttons, the three save slots as cards that
-  load on a click (day, job, time played, completion) and a district map of Saros with its legend, SAVE GAME and
-  LOAD GAME on the pause menu, statistics, settings and shop counters. Progress saves to the browser (localStorage).
+- **HUD**: upright bold type on dark glass in one palette (shadow indigo, low-sun amber, coral, corona cream),
+  in three sizes (HUD SIZE: standard, large, or huge with the essentials only). A rotating radar with the route to
+  the objective, the district, the street and the clock, health and armor under it; a job panel with the giver's
+  face, one bar cut into the job's steps and the rows NOW, NEXT, TIME LIMIT and FAIL IF, which turns into a result
+  card when a job is passed; the dialogue box with the speaker's portrait and part; the eclipse panel; stars, cash,
+  SPOTTED or SEARCHING, rank and cred; the dispatch panel; the crew bar with each member's role, favor and
+  cooldown; the weapon bar; the car's dial with body and nitro; the radio with its station, DJ and track.
+- **Menus**: a start screen and a pause menu with big buttons (RESUME, SAVE GAME, LOAD GAME, CITY MAP, STATS,
+  CONTROLS, SETTINGS, QUIT TO TITLE), the three save slots as rows that load on a click and the district map of
+  Saros; a city atlas with the streets, the path of totality, the week's jobs day by day and the save slots; shop
+  counters with numbered rows. Progress saves to the browser (localStorage).
 
 Everything is original: the city, names, characters, vehicles and story. Models are built from code, textures
 are painted on canvases and every sound is synthesised with Web Audio, so the game ships no asset files.
@@ -111,7 +123,7 @@ days into totality and the last job, and `tools/dossierOutline.mjs` prints the o
 - `game/src/world/` — city layout, road graph, buildings, shopfronts, streets, props, street furniture, city lights, ocean, boats, collision, pickups, markers
 - `game/src/police/` — wanted level, dispatch, pursuit tactics, roadblocks, helicopter, unit callsigns
 - `game/src/missions/` — story jobs, mission director, taxi fares and Corona Tokens
-- `game/src/activities/` — street races, Vane bounties
+- `game/src/activities/` — street races, Vane bounties, driving stunts
 - `game/src/progression/` — street cred, crew favors, completion tracker
 - `game/src/garage/`, `game/src/economy/` — tuning workshop, workshop showroom, shops
 - `game/src/vehicles/` — catalog, models, lights, physics, fleet, traffic AI, carjacking

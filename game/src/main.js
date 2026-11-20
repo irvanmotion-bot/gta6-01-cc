@@ -1,21 +1,23 @@
 // Totality: boots the city of Saros, owns every system and runs the game loop and its states (title, play, pause,
 // atlas, shop). The eclipse calendar is the first system it loads: every other one asks it what day and hour it is.
+// After it come the rules of play, each in its own module: the dark, the wanted level, cred and rank, the crew's
+// favors, driving stunts, the police, the workshop, bounties, races and the story.
 import * as THREE from 'three';
 import { ECLIPSE_DAY, EclipseCalendar } from './eclipse/eclipseCalendar.js';
-import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
 import { DarknessCover } from './eclipse/darknessCover.js';
-import { LANDMARKS } from './world/cityLayout.js';
-import { PoliceDispatch } from './police/policeDispatch.js';
 import { WantedLevel } from './police/wantedLevel.js';
-import { MissionDirector } from './missions/missionDirector.js';
 import { StreetCred } from './progression/streetCred.js';
 import { CrewFavors } from './progression/crewFavors.js';
-import { TuningWorkshop } from './garage/tuningWorkshop.js';
-import { WorkshopShowroom } from './garage/workshopShowroom.js';
-import { StreetRaces } from './activities/streetRaces.js';
-import { VaneBounties } from './activities/vaneBounties.js';
 import { DrivingStunts } from './activities/drivingStunts.js';
+import { PoliceDispatch } from './police/policeDispatch.js';
+import { TuningWorkshop } from './garage/tuningWorkshop.js';
+import { VaneBounties } from './activities/vaneBounties.js';
+import { StreetRaces } from './activities/streetRaces.js';
+import { MissionDirector } from './missions/missionDirector.js';
 import { SideActivities } from './missions/sideActivities.js';
+import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
+import { WorkshopShowroom } from './garage/workshopShowroom.js';
+import { LANDMARKS } from './world/cityLayout.js';
 import { captureGame, restoreGame, summarizeGame } from './core/gameSnapshot.js';
 import { freshStats, loadSaveSlot, loadSettings, migrateRetiredSaves, writeSaveSlot } from './core/saveGame.js';
 import { PedestrianCrowd } from './characters/pedestrians.js';

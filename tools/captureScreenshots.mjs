@@ -2,6 +2,7 @@
 // Playwright and saves what the browser rendered, untouched, into screenshots/.
 //
 //   PLAYWRIGHT_DIR=<folder with node_modules/playwright> node tools/captureScreenshots.mjs [--only <name>] [--out <dir>]
+//   ... --shots <file>   takes the scenes of another list than shots.json (a candidate scene being tried out)
 //   ... --smoke          plays the whole game by script instead and reports what happened and any console error
 //   ... --sheet <dir>    renders a preview of the judge's contact sheet from screenshots/ into <dir> (never into the entry)
 import { createServer } from 'node:http';
@@ -82,7 +83,7 @@ if (smoke) {
 } else if (sheetDir) {
   await previewContactSheet(page, base);
 } else {
-  const shots = JSON.parse(readFileSync(join(root, 'shots.json'), 'utf8'));
+  const shots = JSON.parse(readFileSync(option('--shots') ? resolve(option('--shots')) : join(root, 'shots.json'), 'utf8'));
   mkdirSync(outDir, { recursive: true });
   for (const shot of shots) {
     if (only && !shot.name.includes(only)) continue;
