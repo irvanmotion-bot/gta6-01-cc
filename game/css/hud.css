@@ -220,6 +220,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .gps-rows b { flex: 1; font-weight: 900; overflow: hidden; }
 .gps-rows u { text-decoration: none; }
 
+/* Record strip, along the foot of the screen between the radar and the dial: the share of the game done, then
+   each activity as done-of-total */
+.record-strip { position: absolute; left: 32.5vh; right: 45.5vh; bottom: 1.25vh; display: flex; justify-content: space-between; gap: 1vh; padding: 0.5vh 1.25vh; box-sizing: border-box; background: var(--panel); border-radius: 0.6vh; font-size: var(--t9); line-height: 1.2; white-space: nowrap; overflow: hidden; color: var(--cream); }
+.record-strip b { font-weight: 900; color: #fff; }
+.record-percent, .record-percent b { color: var(--amber); }
+#hud.essentials .record-strip { display: none; }
+
 /* Feed and prompts in the middle */
 .notifications { position: absolute; left: 50%; top: 1.25vh; transform: translateX(-50%); width: 70vh; display: flex; flex-direction: column; gap: 0.5vh; align-items: center; }
 .note { font-size: var(--t10); background: var(--panel); padding: 0.5vh 1.4vh; border-radius: 0.5vh; animation: slide-in 0.25s; transition: opacity 0.6s; max-width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

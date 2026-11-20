@@ -61,10 +61,11 @@ export function deleteSaveSlot(slot) {
 }
 
 /**
- * The player's settings: sound, mouse and shadows; `hudSize` is the HUD SIZE (standard, large, or huge with only the
- * essentials); `renderScale` draws the city at more pixels than the window has and scales it down, for smoother edges.
+ * The player's settings: sound, mouse and shadows; `sunShafts` lays rays of the low sun over the frame (off unless
+ * asked for: it softens the picture); `hudSize` is the HUD SIZE (standard, large, or huge with only the essentials);
+ * `renderScale` draws the city at more pixels than the window has and scales it down, for smoother edges.
  */
-export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true, hudSize: 'standard', renderScale: 1 };
+export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, sunShafts: false, radio: true, hudSize: 'standard', renderScale: 1 };
 
 export function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(readStored(SETTINGS_KEY) || {}) };

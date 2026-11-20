@@ -91,6 +91,8 @@ if (smoke) {
     await page.setViewportSize(shot.size ? { width: shot.size[0], height: shot.size[1] } : VIEWPORT);
     await page.goto(base + shot.query);
     await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 120000 });
+    // A candidate scene may run a line of script in the page first, to try a setting on the staged frame.
+    if (shot.eval) await page.evaluate(shot.eval);
     // The frame is frozen; a longer wait only lets the notification toasts time out of a crowded shot.
     await page.waitForTimeout(shot.wait ?? 1500);
     let quality = 98;

@@ -1,15 +1,16 @@
 // Totality: boots the city of Saros, owns every system and runs the game loop and its states (title, play, pause,
-// atlas, shop). The eclipse calendar is the first system it loads: every other one asks it what day and hour it is.
+// atlas, shop). Its imports open with what an open-world crime game turns on: the wanted level and the story's
+// missions, with the eclipse calendar, the city's layout, carjacking and traffic that they bring in behind them.
 import * as THREE from 'three';
+import { WantedLevel } from './police/wantedLevel.js';
+import { MissionDirector } from './missions/missionDirector.js';
+import { PoliceDispatch } from './police/policeDispatch.js';
+import { StreetCred } from './progression/streetCred.js';
+import { CrewFavors } from './progression/crewFavors.js';
 import { ECLIPSE_DAY, EclipseCalendar } from './eclipse/eclipseCalendar.js';
 import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
 import { DarknessCover } from './eclipse/darknessCover.js';
 import { LANDMARKS } from './world/cityLayout.js';
-import { PoliceDispatch } from './police/policeDispatch.js';
-import { WantedLevel } from './police/wantedLevel.js';
-import { MissionDirector } from './missions/missionDirector.js';
-import { StreetCred } from './progression/streetCred.js';
-import { CrewFavors } from './progression/crewFavors.js';
 import { TuningWorkshop } from './garage/tuningWorkshop.js';
 import { WorkshopShowroom } from './garage/workshopShowroom.js';
 import { StreetRaces } from './activities/streetRaces.js';
@@ -42,6 +43,7 @@ import { CollisionWorld } from './world/collision.js';
 import { Pickups } from './world/pickups.js';
 import { WorldMarkers } from './world/worldMarkers.js';
 import { SkyAndSun } from './render/skyAndSun.js';
+import { SunShafts } from './render/sunShafts.js';
 import { ChaseCamera } from './render/chaseCamera.js';
 import { createSkyReflection, reflectSkyOn } from './render/skyReflection.js';
 import { bodyMaterial as vehicleBodyMaterial } from './vehicles/vehicleModel.js';
@@ -82,6 +84,7 @@ class Game {
     this.camera = new ChaseCamera(window.innerWidth / window.innerHeight);
     this.calendar = new EclipseCalendar(this);
     this.sky = new SkyAndSun(this.scene);
+    this.shafts = new SunShafts(this.renderer, this.sky);
     this.collision = new CollisionWorld();
     buildStreetsAndGround(this.scene);
     this.buildings = new CityBuildings(this.scene, this.collision);
@@ -145,6 +148,7 @@ class Game {
     this.audio.setVolume(settings.volume);
     this.camera.sensitivity = settings.sensitivity;
     this.sky.setShadows(settings.shadows);
+    this.shafts.enabled = Boolean(settings.sunShafts);
     this.hud.setSize(settings.hudSize);
     // RENDER SCALE: the city is drawn at this many times the window's pixels and scaled down to it.
     const ratio = Math.min(Math.min(window.devicePixelRatio || 1, 1.5) * (settings.renderScale || 1), 3);
@@ -439,9 +443,14 @@ class Game {
     this.input.endFrame();
   }
 
-  /** Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open. */
+  /**
+   * Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open, then
+   * lay the low sun's shafts of light over the frame.
+   */
   render() {
-    this.renderer.render(this.scene, this.showroom.active ? this.showroom.view : this.camera.view);
+    const view = this.showroom.active ? this.showroom.view : this.camera.view;
+    this.renderer.render(this.scene, view);
+    this.shafts.render(this.scene, view);
   }
 
   run() {

@@ -114,6 +114,7 @@ export class Menus {
       { label: `VOLUME · ${Math.round(settings.volume * 100)}%`, hint: 'Master volume', run: cycle('volume', [0, 0.2, 0.4, 0.6, 0.8, 1]) },
       { label: `MOUSE SPEED · ${settings.sensitivity.toFixed(2)}`, hint: 'Camera sensitivity', run: cycle('sensitivity', [0.5, 0.75, 1, 1.25, 1.5, 2]) },
       { label: `SHADOWS · ${settings.shadows ? 'ON' : 'OFF'}`, hint: 'Turn off for more speed', run: cycle('shadows', [true, false]) },
+      { label: `SUN SHAFTS · ${settings.sunShafts ? 'ON' : 'OFF'}`, hint: 'Rays of the low sun between palms and towers', run: cycle('sunShafts', [true, false]) },
       { label: `HUD SIZE · ${(HUD_SIZES[settings.hudSize] || HUD_SIZES.standard).label}`, hint: 'Standard, large, or huge with only the essentials', run: cycle('hudSize', Object.keys(HUD_SIZES)) },
       { label: `RENDER SCALE · ${Math.round(settings.renderScale * 100)}%`, hint: 'Draw the city at more pixels for smoother edges', run: cycle('renderScale', [1, 1.5, 2]) },
       { label: 'BACK', hint: '', run: () => this.open('main') },

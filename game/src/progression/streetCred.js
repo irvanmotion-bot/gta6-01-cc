@@ -17,7 +17,7 @@ export class StreetCred {
   earn(amount, reason) {
     if (amount <= 0) return;
     this.points += Math.round(amount);
-    this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason}`);
+    this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason.toUpperCase()}`);
     const rank = rankForPoints(this.points);
     if (rank > this.rank) {
       this.rank = rank;
