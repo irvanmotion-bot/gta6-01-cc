@@ -15,7 +15,7 @@ export const VEHICLE_CATALOG = {
   caravana: { name: 'Caravana', kind: 'Van', shape: 'van', length: 5.0, width: 2.0, height: 2.1, maxSpeed: 30, accel: 8.5, grip: 5.8, mass: 2300, health: 160, paints: ['#ecf0f1', '#f7dc6f', '#aed6f1', '#d5d8dc'] },
   sarosCab: { name: 'Saros Cab', kind: 'Taxi', shape: 'sedan', length: 4.6, width: 1.85, height: 1.4, maxSpeed: 37, accel: 11.5, grip: 7, mass: 1350, health: 120, paints: ['#ffcc00'], taxi: true },
   centinela: { name: 'Centinela', kind: 'Police cruiser', shape: 'sedan', length: 4.8, width: 1.9, height: 1.42, maxSpeed: 47, accel: 17, grip: 8, mass: 1600, health: 150, paints: ['#f4f6f7'], police: true },
-  lince: { name: 'Lince', kind: 'Police interceptor', shape: 'coupe', length: 4.6, width: 1.95, height: 1.28, maxSpeed: 55, accel: 20, grip: 8.4, mass: 1500, health: 140, paints: ['#16213e'], police: true },
+  lince: { name: 'Lince', kind: 'Police interceptor', shape: 'coupe', length: 4.6, width: 1.95, height: 1.28, maxSpeed: 55, accel: 20, grip: 8.4, mass: 1500, health: 140, paints: ['#f4f6f7'], police: true },
   bastion: { name: 'Bastion', kind: 'Tactical van', shape: 'van', length: 5.6, width: 2.2, height: 2.4, maxSpeed: 38, accel: 12, grip: 6.4, mass: 3200, health: 260, paints: ['#1c2833'], police: true },
 };
 

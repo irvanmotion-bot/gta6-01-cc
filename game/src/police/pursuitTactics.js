@@ -98,7 +98,12 @@ export class PursuitDriver {
     const fast = Math.abs(vehicle.speed) > 14 || (player.vehicle ? Math.abs(player.vehicle.speed) > 14 : player.moveSpeed > 5);
     const hit = Math.random() < WINDOW_FIRE.accuracy * (1 - (distance / WINDOW_FIRE.range) * 0.5) * (fast ? 0.6 : 1);
     const miss = hit ? 0.3 : 2.2;
-    const to = this.impact.set(player.position.x + (Math.random() - 0.5) * miss * 2, player.position.y + 0.9 + (Math.random() - 0.5) * miss * 0.6, player.position.z + (Math.random() - 0.5) * miss * 2);
+    // A round at a car strikes the side of it that faces the gun, not its middle.
+    const gap = Math.hypot(player.position.x - from.x, player.position.z - from.z) || 1;
+    const short = player.vehicle ? Math.min(player.vehicle.spec.width * 0.5, gap * 0.5) / gap : 0;
+    const aimX = player.position.x - (player.position.x - from.x) * short;
+    const aimZ = player.position.z - (player.position.z - from.z) * short;
+    const to = this.impact.set(aimX + (Math.random() - 0.5) * miss * 2, player.position.y + 0.9 + (Math.random() - 0.5) * miss * 0.6, aimZ + (Math.random() - 0.5) * miss * 2);
     game.particles.tracer(from, to, 0xbfd8ff);
     game.particles.muzzleFlash(from.x, from.y, from.z);
     game.audio.gunshot('distant', Math.max(0.2, 1 - distance / 50));

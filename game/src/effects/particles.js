@@ -4,6 +4,8 @@ import { createGlowTexture } from '../render/proceduralTextures.js';
 
 const MAX = 1100;
 const RING_LIFE = 0.55;
+/** A round is a streak for a few frames; the flash at the muzzle outlives it. */
+const TRACER_LIFE = 0.08;
 const VERTEX = `
 attribute float size;
 attribute vec4 tint;
@@ -45,7 +47,7 @@ export class Particles {
 
     this.tracers = [];
     // A streak that is thickest in the middle and fine at both ends, so a round passing the camera stays a line.
-    const tracerGeometry = new THREE.BoxGeometry(0.11, 0.11, 1, 1, 1, 2);
+    const tracerGeometry = new THREE.BoxGeometry(0.07, 0.07, 1, 1, 1, 2);
     const corners = tracerGeometry.attributes.position;
     for (let k = 0; k < corners.count; k += 1) {
       if (Math.abs(corners.getZ(k)) > 0.4) corners.setXY(k, corners.getX(k) * 0.12, corners.getY(k) * 0.12);
@@ -99,8 +101,8 @@ export class Particles {
 
   /** The burst at a gun's muzzle: a white-hot heart in a short yellow flare, gone in a few frames. */
   muzzleFlash(x, y, z) {
-    this.emit(x, y, z, 0, 0, 0, 0.1, 1.0, 0.3, 1, 0.78, 0.25, 0.95);
-    this.emit(x, y, z, 0, 0, 0, 0.08, 0.55, 0.1, 1, 0.97, 0.8, 1);
+    this.emit(x, y, z, 0, 0, 0, 0.2, 1.5, 0.3, 1, 0.74, 0.2, 1);
+    this.emit(x, y, z, 0, 0, 0, 0.17, 0.8, 0.1, 1, 0.97, 0.8, 1);
   }
 
   sparks(x, y, z, count) {
@@ -172,7 +174,7 @@ export class Particles {
     slot.mesh.material.color.setHex(color);
     slot.mesh.material.opacity = 0.9;
     slot.mesh.visible = true;
-    slot.life = 0.11;
+    slot.life = TRACER_LIFE;
   }
 
   clear() {
@@ -204,7 +206,7 @@ export class Particles {
     for (const tracer of this.tracers) {
       if (tracer.life <= 0) continue;
       tracer.life -= dt;
-      tracer.mesh.material.opacity = Math.max(0, tracer.life / 0.11);
+      tracer.mesh.material.opacity = Math.max(0, tracer.life / TRACER_LIFE);
       if (tracer.life <= 0) tracer.mesh.visible = false;
     }
     for (const ring of this.rings) {

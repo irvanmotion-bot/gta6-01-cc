@@ -17,29 +17,51 @@ export class PoliceHelicopter {
     this.lastSeen = new THREE.Vector3();
     this.sweep = 0;
     const batch = new MeshBatcher();
+    // A white cabin with the force's blue band and yellow pinstripe, a dark glass nose, a blue tail boom with a
+    // fin and stabiliser, and skids on struts: a police helicopter from any side, and from underneath.
     batch.addBox(0, -0.9, 0.2, 1.9, 1.9, 4.2, '#f4f6f7');
-    batch.addBox(0, -0.5, 1.9, 1.7, 1.2, 1.4, '#1b2a38');
-    batch.addBox(0, -0.2, -4, 0.45, 0.5, 5, '#2e6fd8');
-    batch.addBox(0, 0.1, -6.3, 0.14, 1.6, 0.9, '#2e6fd8');
-    batch.addBox(0, -1.5, 0.2, 2.2, 0.1, 3.2, '#30343a');
-    batch.addBox(0, 1.0, 0.2, 0.25, 0.35, 0.25, '#30343a');
+    batch.taperLastBox(0.8, 0.84, -0.2);
+    batch.addBox(0, -0.62, 0.15, 1.96, 0.5, 4.0, '#2e6fd8');
+    batch.addBox(0, -0.72, 0.15, 1.98, 0.12, 3.8, '#ffd60a');
+    batch.addBox(0, -0.75, 2.2, 1.7, 1.45, 1.5, '#1b2a38');
+    batch.taperLastBox(0.7, 0.55, -0.35);
+    batch.addBox(0, -0.2, -4, 0.5, 0.55, 5, '#2e6fd8');
+    batch.taperLastBox(0.7, 1, 0);
+    batch.addBox(0, 0.1, -6.3, 0.16, 1.7, 1.0, '#2e6fd8');
+    batch.addBox(0, 0.2, -5.6, 2.1, 0.08, 0.6, '#f4f6f7');
+    batch.addBox(0, 1.0, 0.2, 0.3, 0.4, 0.3, '#30343a');
+    batch.addBox(0, 0.95, 0.1, 1.1, 0.3, 2.2, '#dfe3e6');
+    for (const side of [-1, 1]) {
+      batch.addBox(side * 1.15, -1.75, 0.3, 0.14, 0.14, 4.4, '#22262b');
+      for (const z of [-0.9, 1.5]) batch.addBox(side * 1.02, -1.7, z, 0.1, 0.85, 0.12, '#22262b');
+    }
     this.mesh = new THREE.Group();
     const body = batch.build(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.5 }));
     body.matrixAutoUpdate = true;
-    this.rotor = new THREE.Mesh(new THREE.BoxGeometry(10.5, 0.06, 0.34), new THREE.MeshBasicMaterial({ color: 0x15171a }));
-    this.rotor.position.y = 1.35;
+    this.rotor = new THREE.Mesh(new THREE.BoxGeometry(11.5, 0.07, 0.42), new THREE.MeshBasicMaterial({ color: 0x15171a }));
+    this.rotor.position.y = 1.45;
     const rotorB = this.rotor.clone();
     rotorB.position.y = 0;
     rotorB.rotation.y = Math.PI / 2;
-    this.rotor.add(rotorB);
+    // The blur of the turning blades: a faint dark disc, so the rotor reads from far off and against the sky.
+    const blur = new THREE.Mesh(new THREE.CircleGeometry(5.75, 28), new THREE.MeshBasicMaterial({ color: 0x1b2026, transparent: true, opacity: 0.2, depthWrite: false, side: THREE.DoubleSide }));
+    blur.rotation.x = -Math.PI / 2;
+    this.rotor.add(rotorB, blur);
+    // The searchlight under the nose, lit whenever the beam is, and a red beacon under the belly.
+    this.lens = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 8), new THREE.MeshBasicMaterial({ color: 0xfffbe0, toneMapped: false }));
+    this.lens.position.set(0, -1.15, 2.6);
+    const beacon = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.2, 0.3), new THREE.MeshBasicMaterial({ color: 0xff3b30, toneMapped: false }));
+    beacon.position.set(0, -1.05, -1.2);
+    this.mesh.add(this.lens, beacon);
     this.tailRotor = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.5, 0.16), new THREE.MeshBasicMaterial({ color: 0x15171a }));
     this.tailRotor.position.set(0.2, 0.2, -6.3);
     // A narrow shaft: the walking camera stays outside it, so it reads as a beam on Nova and never as a haze round the lens.
-    const beamGeometry = new THREE.ConeGeometry(2.7, HOVER_HEIGHT, 20, 1, true);
+    const beamGeometry = new THREE.ConeGeometry(2.3, HOVER_HEIGHT, 20, 1, true);
     beamGeometry.translate(0, -HOVER_HEIGHT / 2, 0);
     this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+    this.beam.renderOrder = 3;
     this.mesh.add(body, this.rotor, this.tailRotor);
-    this.mesh.scale.setScalar(1.35);
+    this.mesh.scale.setScalar(1.6);
     this.mesh.visible = false;
     this.beam.visible = false;
     this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
@@ -56,6 +78,7 @@ export class PoliceHelicopter {
   /** Switch the searchlight's beam, lamp and ground pool on or off together. */
   setSearchlight(on) {
     this.beam.visible = on;
+    this.lens.visible = on;
     this.lamp.visible = on;
     this.pool.visible = on;
   }
@@ -133,13 +156,16 @@ export class PoliceHelicopter {
     const player = game.player;
     this.orbit += dt * 0.22;
     // Lead a fast car, so the helicopter holds its place over the chase instead of trailing behind it.
+    // Over a car chase it comes down low and close, where its lamp can hold the car and its gunner can see it.
     const car = player.vehicle;
-    const goalX = player.position.x + Math.cos(this.orbit) * ORBIT_RADIUS + (car ? car.velX * 0.75 : 0);
-    const goalZ = player.position.z + Math.sin(this.orbit) * ORBIT_RADIUS + (car ? car.velZ * 0.75 : 0);
+    const radius = car ? CHASE_ORBIT.radius : ORBIT_RADIUS;
+    const hover = car ? CHASE_ORBIT.height : HOVER_HEIGHT;
+    const goalX = player.position.x + Math.cos(this.orbit) * radius + (car ? car.velX * CHASE_ORBIT.lead : 0);
+    const goalZ = player.position.z + Math.sin(this.orbit) * radius + (car ? car.velZ * CHASE_ORBIT.lead : 0);
     const ease = Math.min(1, dt * 1.3);
     mesh.position.x += (goalX - mesh.position.x) * ease;
     mesh.position.z += (goalZ - mesh.position.z) * ease;
-    mesh.position.y += (HOVER_HEIGHT + Math.sin(game.time * 0.8) * 1.5 - mesh.position.y) * ease;
+    mesh.position.y += (hover + Math.sin(game.time * 0.8) * 1.5 - mesh.position.y) * ease;
     const face = Math.atan2(player.position.x - mesh.position.x, player.position.z - mesh.position.z);
     mesh.rotation.set(0.16, face, Math.sin(game.time * 0.6) * 0.06);
     // The searchlight is a cone from the nose down to where the crew is looking. In daylight that is Nova. In the
@@ -170,13 +196,13 @@ export class PoliceHelicopter {
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
-    this.beam.material.opacity = 0.15 + night * 0.15;
+    this.beam.material.opacity = 0.25 + night * 0.05;
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(aim.x, aim.y, aim.z);
     // By day the lamp only warms what it touches; in the dark it is the brightest thing in the street.
-    this.lamp.intensity = 220 + night * 760;
+    this.lamp.intensity = 90 + night * 890;
     this.pool.position.set(aim.x, aim.y + 0.12, aim.z);
-    this.pool.material.opacity = 0.1 + night * 0.3;
+    this.pool.material.opacity = 0.09 + night * 0.31;
 
     this.cooldown -= dt;
     if (stars >= 4 && this.cooldown <= 0 && player.alive && !cover.isHidden()) {
@@ -197,3 +223,8 @@ const SWEEP_REACH = 24;
 const POOL_RADIUS = 3.6;
 const HOVER_HEIGHT = 26;
 const ORBIT_RADIUS = 46;
+/**
+ * Its station over a car chase: the ring it circles on, how high, and how many seconds of the car's travel it aims
+ * ahead. It eases toward that point and so trails it by most of a second, which leaves it a little ahead of the car.
+ */
+const CHASE_ORBIT = { radius: 26, height: 17, lead: 1.2 };

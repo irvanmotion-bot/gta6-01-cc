@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { CITY } from '../core/config.js';
 import { distance2D } from '../core/random.js';
 import { isNode, nearestNode } from '../world/roadNetwork.js';
+import { MeshBatcher } from '../render/meshBatcher.js';
 
 /** A cruiser parked in a blockade: lights on, brakes on, going nowhere. */
 export class BlockadePost {
@@ -68,6 +69,11 @@ export class Roadblocks {
       block.vehicles.push(cruiser);
       game.gunmen.spawn('officer', spot.x + backX * 3.4 + acrossX * side * 3.2, spot.z + backZ * 3.4 + acrossZ * side * 3.2);
     }
+    // A row of striped barriers with amber lamps a few metres in front of the cruisers, facing whoever comes.
+    block.barriers = buildBarrierRow();
+    block.barriers.position.set(spot.x - backX * 4.6, 0, spot.z - backZ * 4.6);
+    block.barriers.rotation.y = roadHeading;
+    game.scene.add(block.barriers);
     if (withSpikes) {
       const strip = new THREE.Mesh(stripGeometry, stripMaterial);
       strip.position.set(spot.x - backX * 13, 0.05, spot.z - backZ * 13);
@@ -97,7 +103,7 @@ export class Roadblocks {
   }
 
   dismiss(block, rejoin) {
-    if (block.strip) this.game.scene.remove(block.strip);
+    this.liftFromStreet(block);
     for (const cruiser of block.vehicles) {
       if (cruiser.dead || cruiser.driver !== 'cop') continue;
       cruiser.parked = false;
@@ -106,8 +112,14 @@ export class Roadblocks {
     }
   }
 
+  /** Take a blockade's strip and barriers off the street. */
+  liftFromStreet(block) {
+    if (block.strip) this.game.scene.remove(block.strip);
+    if (block.barriers) this.game.scene.remove(block.barriers);
+  }
+
   clear() {
-    for (const block of this.list) if (block.strip) this.game.scene.remove(block.strip);
+    for (const block of this.list) this.liftFromStreet(block);
     this.list.length = 0;
   }
 
@@ -142,3 +154,24 @@ const P = CITY.pitch;
 const STRIP_LENGTH = CITY.road;
 const stripGeometry = new THREE.BoxGeometry(STRIP_LENGTH, 0.1, 0.7);
 const stripMaterial = new THREE.MeshStandardMaterial({ color: 0x15171a, emissive: 0xffb300, emissiveIntensity: 0.45, roughness: 0.6 });
+const barrierMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
+const barrierLampMaterial = new THREE.MeshBasicMaterial({ color: 0xffb300, toneMapped: false });
+const barrierLampGeometry = new THREE.BoxGeometry(0.34, 0.34, 0.2);
+
+/**
+ * Four sawhorse barriers across the lanes (the row is built along x; the road runs along z): an orange and white
+ * striped board on two legs, each with an amber lamp on top. They are for show: a car goes straight through them.
+ */
+function buildBarrierRow() {
+  const row = new THREE.Group();
+  const boards = new MeshBatcher();
+  for (const x of [-4.5, -1.5, 1.5, 4.5]) {
+    for (let stripe = 0; stripe < 6; stripe += 1) boards.addBox(x - 1.05 + stripe * 0.42, 0.72, 0, 0.42, 0.42, 0.1, stripe % 2 ? '#f6f3ea' : '#ff7a1a');
+    for (const leg of [-1, 1]) boards.addBox(x + leg * 1.05, 0, 0, 0.12, 1.14, 0.5, '#2a2d31');
+    const lamp = new THREE.Mesh(barrierLampGeometry, barrierLampMaterial);
+    lamp.position.set(x, 1.33, 0);
+    row.add(lamp);
+  }
+  row.add(boards.build(barrierMaterial, { receiveShadow: false }));
+  return row;
+}

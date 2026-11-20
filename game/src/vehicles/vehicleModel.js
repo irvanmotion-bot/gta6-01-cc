@@ -4,7 +4,7 @@ import { MeshBatcher } from '../render/meshBatcher.js';
 
 const wheelGeometry = buildWheelGeometry();
 const wheelMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.7 });
-const lightBarGeometry = new THREE.BoxGeometry(1, 0.2, 0.32);
+const lightBarGeometry = new THREE.BoxGeometry(1, 0.26, 0.4);
 
 /** One wheel as a single shape: the tyre, a bright rim and a cross of spokes that shows it turning. */
 function buildWheelGeometry() {
@@ -121,10 +121,17 @@ export function buildVehicleModel(spec, paint) {
     batch.addBox(0, clearance + shellHeight - 0.02, at(0.2), width * 0.86, 0.04, length * 0.34, '#22262a');
   }
   addBodyTrim(batch, spec, shape, paint, { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter, cabinLength, noseHeight, tailHeight });
-  if (spec.shape === 'sports' || spec.shape === 'coupe') {
+  const sporty = spec.shape === 'sports' || spec.shape === 'coupe';
+  if (sporty) {
     // A wing on two posts over the tail, intakes ahead of the rear wheels and twin exhausts.
     const wingLift = spec.shape === 'sports' ? 0.34 : 0.2;
     batch.addBox(0, clearance + shellHeight + wingLift, at(0.04), width * 0.96, 0.07, 0.46, shade(paint, 0.62));
+    // Flared haunches over the rear wheels, a dark diffuser under the tail and twin stripes over the roof.
+    for (const side of [-1, 1]) {
+      batch.addBox(side * (width / 2 - 0.02), clearance + shellHeight * 0.45, at(0.18), 0.16, shellHeight * 0.5, 1.15, paint);
+      batch.addBox(side * 0.2, clearance + shellHeight + cabinHeight - 0.005, cabinCenter + roofShift, 0.16, 0.02, cabinLength * rakeZ, '#fff3dc');
+    }
+    batch.addBox(0, clearance - 0.04, at(0) - 0.02, width * 0.7, 0.18, 0.12, '#101214');
     for (const side of [-1, 1]) {
       batch.addBox(side * width * 0.33, clearance + tailHeight, at(0.05), 0.07, shellHeight - tailHeight + wingLift, 0.2, '#1d2024');
       batch.addBox(side * (width / 2 + 0.005), clearance + shellHeight * 0.42, at(0.36), 0.05, shellHeight * 0.36, 0.5, '#15171a');
@@ -153,7 +160,7 @@ export function buildVehicleModel(spec, paint) {
   const tailLamps = new MeshBatcher();
   for (const side of [-1, 1]) {
     headLamps.addBox(side * width * 0.32 * shape.nose[1], clearance + noseHeight * 0.58, at(1) + 0.01, width * 0.25, noseHeight * 0.32, 0.08, '#ffffff');
-    tailLamps.addBox(side * width * 0.31 * shape.tail[1], clearance + tailHeight * 0.58, at(0) - 0.01, width * 0.3, tailHeight * 0.26, 0.08, '#ffffff');
+    tailLamps.addBox(side * width * 0.31 * shape.tail[1], clearance + tailHeight * 0.56, at(0) - 0.01, width * 0.3, tailHeight * 0.32, 0.08, '#ffffff');
   }
   const lampOptions = { castShadow: false, receiveShadow: false };
   const lamps = [headLamps.build(headMaterial, lampOptions), tailLamps.build(tailMaterial, lampOptions)];
@@ -163,8 +170,12 @@ export function buildVehicleModel(spec, paint) {
   for (const [t, isFront] of [[0.82, true], [0.18, false]]) {
     for (const side of [-1, 1]) {
       const wheel = new THREE.Group();
-      wheel.add(new THREE.Mesh(wheelGeometry, wheelMaterial));
-      wheel.position.set(side * (width / 2 - 0.1), 0.36, at(t));
+      const tyre = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      // Fast cars stand on wide tyres that fill their arches and show past the body from behind.
+      const stance = sporty ? (isFront ? 1.25 : 1.55) : 1;
+      tyre.scale.x = stance;
+      wheel.add(tyre);
+      wheel.position.set(side * (width / 2 - 0.1 + (sporty ? 0.05 : 0)), 0.36, at(t));
       wheel.userData.front = isFront;
       group.add(wheel);
       wheels.push(wheel);

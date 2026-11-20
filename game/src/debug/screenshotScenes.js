@@ -108,11 +108,14 @@ function clearLane(game, keep, x, zFrom, zTo) {
  * Orrery Trust in the getaway Rayo down Corona Drive at five stars, with the whole response around her.
  */
 function chaseScene(game) {
-  const z0 = 227;
-  const seconds = 0.9;
-  const zEnd = z0 + 43;
-  // Nova is on the wrong side of the drive, in the oncoming lane, with the ocean and the sun to her right.
-  const lane = 1.6;
+  const seconds = 1.6;
+  const speed = 40;
+  // She straddles the centre line of the drive, the ocean and the sun on her right.
+  const lane = 0;
+  // Where the Rayo is when the frame is taken (just across Second Contact Street), and where it starts from.
+  const zEnd = 406;
+  const blockadeZ = 432;
+  const z0 = zEnd - speed * seconds;
   loadCity(game, stagedSave(9), lane, z0 - 4, 0);
   startHeist(game, 'steal');
   const rayo = game.missions.active.vehicle;
@@ -121,53 +124,49 @@ function chaseScene(game) {
   tryEnterVehicle(game);
   play(game, 0.05);
   game.hud.clearSpeech();
-  game.calendar.setHour(hourOfCoverage(0.42));
-  rayo.velZ = 44;
+  game.calendar.setHour(hourOfCoverage(0.6));
+  rayo.velZ = speed;
   rayo.health = rayo.maxHealth * 0.78;
-  clearLane(game, rayo, 0, z0 - 90, z0 + 130);
+  clearLane(game, rayo, 0, z0 - 90, z0 + 220);
   game.wanted.setStars(5, 99);
-  // The pack: one interceptor turning in on her ocean side, one on her rear quarter by the kerb, a cruiser
-  // cutting across her nose further up the drive. From three stars all of them shoot from the window.
-  const pack = [
-    spawnPursuit(game, 'interceptor', 'lince', lane - 4.7, z0 - 0.4, 0, 49, 'flankLeft'),
-    spawnPursuit(game, 'interceptor', 'lince', 4.7, z0 + 9, 0, 45, 'flankLeft'),
-    spawnPursuit(game, 'patrol', 'centinela', -2.4, z0 + 20, 0, 46, 'cutOff'),
-  ];
-  // At the junction ahead: a blockade with a spike strip, and a tactical van swinging in from Umbra Street.
-  game.police.roadblocks.deploy({ x: 0, z: 337, alongX: false, direction: 1 }, true);
-  spawnPursuit(game, 'tactical', 'bastion', 22, 322.6, -Math.PI / 2, 9, 'ram');
-  // Everyone else on Corona Drive: the cars she is overtaking in their own lane, the ones coming at her in
-  // theirs and diving for the kerb, traffic held up behind the blockade.
+  const pack = [];
+  // Up the block: a blockade with barriers, officers and a spike strip, a cab caught in front of it and the
+  // traffic it has stopped on the far side.
+  game.police.roadblocks.deploy({ x: 0, z: blockadeZ, alongX: false, direction: 1 }, true);
   const traffic = [
-    ['sarosCab', -2.9, zEnd + 12, 0, null, true], ['caravana', -2.7, zEnd + 27, 0, '#f4ecd8', false], ['estela', -2.6, zEnd + 43, 0, '#3a86ff', false],
-    ['toro', 4.4, zEnd + 21, Math.PI - 0.16, '#ff7eb6', true], ['avocet', 2.9, zEnd + 44, Math.PI, '#1abc9c', true], ['coyote', 2.7, zEnd + 62, Math.PI, '#ffd93d', false],
-    ['duna', -2.8, 352, 0, '#e67e22', false],
+    ['sarosCab', -3.3, blockadeZ - 11, 0, null, false], ['caravana', -3.0, blockadeZ + 14, 0, '#3a86ff', false],
+    ['duna', 3.0, blockadeZ + 9, Math.PI, '#1abc9c', false], ['toro', 3.0, blockadeZ + 20, Math.PI, '#ff7eb6', false],
   ];
   for (const [model, x, z, heading, paint, panics] of traffic) spawnCivilianCar(game, model, x, z, heading, paint, panics);
   // The pavement and the boardwalk are full on eclipse afternoon; the people nearest the chase are already running.
-  for (const [x, z] of [[7.3, 4], [8.1, 8], [7.9, 10.5], [7.6, 13], [7.2, 15.5], [8.4, 17], [8.0, 19.5], [7.2, 22], [8.0, 28], [7.5, 35], [8.3, 43], [7.4, 52]]) {
-    if (z < 24) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
+  for (const [x, z] of [[7.3, 6], [8.1, 10], [7.6, 14], [8.4, 18], [7.2, 23], [8.0, 29], [7.5, 36], [8.3, 44], [7.4, 53]]) {
+    if (z < 20) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
   }
-  for (const z of [3, 7, 12, 18, 25, 33, 42]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);
-  // A cruiser that lost the corner burns against the kerb and goes up as she passes.
-  const wreck = game.vehicles.spawn('centinela', 6.3, zEnd + 13, 0.6);
-  wreck.health = 0;
-  wreck.hitByPlayer = true;
-  wreck.burning = 3.6 - (seconds - 0.13);
-  game.police.helicopter.scramble();
-  game.police.helicopter.orbit = Math.PI / 2 - 0.25;
-  game.police.helicopter.mesh.position.set(14, 25, zEnd + 46);
+  for (const z of [5, 9, 14, 20, 27, 35, 44]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);
+  const helicopter = game.police.helicopter;
+  helicopter.scramble();
+  // The helicopter is already on station: ahead of the car and a little to the city side, as its orbit holds it.
+  helicopter.orbit = 1.1;
+  helicopter.mesh.position.set(lane + Math.cos(helicopter.orbit) * 26, 17, z0 + Math.sin(helicopter.orbit) * 26 + speed * 0.45);
   game.crew.cooldowns.jam = 96;
-  game.hud.say('JAZZ', 'They made the car, baby. Get to the square before the sun goes!', '#f4ecd8');
+  const closeIn = seconds - 0.45;
   play(game, seconds, (t) => {
-    game.input.held.add('KeyW');
-    if (t > seconds - 0.4) game.input.held.add('ShiftLeft');
-    // The gunship's next burst is due as the frame is taken, so its tracer is in the air; so are the bursts of
-    // the officers leaning out of the two interceptors.
-    if (t > seconds - 0.05 && game.police.helicopter.cooldown > 0.05) game.police.helicopter.cooldown = 0;
-    if (t > seconds - 0.08) for (const cruiser of pack) if (cruiser.controller && cruiser.controller.isPursuit) cruiser.controller.windowClock = Math.min(cruiser.controller.windowClock, 0.01);
+    // She holds the Rayo at the pace the interceptors can match, feathering the throttle.
+    if (rayo.speed < speed + 1) game.input.held.add('KeyW'); else game.input.held.delete('KeyW');
+    // The pack catches her as she reaches the junction: an interceptor draws level on her ocean side and a
+    // cruiser on the other, each a door's width away and about to turn in.
+    if (t >= closeIn && !pack.length) {
+      const at = rayo.position;
+      pack.push(
+        spawnPursuit(game, 'interceptor', 'lince', at.x - 3.3, at.z + 1.2, 0, rayo.speed, 'flankRight'),
+        spawnPursuit(game, 'patrol', 'centinela', at.x + 3.3, at.z + 2.6, 0, rayo.speed, 'flankLeft'),
+      );
+    }
+    // The gunship holds its fire for this frame; the officer in the interceptor's window fires as it is taken.
+    helicopter.cooldown = 1;
+    for (const cruiser of pack) if (cruiser.controller && cruiser.controller.isPursuit) cruiser.controller.windowClock = cruiser === pack[0] && t > seconds - STEP * 1.5 ? 0 : 1;
     // No hit in the last moments, so the red damage vignette does not tint the frame.
-    if (t > seconds - 0.6) game.player.invulnerable = 1;
+    game.player.invulnerable = 1;
     // The mouse is left alone: the chase camera settles behind the car by itself.
     game.camera.idleLook = 2;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);

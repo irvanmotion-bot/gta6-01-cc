@@ -58,7 +58,7 @@ vec3 sunRays(vec3 dir, float sunAngle) {
   float around = atan(dot(offset, discUp), dot(offset, discRight));
   float reach = max(1.0 - sunAngle / (sunRadius * 4.6), 0.0);
   float spokes = 0.5 + 0.3 * sin(around * 12.0 + 0.6) + 0.2 * sin(around * 5.0 + 1.9);
-  return vec3(1.0, 0.7, 0.3) * reach * reach * (0.3 + 0.7 * spokes) * 0.5;
+  return vec3(1.0, 0.7, 0.3) * reach * reach * (0.3 + 0.7 * spokes) * 0.26;
 }
 void main() {
   vec3 dir = normalize(vDir);
@@ -70,9 +70,9 @@ void main() {
   float sunAngle = acos(min(sunAmount, 1.0));
   float moonAngle = acos(clamp(dot(dir, moonDir), -1.0, 1.0));
   // The glow round the sun warms a wide patch of sky; it shrinks with the crescent.
-  color += sunColor * pow(sunAmount, 6.0) * 0.3 * sunGlow;
+  color += sunColor * pow(sunAmount, 6.0) * 0.12 * sunGlow;
   // Close to the sun the haze burns orange rather than white, so the pale disc and its crescent stand out of it.
-  color = mix(color, vec3(1.0, 0.66, 0.3), pow(sunAmount, 26.0) * 0.55 * sunGlow * (1.0 - starAmount) * (1.0 - corona));
+  color = mix(color, vec3(1.0, 0.62, 0.26), pow(sunAmount, 20.0) * 0.7 * sunGlow * (1.0 - starAmount) * (1.0 - corona));
   float star = step(0.9985, hash(floor(dir * 190.0)));
   color += vec3(star) * starAmount * h;
   // Drifting cumulus on a flat layer overhead, kept clear of the sun so the eclipse is never hidden.
@@ -89,7 +89,7 @@ void main() {
   // The halo and the rays belong to the crescent: the moon's disc stands in front of them on its own side.
   float clearOfMoon = 1.0 - moon * moonShade * 0.9;
   float halo = (1.0 - smoothstep(sunRadius, sunRadius * 1.9, sunAngle)) * (1.0 - disc) * sunGlow * clearOfMoon;
-  color += vec3(1.0, 0.66, 0.26) * halo * 0.4;
+  color += vec3(1.0, 0.66, 0.26) * halo * 0.22;
   // Long uneven rays stand out from the limb, so even a thin crescent blazes in the haze.
   color += sunRays(dir, sunAngle) * sunGlow * (1.0 - disc) * (1.0 - corona) * clearOfMoon;
   color = mix(color, vec3(1.0, 0.99, 0.9), disc);
@@ -108,9 +108,9 @@ const DAY_COLOURS = [
   [5, '#0c1232', '#2f2d55', '#9fb3e8', 0.9, 0.7],
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
   [9, '#2a84e2', '#ffeed2', '#fff0d0', 3.0, 0.7],
-  [13, '#2379e4', '#ffe6bd', '#ffecc4', 3.4, 0.72],
-  [15, '#2a66d8', '#ffc37a', '#ffd08a', 3.7, 0.58],
-  [17.4, '#2f55c4', '#ffa24e', '#ffb65c', 3.8, 0.5],
+  [13, '#2379e4', '#ffe6bd', '#ffecc4', 3.4, 0.78],
+  [15, '#2c7fe8', '#ffd9a4', '#ffe6b8', 3.6, 0.7],
+  [17.4, '#2f7ae8', '#ffc587', '#ffdca4', 3.6, 0.68],
   [18.8, '#3a56b4', '#ff9a5a', '#ff9a52', 2.3, 0.62],
   [19.8, '#231d66', '#ee5f7c', '#d8708c', 0.8, 0.7],
   [21, '#0a1030', '#2a3a72', '#9fb3e8', 0.9, 0.7],
@@ -225,7 +225,9 @@ export class SkyAndSun {
     this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.3 * (1 - dark * 0.6);
     this.ambient.color.copy(uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.6 - dark * 0.25);
     this.ambient.groundColor.copy(this.sun.color).lerp(this.scratchA.set('#c0926a'), 0.55);
-    this.fill.intensity = this.sun.intensity * 0.16 + dark * 0.2;
+    // The fill is the daylight bounced back off the bright sand, sea and stucco: with it, the shaded side of a
+    // car or a wall is a soft violet-blue with its own colour still in it, never a black silhouette.
+    this.fill.intensity = this.sun.intensity * 0.26 * (1 - dark) + dark * 0.2;
     this.fill.color.copy(uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
     this.scene.fog.color.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, dark * 0.55);
 

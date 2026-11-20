@@ -143,8 +143,8 @@ export class Vehicle {
     this.model.tailMaterial.color.setHex(braking ? TAIL_LAMP.braking : TAIL_LAMP.idle);
     if (this.model.lightBar) {
       const phase = this.siren ? Math.floor(this.game.time * 7) % 2 : -1;
-      this.model.lightBar[0].color.setHex(phase === 0 ? 0xff2a2a : 0x551010);
-      this.model.lightBar[1].color.setHex(phase === 1 ? 0x3a7bff : 0x101c55);
+      this.model.lightBar[0].color.setHex(phase === 0 ? 0xff2a2a : phase === 1 ? 0xb01818 : 0x551010);
+      this.model.lightBar[1].color.setHex(phase === 1 ? 0x3a7bff : phase === 0 ? 0x1c3fb8 : 0x101c55);
       flashSirenFlares(this.lights, phase);
     }
     this.effects(dt);

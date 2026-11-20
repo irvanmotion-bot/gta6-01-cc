@@ -49,18 +49,19 @@ function paintAsphaltTexture() {
   canvas.width = size;
   canvas.height = size;
   const c = canvas.getContext('2d');
-  c.fillStyle = '#676a72';
+  // Sun-bleached asphalt: a light warm grey, so the road reads as a bright surface under the afternoon sun.
+  c.fillStyle = '#8f8a84';
   c.fillRect(0, 0, size, size);
   for (let k = 0; k < 5200; k += 1) {
-    const shade = rng.int(78, 128);
-    c.fillStyle = `rgba(${shade},${shade},${shade + 6},${rng.range(0.25, 0.7)})`;
+    const shade = rng.int(112, 160);
+    c.fillStyle = `rgba(${shade + 5},${shade + 1},${shade - 4},${rng.range(0.25, 0.7)})`;
     c.fillRect(rng.int(0, size), rng.int(0, size), rng.int(1, 3), rng.int(1, 3));
   }
   for (let k = 0; k < 9; k += 1) {
-    c.fillStyle = `rgba(30,32,37,${rng.range(0.25, 0.5)})`;
+    c.fillStyle = `rgba(52,50,54,${rng.range(0.14, 0.3)})`;
     c.fillRect(rng.int(0, size), rng.int(0, size), rng.int(30, 110), rng.int(18, 70));
   }
-  c.strokeStyle = 'rgba(18,19,22,0.75)';
+  c.strokeStyle = 'rgba(40,40,44,0.5)';
   c.lineWidth = 1.5;
   for (let k = 0; k < 12; k += 1) {
     let x = rng.int(0, size);
@@ -74,7 +75,7 @@ function paintAsphaltTexture() {
     const x = rng.int(40, size - 40);
     const y = rng.int(40, size - 40);
     const stain = c.createRadialGradient(x, y, 0, x, y, rng.int(14, 34));
-    stain.addColorStop(0, 'rgba(12,12,16,0.6)');
+    stain.addColorStop(0, 'rgba(30,30,36,0.4)');
     stain.addColorStop(1, 'rgba(12,12,16,0)');
     c.fillStyle = stain;
     c.fillRect(x - 40, y - 40, 80, 80);

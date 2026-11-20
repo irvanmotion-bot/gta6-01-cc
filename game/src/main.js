@@ -407,7 +407,7 @@ class Game {
       this.buildings.setNight(this.sky.night);
       this.cityLights.setNight(this.sky.night);
       setVehicleLightsNight(this.sky.night);
-      for (const material of this.glossy) material.envMapIntensity = 0.45 - this.sky.night * 0.36;
+      for (const material of this.glossy) material.envMapIntensity = 0.3 - this.sky.night * 0.21;
       this.headlamp.update(this.state === 'play' && this.darkness.headlightsOn ? this.player.vehicle : null, this.sky.night);
       this.boats.update(dt, this.time);
       this.particles.update(dt);

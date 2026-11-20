@@ -96,10 +96,13 @@ export class EclipseCalendar {
     return smooth(0.9, 0.995, this.coverage());
   }
 
-  /** The share of sunlight that still reaches the streets: the day stays bright until the sun is a thin crescent. */
+  /**
+   * The share of sunlight that still reaches the streets. As in a real eclipse the eye hardly notices the loss until
+   * four fifths of the sun is gone: the day stays bright and warm, then the light falls away fast into totality.
+   */
   sunlight() {
     const covered = this.coverage();
-    return 1 - 0.3 * smooth(0.4, 0.9, covered) - 0.66 * smooth(0.9, 1, covered);
+    return 1 - 0.08 * smooth(0.55, 0.8, covered) - 0.88 * smooth(0.8, 1, covered);
   }
 
   /** Hours of clock per real second right now. */

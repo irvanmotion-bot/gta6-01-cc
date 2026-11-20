@@ -30,8 +30,11 @@ export function attachVehicleLights(model, spec) {
 /** Flash a police car's flares in step with its light bar. */
 export function flashSirenFlares(lights, phase) {
   if (!lights.flares) return;
-  lights.flares[0].visible = phase === 0;
-  lights.flares[1].visible = phase === 1;
+  // Both lamps glow while the siren runs; the one that is lit this beat flares wide, the other stays a small ember.
+  lights.flares.forEach((flare, index) => {
+    flare.visible = phase >= 0;
+    flare.scale.setScalar(phase === index ? 3.9 : 1.5);
+  });
 }
 
 /** Headlight beams and tail flares fade in with the night for every car at once. */

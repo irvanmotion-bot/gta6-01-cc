@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { angleDelta, clamp } from '../core/random.js';
 
 /** The driving view: metres behind the car (plus a share of its length), lift of the aim point, pitch and lens. */
-const CHASE = { distance: 3.0, perLength: 0.58, speedPull: 0.5, lift: 0.95, pitch: 0.1, fov: 54, speedFov: 7, boostFov: 3, follow: 36 };
+const CHASE = { distance: 4.6, perLength: 0.5, speedPull: 0.7, lift: 2.1, pitch: 0.13, fov: 54, speedFov: 6, boostFov: 2, follow: 36 };
 
 export class ChaseCamera {
   constructor(aspect) {
@@ -41,8 +41,8 @@ export class ChaseCamera {
     let wanted;
     let height;
     if (vehicle) {
-      // Close and low behind the boot, aimed over the roof: the car fills the lower third and the street ahead
-      // the rest. Speed eases the camera back a little, and the lens widens further down.
+      // Level, behind and a little above the roof: the whole car sits in the lower middle with the cars beside it
+      // in view, and the street runs straight up the frame to its vanishing point. Speed eases the camera back.
       const pace = clamp(Math.abs(vehicle.speed) / 50, 0, 1);
       wanted = CHASE.distance + vehicle.spec.length * CHASE.perLength + pace * CHASE.speedPull;
       height = vehicle.spec.height + CHASE.lift;
