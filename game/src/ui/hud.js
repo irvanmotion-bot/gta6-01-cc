@@ -11,6 +11,8 @@ import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
 import { HudFoeBars } from './hudFoeBars.js';
+import { HudUnitTags } from './hudUnitTags.js';
+import { HudWaypoint } from './hudWaypoint.js';
 import { HudRecordStrip } from './hudRecordStrip.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
 import { speakerJob } from '../missions/storyMissions.js';
@@ -21,6 +23,9 @@ export const HUD_SIZES = {
   large: { label: 'LARGE', scale: 1.2 },
   huge: { label: 'HUGE · ESSENTIALS', scale: 2.5, essentials: true },
 };
+
+/** How long a line stays in the feed, in seconds of play. */
+const NOTE_SECONDS = 4.3;
 
 /** The feed's line for what the radio is playing: the station, its frequency, the track and the artist. */
 function radioLine(playing) {
@@ -48,8 +53,11 @@ export class Hud {
     this.weaponBar = new HudWeaponBar(game, corner, this.cache);
     this.vehiclePanel = new HudVehiclePanel(game, corner, this.cache);
     this.foeBars = new HudFoeBars(game, root, this.cache);
+    this.unitTags = new HudUnitTags(game, root, this.cache);
+    this.waypoint = new HudWaypoint(game, root, this.cache);
     this.recordStrip = new HudRecordStrip(game, root, this.cache);
     this.buildOverlays(root);
+    this.notes = [];
     this.speech = [];
     this.speechClock = 0;
     this.bannerClock = 0;
@@ -137,13 +145,25 @@ export class Hud {
     this.root.classList.toggle('hidden', !visible);
   }
 
-  /** A short line in the feed at the top of the screen: pickups, purchases, cred, radio chatter. */
+  /**
+   * A short line in the feed at the top of the screen: pickups, purchases, cred, radio chatter. The three newest
+   * show; each lives a few seconds of the game's own time, so the feed holds still while the game is paused.
+   */
   notify(message) {
     const line = createElement('div', 'note', null, message);
     this.notifications.prepend(line);
-    while (this.notifications.children.length > 3) this.notifications.lastChild.remove();
-    setTimeout(() => line.classList.add('gone'), 3600);
-    setTimeout(() => line.remove(), 4300);
+    this.notes.unshift({ line, life: NOTE_SECONDS });
+    while (this.notes.length > 3) this.notes.pop().line.remove();
+  }
+
+  /** Age the feed: a line fades over its last moments, then goes. */
+  ageNotes(dt) {
+    for (let index = this.notes.length - 1; index >= 0; index -= 1) {
+      const note = this.notes[index];
+      note.life -= dt;
+      if (note.life < 0.7) note.line.classList.add('gone');
+      if (note.life <= 0) { note.line.remove(); this.notes.splice(index, 1); }
+    }
   }
 
   /** The big centred title of a job start, pass or fail. */
@@ -235,7 +255,10 @@ export class Hud {
     this.weaponBar.update(dt);
     this.vehiclePanel.update(dt);
     this.foeBars.update(dt);
+    this.unitTags.update(dt);
+    this.waypoint.update(dt);
     this.recordStrip.update(dt);
+    this.ageNotes(dt);
     cache.text(this.clock, `${game.calendar.dayName()} ${game.calendar.clockText()}`);
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
     cache.text(this.street, streetNameAt(player.position.x, player.position.z));

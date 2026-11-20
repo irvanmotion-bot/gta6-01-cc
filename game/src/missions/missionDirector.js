@@ -6,6 +6,7 @@ import { CRED_AWARDS } from '../progression/streetCred.js';
 import { leaveVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { SeededRandom, distance2D } from '../core/random.js';
+import { landmarkNear } from '../world/cityLayout.js';
 
 export class MissionDirector {
   constructor(game) {
@@ -316,6 +317,20 @@ export class MissionDirector {
     vehicle.stolen = false;
     vehicle.parked = true;
     run.vehicle = null;
+  }
+
+  /**
+   * The one place the step in hand sends her to, with a name for it (the landmark that stands there, the car to
+   * take, or the step's own name), or null when the step has no single place: the HUD hangs its waypoint on it.
+   */
+  waypoint() {
+    const run = this.active;
+    if (!run || !run.step) return null;
+    const step = run.step;
+    if (step.kind === 'steal' && run.vehicle) return { x: run.vehicle.position.x, z: run.vehicle.position.z, name: run.vehicle.spec.name.toUpperCase() };
+    if (!step.at) return null;
+    const place = landmarkNear(step.at[0], step.at[1]);
+    return { x: step.at[0], z: step.at[1], name: place ? place.name : (step.stage || 'OBJECTIVE').toUpperCase() };
   }
 
   /** What the minimap should show for the story: objectives while on a job, givers otherwise. */

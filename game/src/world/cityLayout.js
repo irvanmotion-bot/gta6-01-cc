@@ -83,6 +83,17 @@ function landmark(id, name, i, j, color, icon, subtitle) {
   return { id, name, block: [i, j], color, icon, subtitle, ...sidewalkSpot(i, j), kerb: kerbSpot(i, j) };
 }
 
+/** The landmark within `range` metres of a point, nearest first, or null: a place's name for a waypoint. */
+export function landmarkNear(x, z, range = 48) {
+  let best = null;
+  let nearest = range;
+  for (const place of Object.values(LANDMARKS)) {
+    const distance = Math.hypot(place.x - x, place.z - z);
+    if (distance < nearest) { nearest = distance; best = place; }
+  }
+  return best;
+}
+
 /** The named places of the story, each on the south sidewalk of its block. */
 export const LANDMARKS = {
   safehouse: landmark('safehouse', 'CASA REYES', 1, 5, '#58c48d', 'H', 'safehouse · rest and save'),

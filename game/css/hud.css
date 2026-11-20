@@ -259,6 +259,29 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .foe-track i { display: block; height: 100%; background: #ff4a3a; }
 .foe-bar.police .foe-track i { background: #4d8dff; }
 
+/* The waypoint: the job's next place as a plate on the screen, with its name and its distance; out of view, the
+   plate sits at the side of the screen the place lies toward */
+.waypoint { position: absolute; display: none; transform: translate(-50%, -50%); align-items: center; gap: 0.8vh; padding: 0.35vh 1.1vh 0.4vh; background: var(--panel); border-radius: 0.6vh; box-shadow: inset 0 -0.42vh 0 var(--amber); font-size: var(--t9); line-height: 1.25; white-space: nowrap; }
+.waypoint.visible { display: flex; }
+.waypoint.to-left { transform: translate(0, -50%); }
+.waypoint.to-right { transform: translate(-100%, -50%); flex-direction: row-reverse; }
+.waypoint-arrow { font-style: normal; font-size: var(--t10); line-height: 1; color: var(--amber); }
+.waypoint-name { font-weight: 900; letter-spacing: 0.04vh; color: #fff; }
+.waypoint-metres { font-weight: 900; color: var(--amber); }
+#hud.essentials .waypoint { gap: 0.5vh; padding: 0.2vh 0.7vh 0.35vh; font-size: var(--t8); box-shadow: inset 0 -0.3vh 0 var(--amber); }
+#hud.essentials .waypoint-arrow { font-size: var(--t8); }
+#hud.essentials .waypoint-name, #hud.essentials .waypoint-metres { font-weight: 700; letter-spacing: 0; }
+
+/* Callsign tags over the police units on her: the unit's radio name, then what it is doing */
+.unit-tag { position: absolute; display: none; transform: translate(-50%, -100%); padding: 0.15vh 0.9vh 0.2vh; background: rgba(18, 14, 36, 0.82); border-bottom: 0.42vh solid var(--coral); border-radius: 0.5vh 0.5vh 0 0; font-size: var(--t9); line-height: 1.25; white-space: nowrap; }
+.unit-tag.visible { display: block; }
+.unit-tag b { font-weight: 900; color: #fff; }
+.unit-tag em { margin-left: 0.8vh; font-style: normal; font-size: var(--t8); color: var(--alarm); }
+.unit-tag.air { border-bottom-color: var(--amber); }
+#hud.essentials .unit-tag { padding: 0.1vh 0.6vh; font-size: var(--t8); border-bottom-width: 0.3vh; }
+#hud.essentials .unit-tag b { font-weight: 700; }
+#hud.essentials .unit-tag em { display: none; }
+
 .banner { position: absolute; left: 0; right: 0; top: 21vh; text-align: center; opacity: 0; transform: scale(0.9); transition: 0.35s; }
 .banner.visible { opacity: 1; transform: none; }
 .banner-title { font-family: var(--display); font-weight: 400; font-size: 10vh; line-height: 1; letter-spacing: 0.4vh; text-shadow: 0 0.6vh 0 var(--ink), 0 0 3vh rgba(18, 14, 36, 0.6); }
