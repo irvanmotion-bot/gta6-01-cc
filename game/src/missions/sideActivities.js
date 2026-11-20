@@ -79,9 +79,12 @@ export class SideActivities {
     const fare = this.fare;
     if (!fare) return null;
     const pickup = fare.stage === 'pickup';
+    const rows = [['NOW', pickup ? 'Stop at the yellow marker for your fare' : `Drive the fare to ${fare.to}`], ['NEXT', pickup ? `DROP OFF IN ${fare.to.toUpperCase()}` : 'THE NEXT FARE']];
+    if (!pickup) rows.push(['TIME LIMIT', `${Math.max(0, Math.ceil(fare.timer))} S · FARE WALKS`]);
+    rows.push(['PAYS', `$${fare.pay} + TIP FOR SPEED`]);
     return {
-      header: `SAROS CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STAGE 1/2 · PICK UP' : 'STAGE 2/2 · DROP OFF', share: pickup ? 0.1 : 0.55,
-      objective: pickup ? 'Stop at the yellow marker for your fare' : `Drive the fare to ${fare.to}`, next: pickup ? `Drop off in ${fare.to}` : `$${fare.pay} + tip for speed`, timer: pickup ? null : fare.timer, counting: 'down',
+      header: `SAROS CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STEP 1 OF 2 · PICK UP' : 'STEP 2 OF 2 · DROP OFF', share: pickup ? 0.1 : 0.55,
+      rows, accent: `PAYS $${fare.pay} + TIP`, urgent: !pickup && fare.timer < 20, kind: 'fare',
     };
   }
 

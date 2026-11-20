@@ -132,8 +132,11 @@ function chaseScene(game) {
   game.wanted.setStars(5, 99);
   const pack = [];
   // Up the block: a blockade with barriers, officers and a spike strip, a cab caught in front of it and the
-  // traffic it has stopped on the far side.
+  // traffic it has stopped on the far side. Its call on the radio is the line in the feed.
+  game.hud.clearFeed();
   game.police.roadblocks.deploy({ x: 0, z: blockadeZ, alongX: false, direction: 1 }, true);
+  // A patrol car a block behind, coming up Corona Drive to close the box.
+  spawnPursuit(game, 'patrol', 'centinela', lane + 2.8, z0 - 96, 0, speed);
   const traffic = [
     ['sarosCab', -3.3, blockadeZ - 11, 0, null, false], ['caravana', -3.0, blockadeZ + 14, 0, '#3a86ff', false],
     ['duna', 3.0, blockadeZ + 9, Math.PI, '#1abc9c', false], ['toro', 3.0, blockadeZ + 20, Math.PI, '#ff7eb6', false],
@@ -307,8 +310,16 @@ function pauseScene(game) {
 }
 
 const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+/**
+ * The HUD SIZE each scene is taken at. The cover is seen whole, so it takes the full HUD; the others are seen
+ * small, so they take the size made for a small picture.
+ */
+const SCENE_HUD = { chase: 'large' };
 
 export function stageScreenshot(game, name) {
+  // The game's own settings, as a player would set them for a small window: a legible HUD and a supersampled city.
+  game.settings = { ...game.settings, hudSize: SCENE_HUD[name] || 'huge', renderScale: 2 };
+  game.applySettings();
   (SCENES[name] || titleScene)(game);
   game.input.held.clear();
   game.frozen = true;

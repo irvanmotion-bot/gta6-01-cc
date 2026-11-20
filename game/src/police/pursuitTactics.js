@@ -28,9 +28,9 @@ export class PursuitDriver {
 
   /** What the dispatch panel prints for this unit right now. */
   tacticLabel() {
-    if (this.deployed) return 'ON FOOT';
-    if (this.game.wanted.evading) return 'SEARCH';
-    if (this.swerving) return 'SIDE-SWIPE';
+    if (this.deployed) return 'OFFICERS OUT';
+    if (this.game.wanted.evading) return 'SEARCHING';
+    if (this.swerving) return 'SIDE-SWIPING';
     return TACTIC_LABELS[this.tactic];
   }
 
@@ -55,21 +55,25 @@ export class PursuitDriver {
       vehicle.setControls(-1, this.reverseSteer, false);
       return;
     }
+    const direct = distance < 70 && game.collision.hasLineOfSight(position.x, position.z, player.position.x, player.position.z, 1);
+    // With every unit's eyes off her, this crew does not know where she is: it has only the search zone to work.
+    const knows = direct || !game.wanted.evading;
     // Close to a player on foot or stopped: brake, then put the officers on the street.
-    if (distance < 17 && playerSpeed < 5 && this.redeploy <= 0) {
+    if (knows && distance < 17 && playerSpeed < 5 && this.redeploy <= 0) {
       vehicle.setControls(vehicle.speed > 1 ? -1 : 0, 0, true);
       if (Math.abs(vehicle.speed) < 2) this.deploy(vehicle);
       return;
     }
-    const direct = distance < 70 && game.collision.hasLineOfSight(position.x, position.z, player.position.x, player.position.z, 1);
     if (direct) this.fireFromWindow(vehicle, player, distance, dt);
-    const aim = direct ? this.aimInSight(vehicle, player, distance) : this.aimByRoad(vehicle, player);
+    const aim = direct ? this.aimInSight(vehicle, player, distance) : knows ? this.aimByRoad(vehicle, player) : this.aimForSearch(vehicle);
     const turn = angleDelta(vehicle.heading, Math.atan2(aim.x - position.x, aim.z - position.z));
     const sharp = Math.abs(turn) > 0.85;
     let throttle = sharp && vehicle.speed > 11 ? -0.7 : 1;
     if (aim.holdBack && vehicle.speed > playerSpeed + 1) throttle = distance < 8 ? -0.6 : 0;
+    // Searching is done at a crawl, lamps on, looking down every street.
+    if (!knows && vehicle.speed > SEARCH_PACE) throttle = 0;
     // Closing on someone on foot or parked: come in under control and pull up, do not plough into the kerb beside them.
-    if (playerSpeed < 6 && vehicle.speed > Math.max(7, distance * 0.42)) throttle = -1;
+    if (knows && playerSpeed < 6 && vehicle.speed > Math.max(7, distance * 0.42)) throttle = -1;
     vehicle.setControls(throttle, clamp(turn * 2.2, -1, 1), sharp && vehicle.speed > 9 && Math.abs(turn) > 1.3);
     this.stuck = Math.abs(vehicle.speed) < 1.2 ? this.stuck + dt : 0;
     if (this.stuck > 1.5) {
@@ -172,22 +176,41 @@ export class PursuitDriver {
     return { x: leadX, z: leadZ };
   }
 
-  /** No line of sight: follow the street grid to the player, or to the junction ahead of them when cutting off. */
-  aimByRoad(vehicle, player) {
-    let goalX = player.position.x;
-    let goalZ = player.position.z;
-    const car = player.vehicle;
+  /**
+   * Nobody has eyes on her: drive the street grid to a point of the search zone, and to another once there. Each
+   * crew picks its own points, so the pack spreads over the zone instead of bunching on its middle.
+   */
+  aimForSearch(vehicle) {
+    const wanted = this.game.wanted;
+    const zone = wanted.searchRadius();
+    const spot = this.searchSpot;
+    if (!spot || distance2D(vehicle.position.x, vehicle.position.z, spot.x, spot.z) < 16) {
+      const angle = Math.random() * Math.PI * 2;
+      const reach = zone * (0.25 + Math.random() * 0.7);
+      this.searchSpot = { x: wanted.lastSeen.x + Math.cos(angle) * reach, z: wanted.lastSeen.z + Math.sin(angle) * reach };
+    }
+    return this.aimByRoad(vehicle, null, this.searchSpot);
+  }
+
+  /**
+   * No line of sight: follow the street grid to the player, or to the junction ahead of them when cutting off;
+   * with a `place` given, to that point instead.
+   */
+  aimByRoad(vehicle, player, place = null) {
+    let goalX = place ? place.x : player.position.x;
+    let goalZ = place ? place.z : player.position.z;
+    const car = place ? null : player.vehicle;
     if (this.tactic === 'cutOff' && car && Math.abs(car.speed) > 8) {
       goalX += car.forwardX() * 120;
       goalZ += car.forwardZ() * 120;
     }
     if (!this.node) this.node = nearestNode(vehicle.position.x, vehicle.position.z);
-    let spot = nodePosition(this.node.i, this.node.j);
-    if (distance2D(vehicle.position.x, vehicle.position.z, spot.x, spot.z) < 11) {
+    let junction = nodePosition(this.node.i, this.node.j);
+    if (distance2D(vehicle.position.x, vehicle.position.z, junction.x, junction.z) < 11) {
       this.node = stepToward(this.node, goalX, goalZ);
-      spot = nodePosition(this.node.i, this.node.j);
+      junction = nodePosition(this.node.i, this.node.j);
     }
-    return spot;
+    return junction;
   }
 
   /** Stop and send the crew out: two officers from a cruiser, a four-strong squad from a tactical van. */
@@ -241,4 +264,6 @@ const windowGunnerMaterial = new THREE.MeshStandardMaterial({ vertexColors: true
 /** Shooting from a moving cruiser: the wanted level it starts at, reach in metres, shots a burst and their odds. */
 const WINDOW_FIRE = { fromStars: 3, range: 40, burst: 3, rate: 0.12, pause: 1.5, accuracy: 0.22, damage: 5 };
 const PACK_PATTERN =['ram', 'flankLeft', 'flankRight', 'cutOff', 'ram', 'cutOff'];
-const TACTIC_LABELS = { respond: 'RESPOND', tail: 'TAIL', ram: 'RAM', flankLeft: 'FLANK LEFT', flankRight: 'FLANK RIGHT', cutOff: 'CUT OFF' };
+const TACTIC_LABELS = { respond: 'RESPONDING', tail: 'TAILING', ram: 'RAMMING', flankLeft: 'FLANK LEFT', flankRight: 'FLANK RIGHT', cutOff: 'CUTTING OFF' };
+/** The speed, in metres a second, of a cruiser working the search zone. */
+const SEARCH_PACE = 13;

@@ -96,8 +96,10 @@ export class Minimap {
     const vehicle = player.vehicle;
     const targetZoom = vehicle ? 1.05 - Math.min(Math.abs(vehicle.speed) / 60, 1) * 0.3 : 1.2;
     this.zoom += (targetZoom - this.zoom) * 0.05;
-    const unit = height / 220;
-    const scale = this.zoom * unit;
+    // The map keeps the same stretch of city in view whatever the radar's size; blips and labels are drawn large
+    // enough to read on a small one.
+    const unit = height / 125;
+    const scale = (this.zoom * height) / 220;
     const angle = game.camera.yaw - Math.PI;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
@@ -119,6 +121,12 @@ export class Minimap {
 
     const target = this.routeTarget();
     if (target) this.drawRoute(c, routeAlongStreets(player.position, target), toMap, halfX, halfY, unit, target.color);
+    // With every unit's eyes off her, the zone the force is searching: out of it, the stars come off faster.
+    const zone = game.wanted.searchZone();
+    if (zone) {
+      const centre = toMap(zone.x, zone.z);
+      this.drawSearchZone(c, halfX + centre.x, halfY + centre.y, zone.radius * scale, unit);
+    }
 
     const edgeX = halfX - 11 * unit;
     const edgeTop = halfY - 11 * unit;
@@ -153,6 +161,20 @@ export class Minimap {
       c.strokeStyle = '#ff6a4d';
       c.strokeRect(0, 0, width, height);
     }
+  }
+
+  /** The search zone: a coral disc with a dashed rim, round the place the police last saw her. */
+  drawSearchZone(c, x, y, radius, unit) {
+    c.save();
+    c.beginPath();
+    c.arc(x, y, radius, 0, Math.PI * 2);
+    c.fillStyle = 'rgba(255, 106, 77, 0.24)';
+    c.fill();
+    c.setLineDash([6 * unit, 4 * unit]);
+    c.lineWidth = 2.4 * unit;
+    c.strokeStyle = '#ff6a4d';
+    c.stroke();
+    c.restore();
   }
 
   /** The route as a bright line with a dark edge, from the player's arrow to the objective. */
@@ -327,6 +349,8 @@ export class Minimap {
     c.strokeText(DISTRICTS.jacaranda.name.toUpperCase(), toX(280), toY(330));
     c.fillText(DISTRICTS.jacaranda.name.toUpperCase(), toX(280), toY(330));
     const unit = Math.max(1.2, scale * 2.4);
+    const zone = game.wanted.searchZone();
+    if (zone) this.drawSearchZone(c, toX(zone.x), toY(zone.z), zone.radius * scale, unit);
     const places = Object.values(LANDMARKS).map((p) => ({ x: p.x, z: p.z, color: p.color, label: p.icon }));
     for (const blip of [...places, ...this.collectBlips()]) this.drawBlip(c, toX(blip.x), toY(blip.z), blip, unit);
     // Every landmark carries its name under its icon.

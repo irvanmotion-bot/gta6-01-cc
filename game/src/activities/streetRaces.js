@@ -135,9 +135,15 @@ export class StreetRaces {
     const race = this.active;
     if (!race) return null;
     const count = race.points.length;
+    const field = race.rivals.length + 1;
+    const clock = `${Math.floor(race.clock / 60)}:${String(Math.floor(race.clock % 60)).padStart(2, '0')}`;
     return {
-      header: 'STREET RACE', title: race.event.name, stageLine: `POSITION ${race.place}/${race.rivals.length + 1}`, share: race.index / count,
-      objective: race.countdown > 0 ? 'Hold the line… engines hot' : `Checkpoint ${Math.min(race.index + 1, count)} of ${count}`, next: `Purse $${race.event.purse.toLocaleString('en-US')} for first`, timer: race.clock, counting: 'up',
+      header: `STREET RACE · ${field} CARS`, title: race.event.name, stageLine: `POSITION ${race.place} OF ${field}`, share: race.index / count,
+      rows: [
+        ['NOW', race.countdown > 0 ? 'Hold the line: engines hot' : `Checkpoint ${Math.min(race.index + 1, count)} of ${count}`],
+        ['RACE TIME', clock], ['PURSE', `$${race.event.purse.toLocaleString('en-US')} FOR FIRST PLACE`],
+      ],
+      accent: `PLACE ${race.place} OF ${field} · ${clock}`, kind: 'race',
     };
   }
 

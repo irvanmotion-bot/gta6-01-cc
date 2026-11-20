@@ -60,7 +60,8 @@ export function deleteSaveSlot(slot) {
   try { window.localStorage.removeItem(slotKey(slot)); } catch (error) { /* nothing to delete */ }
 }
 
-export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true };
+/** `hudSize` is 'standard', 'large' or 'huge' (ui/hud.js); `renderScale` multiplies the pixels the city is drawn at. */
+export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true, hudSize: 'large', renderScale: 1 };
 
 export function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(readStored(SETTINGS_KEY) || {}) };

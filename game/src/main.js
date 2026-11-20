@@ -140,10 +140,21 @@ class Game {
     this.hud.fitToWindow();
   }
 
+  /**
+   * Put the settings to work: volume, mouse speed, shadows, the size of the HUD, and RENDER SCALE, which draws the
+   * city at more pixels than the window has and lets the browser average them down: smoother edges for more work.
+   */
   applySettings() {
-    this.audio.setVolume(this.settings.volume);
-    this.camera.sensitivity = this.settings.sensitivity;
-    this.sky.setShadows(this.settings.shadows);
+    const settings = this.settings;
+    this.audio.setVolume(settings.volume);
+    this.camera.sensitivity = settings.sensitivity;
+    this.sky.setShadows(settings.shadows);
+    this.hud.setSize(settings.hudSize);
+    const ratio = Math.min(window.devicePixelRatio || 1, 1.5) * (settings.renderScale || 1);
+    if (this.renderer.getPixelRatio() !== ratio) {
+      this.renderer.setPixelRatio(ratio);
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
   }
 
   /** Everyone a bullet, a bumper or a blast can reach: Nova, the citizens and the gunmen. */
@@ -171,6 +182,7 @@ class Game {
     this.down = null;
     this.hud.hideDown();
     this.hud.clearSpeech();
+    this.hud.clearFeed();
     this.races.reset();
     this.missions.reset();
     this.vehicles.clear();
@@ -347,6 +359,7 @@ class Game {
       this.shops.update(dt);
       this.workshop.update(dt);
       this.darkness.update(dt);
+      this.audio.radio.tick(dt, Boolean(this.player.vehicle));
       this.stats.playSeconds += dt;
     }
     this.watchParties.update(dt);

@@ -60,6 +60,7 @@ export class HudEclipsePanel {
     cache.text(this.big, readout.big);
     // The panel has room for the first words of the line; the atlas prints it whole.
     cache.text(this.line, readout.line.split(/ · |: /)[0]);
+    cache.toggle(this.root, 'worded', !readout.ticking);
     cache.width(this.fill, readout.share);
     cache.toggle(this.root, 'ticking', readout.ticking);
     cache.toggle(this.root, 'totality', calendar.isTotality());

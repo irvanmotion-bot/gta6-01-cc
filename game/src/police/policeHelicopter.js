@@ -16,6 +16,8 @@ export class PoliceHelicopter {
     this.aim = new THREE.Vector3();
     this.lastSeen = new THREE.Vector3();
     this.sweep = 0;
+    this.searching = false;
+    this.firedClock = 0;
     const batch = new MeshBatcher();
     // A white cabin with the force's blue band and yellow pinstripe, a dark glass nose, a blue tail boom with a
     // fin and stabiliser, and skids on struts: a police helicopter from any side, and from underneath.
@@ -88,6 +90,29 @@ export class PoliceHelicopter {
     return distance2D(this.mesh.position.x, this.mesh.position.z, player.x, player.z);
   }
 
+  /**
+   * Whether the crew can see Nova from up there: in range, and no building tall enough to stand between the cabin
+   * and her. Pressed against the far wall of a tower she is out of its sight, as she is from a car in the next street.
+   */
+  seesPlayer(range) {
+    if (!this.active) return false;
+    const player = this.game.player.position;
+    const from = this.mesh.position;
+    const flat = distance2D(from.x, from.z, player.x, player.z);
+    if (flat > range) return false;
+    const dx = player.x - from.x;
+    const dy = player.y + 1.2 - from.y;
+    const dz = player.z - from.z;
+    const reach = Math.hypot(dx, dy, dz) || 1;
+    return this.game.collision.raycast(from.x, from.y, from.z, dx / reach, dy / reach, dz / reach, reach - 1, 1.5) >= reach - 1;
+  }
+
+  /** What the dispatch panel prints for the helicopter: its gun when it has just fired, its lamp, or the sweep. */
+  tacticLabel() {
+    if (this.searching) return 'SWEEPING';
+    return this.firedClock > 0 ? 'GUNSHIP' : 'SPOTLIGHT';
+  }
+
   /** Bring it in from over the hills. */
   scramble() {
     const player = this.game.player.position;
@@ -155,13 +180,18 @@ export class PoliceHelicopter {
     if (stars < 3) { this.dismiss(); return; }
     const player = game.player;
     this.orbit += dt * 0.22;
+    this.firedClock = Math.max(0, this.firedClock - dt);
+    // With every unit's eyes off her, the helicopter circles the place she was last seen and sweeps it with its lamp.
+    const wanted = game.wanted;
+    this.searching = wanted.evading || game.darkness.isHidden();
     // Lead a fast car, so the helicopter holds its place over the chase instead of trailing behind it.
     // Over a car chase it comes down low and close, where its lamp can hold the car and its gunner can see it.
-    const car = player.vehicle;
+    const car = wanted.evading ? null : player.vehicle;
+    const centre = wanted.evading ? wanted.lastSeen : player.position;
     const radius = car ? CHASE_ORBIT.radius : ORBIT_RADIUS;
     const hover = car ? CHASE_ORBIT.height : HOVER_HEIGHT;
-    const goalX = player.position.x + Math.cos(this.orbit) * radius + (car ? car.velX * CHASE_ORBIT.lead : 0);
-    const goalZ = player.position.z + Math.sin(this.orbit) * radius + (car ? car.velZ * CHASE_ORBIT.lead : 0);
+    const goalX = centre.x + Math.cos(this.orbit) * radius + (car ? car.velX * CHASE_ORBIT.lead : 0);
+    const goalZ = centre.z + Math.sin(this.orbit) * radius + (car ? car.velZ * CHASE_ORBIT.lead : 0);
     const ease = Math.min(1, dt * 1.3);
     mesh.position.x += (goalX - mesh.position.x) * ease;
     mesh.position.z += (goalZ - mesh.position.z) * ease;
@@ -173,7 +203,8 @@ export class PoliceHelicopter {
     // finds her again only if its pool of light crosses her.
     const cover = game.darkness;
     const aim = this.aim;
-    if (cover.isHidden()) {
+    if (this.searching) {
+      if (wanted.evading) this.lastSeen.set(wanted.lastSeen.x, 0, wanted.lastSeen.z);
       this.sweep += dt;
       const goalAimX = this.lastSeen.x + Math.sin(this.sweep * 0.9) * SWEEP_REACH;
       const goalAimZ = this.lastSeen.z + Math.sin(this.sweep * 0.63 + 1.3) * SWEEP_REACH;
@@ -205,8 +236,9 @@ export class PoliceHelicopter {
     this.pool.material.opacity = 0.09 + night * 0.31;
 
     this.cooldown -= dt;
-    if (stars >= 4 && this.cooldown <= 0 && player.alive && !cover.isHidden()) {
+    if (stars >= 4 && this.cooldown <= 0 && player.alive && !this.searching) {
       this.cooldown = 0.3 + Math.random() * 0.5;
+      this.firedClock = 2.5;
       const hit = Math.random() < 0.13;
       const from = new THREE.Vector3(mesh.position.x, mesh.position.y - 1.4, mesh.position.z);
       const to = new THREE.Vector3(player.position.x + (hit ? 0 : (Math.random() - 0.5) * 7), player.position.y + 0.8, player.position.z + (hit ? 0 : (Math.random() - 0.5) * 7));

@@ -50,6 +50,28 @@ export class PoliceDispatch {
     return this.helicopter.active && this.helicopter.distanceToPlayer() < range * 1.5;
   }
 
+  /** True when a unit standing at (x, z) has Nova within `range` with no building between them. */
+  hasSightFrom(x, z, range) {
+    const player = this.game.player.position;
+    return distance2D(x, z, player.x, player.z) < range && this.game.collision.hasLineOfSight(x, z, player.x, player.z, 1.2);
+  }
+
+  /**
+   * How many units have eyes on Nova right now: every crewed police car and every officer on foot within `range`
+   * of her with a clear line to her, and the helicopter when nothing tall stands between it and her.
+   */
+  unitsSeeing(range) {
+    const game = this.game;
+    let count = this.helicopter.seesPlayer(range * 1.5) ? 1 : 0;
+    for (const vehicle of game.vehicles.list) {
+      if (vehicle.spec.police && !vehicle.dead && vehicle.driver === 'cop' && this.hasSightFrom(vehicle.position.x, vehicle.position.z, range)) count += 1;
+    }
+    for (const gunman of game.gunmen.list) {
+      if (gunman.faction === 'police' && gunman.alive && this.hasSightFrom(gunman.position.x, gunman.position.z, range)) count += 1;
+    }
+    return count;
+  }
+
   /** Which kind of unit answers the next call at this wanted level. */
   chooseRole(stars) {
     const roll = this.rng.next();
@@ -95,7 +117,7 @@ export class PoliceDispatch {
       if (row && block.spikes) row.tactic = 'SPIKE STRIP';
     }
     if (this.helicopter.active) {
-      rows.push({ ...this.helicopter.unit, units: 1, tactic: game.wanted.stars >= 4 ? 'GUNSHIP' : 'SPOTLIGHT', distance: this.helicopter.distanceToPlayer() });
+      rows.push({ ...this.helicopter.unit, units: 1, tactic: this.helicopter.tacticLabel(), distance: this.helicopter.distanceToPlayer() });
     }
     let officers = 0;
     let nearest = Infinity;
@@ -104,7 +126,11 @@ export class PoliceDispatch {
       officers += 1;
       nearest = Math.min(nearest, distance2D(gunman.position.x, gunman.position.z, player.x, player.z));
     }
-    if (officers > 0) rows.push({ role: 'foot', kind: 'OFFICERS', icon: UNIT_ROLES.foot.icon, callsign: `FOOT ×${officers}`, units: officers, tactic: game.wanted.stars <= 1 ? 'ARREST' : 'OPEN FIRE', distance: nearest });
+    if (officers > 0) {
+      const foot = UNIT_ROLES.foot;
+      const tactic = game.wanted.evading ? 'SEARCHING' : game.wanted.stars <= 1 ? 'ARRESTING' : 'FIRING';
+      rows.push({ role: 'foot', kind: foot.kind, tag: foot.tag, icon: foot.icon, callsign: `${foot.prefix} ×${officers}`, units: officers, tactic, distance: nearest });
+    }
     return rows.sort((a, b) => a.distance - b.distance);
   }
 

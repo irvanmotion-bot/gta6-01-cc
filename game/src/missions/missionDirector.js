@@ -78,6 +78,8 @@ export class MissionDirector {
     const game = this.game;
     const stages = mission.steps.filter((step) => step.stage).map((step) => step.stage);
     this.active = { mission, index: -1, step: null, timer: null, vehicle: null, tag: mission.id, remaining: [], targets: [], total: 0, progress: 0, stages, stage: 0, number: STORY_MISSIONS.indexOf(mission) + 1 };
+    // Where the job stops racing the eclipse: the step that waits for the dark.
+    this.active.darkStep = mission.steps.findIndex((step) => step.kind === 'awaitTotality');
     if (mission.hour !== undefined) game.calendar.setHour(mission.hour);
     game.hud.banner(mission.title.toUpperCase(), `Job ${this.active.number} · ${CHARACTERS[mission.giver].name} · reward $${mission.reward.toLocaleString('en-US')}`, '#ffb547');
     game.audio.menuSelect();
@@ -172,6 +174,43 @@ export class MissionDirector {
     };
   }
 
+  /**
+   * True while the job in hand must be done before the sun goes out: every step of the heist up to the one that
+   * waits for the dark at the vault door. Totality falling during one of them fails the job.
+   */
+  underEclipseDeadline() {
+    const run = this.active;
+    return Boolean(run && run.mission.deadline === 'totality' && run.index < run.darkStep);
+  }
+
+  /**
+   * The clock the job panel prints as TIME LIMIT, with what it runs to: a step's own timer, or the seconds left
+   * until totality while the heist is under its deadline. Null when nothing is counting.
+   */
+  timeLimit() {
+    const run = this.active;
+    if (!run || !run.step) return null;
+    if (run.timer !== null) return { seconds: run.timer, until: 'ON THE CLOCK' };
+    if (this.underEclipseDeadline() || run.step.kind === 'awaitTotality') {
+      const seconds = this.game.calendar.secondsToTotality();
+      if (seconds !== null) return { seconds, until: 'TOTALITY' };
+    }
+    return null;
+  }
+
+  /** Everything that fails the step in hand, as the job panel lists it after FAIL IF. */
+  failConditions() {
+    const run = this.active;
+    if (!run || !run.step) return [];
+    const list = [];
+    if (run.timer !== null) list.push('TIME RUNS OUT');
+    if (this.underEclipseDeadline()) list.push('TOTALITY COMES FIRST');
+    if (run.step.kind === 'awaitTotality') list.push('THE SUN COMES BACK');
+    if (run.vehicle) list.push(`${run.vehicle.spec.name.toUpperCase()} WRECKED`);
+    list.push('ARRESTED', 'WIPED OUT');
+    return list;
+  }
+
   objectiveText() {
     const run = this.active;
     if (!run || !run.step) return '';
@@ -209,6 +248,8 @@ export class MissionDirector {
       if (run.timer <= 0) { this.fail('You ran out of time.'); return; }
     }
     if (run.vehicle && run.vehicle.dead) { this.fail(`The ${run.vehicle.spec.name} was destroyed.`); return; }
+    // The heist races the moon: the vault door must be hers before the sun goes out.
+    if (this.underEclipseDeadline() && ['totality', 'waning', 'after'].includes(game.calendar.phase())) { this.fail('Totality came before you held the vault door.'); return; }
 
     if (step.kind === 'steal') {
       game.markers.show(run.vehicle.position.x, run.vehicle.position.z, '#4dabf7', 2.6, 10);
