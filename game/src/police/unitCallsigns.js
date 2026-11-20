@@ -1,6 +1,6 @@
-// Names every Solmara P.D. unit on the radio: its role, what the dispatch panel calls it and its numbered callsign.
+// Names every Saros P.D. unit on the radio: its role, what the dispatch panel calls it and its numbered callsign.
 
-/** Hand out the next callsign of a role: MAREA 12, LINCE 3, MURO 2, BARRERA 5, GAVIOTA 1. */
+/** Hand out the next callsign of a role: VIGIA 12, LINCE 3, MURO 2, BARRERA 5, AVOCET 1. */
 export function assignCallsign(role, counters) {
   const spec = UNIT_ROLES[role];
   counters[role] = (counters[role] || spec.firstNumber) + spec.step;
@@ -14,14 +14,14 @@ export function responseTierName(stars) {
 
 /**
  * The roles of the force. `model` is the car from vehicleCatalog.js; `prefix` is the radio name:
- * marea = tide (patrol), lince = lynx (interceptor), muro = wall (tactical van), barrera = barrier, gaviota = gull.
+ * vigía = lookout (patrol), lince = lynx (interceptor), muro = wall (tactical van), barrera = barrier, avocet = the shore bird.
  */
 export const UNIT_ROLES = {
-  patrol: { kind: 'PATROL', prefix: 'MAREA', model: 'centinela', firstNumber: 10, step: 2, icon: '▣' },
+  patrol: { kind: 'PATROL', prefix: 'VIGIA', model: 'centinela', firstNumber: 10, step: 2, icon: '▣' },
   interceptor: { kind: 'INTERCEPTOR', prefix: 'LINCE', model: 'lince', firstNumber: 1, step: 1, icon: '◆' },
   tactical: { kind: 'TAC VAN', prefix: 'MURO', model: 'bastion', firstNumber: 0, step: 1, icon: '■' },
   roadblock: { kind: 'ROADBLOCK', prefix: 'BARRERA', model: 'centinela', firstNumber: 2, step: 1, icon: '▬' },
-  air: { kind: 'AIR UNIT', prefix: 'GAVIOTA', model: null, firstNumber: 0, step: 1, icon: '✕' },
+  air: { kind: 'AIR UNIT', prefix: 'AVOCET', model: null, firstNumber: 0, step: 1, icon: '✕' },
   foot: { kind: 'OFFICERS', prefix: 'FOOT', model: null, firstNumber: 0, step: 1, icon: '●' },
 };
 

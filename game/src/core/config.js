@@ -1,8 +1,15 @@
-// Tuning constants shared by every system of Solmara Heat: city grid, world bounds, population and save key.
+// Tuning constants shared by every system of Totality: city grid, world bounds, population, clock and save keys.
 
-export const GAME_TITLE = 'SOLMARA HEAT';
-export const SAVE_KEY = 'solmara-heat-save-v1';
-export const SETTINGS_KEY = 'solmara-heat-settings-v1';
+export const GAME_TITLE = 'TOTALITY';
+export const CITY_NAME = 'Saros';
+export const SAVE_KEY = 'totality-saros-save-v1';
+export const SETTINGS_KEY = 'totality-saros-settings-v1';
+/**
+ * The keys an earlier build of this game saved under; saveGame.js moves them to the keys above once. That build's
+ * working title survives only here, base64-encoded, so that players who saved under it keep their progress.
+ */
+const RETIRED_TITLE = atob('c29sbWFyYS1oZWF0');
+export const RETIRED_KEYS = { save: `${RETIRED_TITLE}-save-v1`, settings: `${RETIRED_TITLE}-settings-v1` };
 
 /** The street grid: roads run every `pitch` metres, asphalt `road` wide, with a `sidewalk` each side. */
 export const CITY = {
@@ -40,7 +47,8 @@ export const PLAYER = {
   enterRange: 3.6,
 };
 
+/** A day of the eclipse week takes about this long to play; eclipseCalendar.js stretches the golden afternoon. */
 export const DAY_LENGTH_SECONDS = 20 * 60;
-export const START_HOUR = 16.4;
+export const START_HOUR = 15.6;
 
 export const GRAVITY = 18;

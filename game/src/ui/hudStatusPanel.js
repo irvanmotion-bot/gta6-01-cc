@@ -1,5 +1,6 @@
-// The HUD's top-right status panel: wanted stars with the response tier and escape bar, cash, the five weapon
-// slots with their rounds, labelled health and armor meters, and the street-cred rank with its progress bar.
+// The HUD's status panel, under the eclipse panel: wanted stars and cash on one line, the response tier and escape
+// bar while wanted, health and armor side by side, the gun in hand with its rounds, the five weapon slots and the
+// street-cred rank with its progress bar.
 import { createElement, createMeter, formatCash } from './domBuilder.js';
 
 export class HudStatusPanel {
@@ -8,23 +9,25 @@ export class HudStatusPanel {
     this.cache = cache;
     this.shownCash = 0;
     const root = createElement('div', 'hud-panel status-panel', parent);
-    const wanted = createElement('div', 'wanted-row', root);
-    this.stars = createElement('div', 'wanted-stars', wanted);
+    // Stars and cash share the top line; the tier badge and the escape bar appear under it only while wanted.
+    const top = createElement('div', 'status-top', root);
+    this.stars = createElement('div', 'wanted-stars', top);
     for (let index = 0; index < 5; index += 1) createElement('i', '', this.stars, '★');
+    this.cash = createElement('div', 'cash-readout', top);
     this.tier = createElement('div', 'wanted-tier', root);
     this.escape = createMeter(root, 'escape-meter', 'EVADING');
-    this.cash = createElement('div', 'cash-readout', root);
+    const vitals = createElement('div', 'vitals', root);
+    this.health = createMeter(vitals, 'health-meter', 'HEALTH');
+    this.armor = createMeter(vitals, 'armor-meter', 'ARMOR');
+    const weapon = createElement('div', 'weapon-line', root);
+    this.weaponName = createElement('span', 'weapon-name', weapon);
+    this.weaponAmmo = createElement('b', 'weapon-ammo', weapon);
     this.slots = createElement('div', 'weapon-slots', root);
     this.slotNodes = [];
     for (let index = 0; index < 5; index += 1) {
       const slot = createElement('div', 'weapon-slot', this.slots);
       this.slotNodes.push({ root: slot, key: createElement('b', '', slot), name: createElement('span', '', slot), rounds: createElement('em', '', slot) });
     }
-    const weapon = createElement('div', 'weapon-line', root);
-    this.weaponName = createElement('span', 'weapon-name', weapon);
-    this.weaponAmmo = createElement('b', 'weapon-ammo', weapon);
-    this.health = createMeter(root, 'health-meter', 'HEALTH');
-    this.armor = createMeter(root, 'armor-meter', 'ARMOR');
     this.rank = createMeter(root, 'rank-meter', 'RANK');
   }
 
@@ -66,7 +69,7 @@ export class HudStatusPanel {
     cache.text(this.armor.value, String(armor));
     const cred = game.cred;
     cache.text(this.rank.label, `RANK ${cred.rank} · ${cred.title().toUpperCase()}`);
-    cache.text(this.rank.value, `${cred.points.toLocaleString('en-US')} CRED`);
+    cache.text(this.rank.value, cred.points.toLocaleString('en-US'));
     cache.width(this.rank.fill, cred.progressToNextRank());
   }
 }

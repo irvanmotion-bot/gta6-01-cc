@@ -1,5 +1,5 @@
-// Life on the water: sailboats and motor yachts off Playa Dorada that drift on the swell, and a container ship
-// tied up at the Puerto Viejo docks.
+// Life on the water: sailboats and motor yachts off Gnomon Strand that drift on the swell, and a container ship
+// tied up at the Cormorant docks.
 import * as THREE from 'three';
 import { CITY } from '../core/config.js';
 import { SeededRandom } from '../core/random.js';

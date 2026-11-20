@@ -73,7 +73,7 @@ page.on('request', (request) => { if (!request.url().startsWith(base) && !reques
 
 if (smoke) {
   await page.goto(base);
-  await page.waitForFunction(() => window.solmara && window.solmara.state === 'title', null, { timeout: 60000 });
+  await page.waitForFunction(() => window.totality && window.totality.state === 'title', null, { timeout: 60000 });
   console.log(JSON.stringify(await page.evaluate(playWholeGame), null, 1));
 } else if (sheetDir) {
   await previewContactSheet(page, base);

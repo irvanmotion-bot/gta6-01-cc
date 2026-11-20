@@ -1,7 +1,8 @@
-// The heads-up display: builds every panel (job, status, dispatch, crew, vehicle, radar) and runs the pieces
+// The heads-up display: builds every panel (job, crew, eclipse countdown, status, dispatch, vehicle, radar) and runs the pieces
 // that belong to no panel: the dialogue box with portraits, banners, notifications, hints and the crosshair.
 import { districtNameAt, streetNameAt } from '../world/cityLayout.js';
 import { DomCache, createElement } from './domBuilder.js';
+import { HudEclipsePanel } from './hudEclipsePanel.js';
 import { HudJobPanel } from './hudJobPanel.js';
 import { HudStatusPanel } from './hudStatusPanel.js';
 import { HudDispatchPanel } from './hudDispatchPanel.js';
@@ -20,6 +21,7 @@ export class Hud {
     const right = createElement('div', 'hud-column right-column', root);
     this.jobPanel = new HudJobPanel(game, left, this.cache);
     this.crewPanel = new HudCrewPanel(game, left, this.cache);
+    this.eclipsePanel = new HudEclipsePanel(game, right, this.cache);
     this.statusPanel = new HudStatusPanel(game, right, this.cache);
     this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);
     this.vehiclePanel = new HudVehiclePanel(game, root, this.cache);
@@ -161,11 +163,12 @@ export class Hud {
     const cache = this.cache;
     const player = game.player;
     this.jobPanel.update(dt);
+    this.eclipsePanel.update(dt);
     this.statusPanel.update(dt);
     this.dispatchPanel.update(dt);
     this.crewPanel.update(dt);
     this.vehiclePanel.update(dt);
-    cache.text(this.clock, game.sky.clockText());
+    cache.text(this.clock, `${game.calendar.dayName()} ${game.calendar.clockText()}`);
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
     cache.text(this.street, streetNameAt(player.position.x, player.position.z));
 

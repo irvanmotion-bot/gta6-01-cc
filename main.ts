@@ -1,4 +1,4 @@
-// Solmara Heat's hand-in program (Node 22, standard library only). The game itself is game/: static files a desktop
+// Totality's hand-in program (Node 22, standard library only). The game itself is game/: static files a desktop
 // browser plays offline. This copies game/ and screenshots/ from beside this file to /output and writes
 // /output/dossier.json with the kit's own buildDossier, so the gate can rebuild the same bytes.
 //

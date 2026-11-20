@@ -1,4 +1,4 @@
-/* The start screen, pause menu, save-slot cards, city atlas, shop counter and loading card of Solmara Heat. */
+/* The start screen, pause menu, save-slot cards, city atlas, shop counter and loading card of Totality. */
 .menu { position: fixed; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 0 7vh; background: linear-gradient(90deg, rgba(10, 14, 22, 0.88) 0%, rgba(10, 14, 22, 0.5) 40%, rgba(10, 14, 22, 0.1) 70%); }
 .menu.visible { display: flex; }
 .menu header h1, .menu header h2 { margin: 0; font-family: var(--display); font-style: italic; line-height: 0.86; letter-spacing: 0.3vh; }

@@ -38,7 +38,7 @@ export class Shops {
   }
 
   openGunShop() {
-    this.game.counter.open({ title: 'AMMO AMIGO', tagline: '"Your friend in a firefight."', accent: '#c0392b', stock: () => this.gunStock(), purchase: (item) => this.sellGunItem(item) });
+    this.game.counter.open({ title: 'AMMO AMIGO', tagline: '"Your friend in a firefight."', accent: '#ff6a4d', stock: () => this.gunStock(), purchase: (item) => this.sellGunItem(item) });
   }
 
   /** Buy straight from the gun counter by item id (the counter does the same when a row is picked). */
@@ -64,7 +64,7 @@ export class Shops {
     vehicle.repair();
     vehicle.repaint(randomPaint(vehicle.modelId, game.vehicles.rng));
     game.audio.cashRegister();
-    game.hud.banner('FRESH COAT', `Resprayed and repaired · -$${price}`, '#16a085');
+    game.hud.banner('FRESH COAT', `Resprayed and repaired · -$${price}`, '#f4ecd8');
     this.resprayCooldown = 8;
   }
 
@@ -104,7 +104,9 @@ export class Shops {
   rest() {
     const game = this.game;
     game.player.health = 100;
-    game.sky.hour = (game.sky.hour + 6) % 24;
+    // Nova sleeps into the next afternoon of eclipse week, unless the story is holding the week on this day.
+    game.calendar.sleepUntilNextDay();
+    game.watchParties.populate();
     game.saveGame(false);
   }
 }

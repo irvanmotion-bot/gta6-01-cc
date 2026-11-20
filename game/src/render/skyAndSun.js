@@ -1,6 +1,6 @@
-// The sky dome, the sun and its shadows, fog and the day-night cycle that colours all of them.
+// The sky dome with its big low sun and the moon that crosses it, the sunlight and its long shadows, the warm
+// haze, and the colours of the day, the night and the minutes of totality.
 import * as THREE from 'three';
-import { DAY_LENGTH_SECONDS, START_HOUR } from '../core/config.js';
 import { clamp } from '../core/random.js';
 
 const SKY_VERTEX = `
@@ -16,6 +16,14 @@ uniform vec3 topColor;
 uniform vec3 horizonColor;
 uniform vec3 sunColor;
 uniform vec3 sunDir;
+uniform vec3 moonDir;
+uniform vec3 discRight;
+uniform vec3 discUp;
+uniform float sunRadius;
+uniform float moonRadius;
+uniform float moonShade;
+uniform float corona;
+uniform float sunGlow;
 uniform float starAmount;
 uniform float cloudTime;
 varying vec3 vDir;
@@ -33,55 +41,92 @@ float cloudCover(vec2 p) {
   for (int k = 0; k < 4; k++) { sum += valueNoise(p) * gain; p = p * 2.03 + vec2(13.7, 7.1); gain *= 0.5; }
   return sum;
 }
+/* The pearly crown round the black moon at totality: a bright inner ring and long uneven streamers. */
+vec3 coronaLight(vec3 dir, float moonAngle) {
+  vec3 offset = dir - moonDir;
+  float around = atan(dot(offset, discUp), dot(offset, discRight));
+  float beyond = max(moonAngle - moonRadius, 0.0) / moonRadius;
+  float streamers = 0.55 + 0.45 * pow(abs(sin(around * 2.0 + 0.7)), 3.0) + 0.25 * sin(around * 7.0 + 2.1);
+  float ring = exp(-beyond * 9.0) * 1.5;
+  float crown = exp(-beyond * (2.6 - streamers * 1.4)) * 0.75 * streamers;
+  return vec3(1.0, 0.95, 0.86) * (ring + crown) * step(moonRadius, moonAngle);
+}
 void main() {
   vec3 dir = normalize(vDir);
   float h = clamp(dir.y, 0.0, 1.0);
-  // Deep colour overhead, a paler tone of it lower down, and the horizon's own colour only in a low band of haze.
-  vec3 color = mix(mix(topColor, vec3(1.0), 0.42 * (1.0 - starAmount)), topColor, pow(h, 0.6));
-  color = mix(horizonColor, color, smoothstep(0.0, 0.2, h));
+  // Deep colour overhead, a paler tone of it lower down, and the horizon's own colour in a broad band of warm haze.
+  vec3 color = mix(mix(topColor, vec3(1.0), 0.3 * (1.0 - starAmount)), topColor, pow(h, 0.55));
+  color = mix(horizonColor, color, smoothstep(0.0, 0.34, h));
   float sunAmount = max(dot(dir, sunDir), 0.0);
-  color += sunColor * pow(sunAmount, 420.0) * 3.0;
-  color += sunColor * pow(sunAmount, 9.0) * 0.32 * (1.0 - starAmount * 0.9);
+  float sunAngle = acos(min(sunAmount, 1.0));
+  float moonAngle = acos(clamp(dot(dir, moonDir), -1.0, 1.0));
+  // The glow round the sun warms a wide patch of sky; it shrinks with the crescent.
+  color += sunColor * pow(sunAmount, 7.0) * 0.36 * sunGlow;
+  color += sunColor * pow(sunAmount, 60.0) * 0.5 * sunGlow;
   float star = step(0.9985, hash(floor(dir * 190.0)));
   color += vec3(star) * starAmount * h;
-  // Drifting cumulus on a flat layer overhead: lit by the sun on top, tinted by the horizon underneath.
+  // Drifting cumulus on a flat layer overhead, kept clear of the sun so the eclipse is never hidden.
   vec2 plane = dir.xz / (dir.y + 0.16) * 1.7 + vec2(cloudTime * 0.012, cloudTime * 0.005);
-  float cover = smoothstep(0.58, 0.8, cloudCover(plane)) * smoothstep(0.02, 0.22, dir.y);
-  vec3 cloudLit = mix(horizonColor, vec3(1.0), 0.86) + sunColor * (0.14 + pow(sunAmount, 5.0) * 0.5);
+  float cover = smoothstep(0.58, 0.8, cloudCover(plane)) * smoothstep(0.02, 0.22, dir.y) * (1.0 - smoothstep(0.9, 0.975, sunAmount));
+  vec3 cloudLit = mix(horizonColor, vec3(1.0), 0.8) + sunColor * (0.14 + pow(sunAmount, 5.0) * 0.5) * sunGlow;
   vec3 cloudColor = mix(cloudLit, topColor * 0.8 + horizonColor * 0.3, starAmount * 0.96);
   color = mix(color, cloudColor, cover * 0.88);
+  // The moon's disc darkens the sky it stands in front of, then the sun's disc shows wherever the moon is not.
+  float edge = sunRadius * 0.035;
+  float moon = 1.0 - smoothstep(moonRadius - edge, moonRadius + edge, moonAngle);
+  color = mix(color, color * 0.42 + topColor * 0.1, moon * moonShade);
+  float disc = (1.0 - smoothstep(sunRadius - edge, sunRadius + edge, sunAngle)) * (1.0 - moon);
+  color = mix(color, vec3(1.0, 0.97, 0.84) * 1.25, disc);
+  color += coronaLight(dir, moonAngle) * corona;
   gl_FragColor = vec4(color, 1.0);
   #include <colorspace_fragment>
 }`;
 
-/** Colour keys through the day: [hour, sky top, horizon, sun light, sun strength, ambient strength]. */
-const KEYS = [
+/** Colour keys through the day: [hour, sky top, horizon haze, sunlight, sun strength, ambient strength]. */
+const DAY_COLOURS = [
   [0, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.7],
   [5, '#0c1232', '#2f2d55', '#9fb3e8', 0.9, 0.7],
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
-  [9, '#2a8ae6', '#bfe6f5', '#fff0d0', 3.0, 0.7],
-  [13, '#1578ee', '#c4ebf8', '#fff3da', 3.5, 0.72],
-  [16.5, '#1c74e6', '#ffe4bd', '#ffd9a0', 3.4, 0.66],
-  [18.6, '#3a56b4', '#ff9a5a', '#ff9a52', 2.3, 0.62],
+  [9, '#2a84e2', '#ffeed2', '#fff0d0', 3.0, 0.7],
+  [13, '#2379e4', '#ffe6bd', '#ffecc4', 3.4, 0.72],
+  [15, '#2a72dc', '#ffd59c', '#ffdc9e', 3.5, 0.7],
+  [17.4, '#3167cc', '#ffbe7c', '#ffc77c', 3.3, 0.68],
+  [18.8, '#3a56b4', '#ff9a5a', '#ff9a52', 2.3, 0.62],
   [19.8, '#231d66', '#ee5f7c', '#d8708c', 0.8, 0.7],
   [21, '#0a1030', '#2a3a72', '#9fb3e8', 0.9, 0.7],
   [24, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.7],
 ];
+/** The sky inside the moon's shadow: indigo overhead and a ring of sunset on every horizon. */
+const TOTALITY_SKY = { top: '#0b1136', horizon: '#e9814a', light: '#c9d4ff' };
+/** The sun and moon are drawn many times their true size, so the crescent reads from any street. */
+const SUN_RADIUS = 0.088;
+const MOON_RADIUS = 0.093;
+const SUNRISE = 6;
+const SUNSET = 19.6;
 
 export class SkyAndSun {
   constructor(scene) {
-    this.hour = START_HOUR;
+    this.hour = 16;
     this.night = 0;
+    this.eclipseDark = 0;
     this.uniforms = {
       topColor: { value: new THREE.Color() },
       horizonColor: { value: new THREE.Color() },
       sunColor: { value: new THREE.Color() },
       sunDir: { value: new THREE.Vector3(0, 1, 0) },
+      moonDir: { value: new THREE.Vector3(0, -1, 0) },
+      discRight: { value: new THREE.Vector3(1, 0, 0) },
+      discUp: { value: new THREE.Vector3(0, 1, 0) },
+      sunRadius: { value: SUN_RADIUS },
+      moonRadius: { value: MOON_RADIUS },
+      moonShade: { value: 0 },
+      corona: { value: 0 },
+      sunGlow: { value: 1 },
       starAmount: { value: 0 },
       cloudTime: { value: 0 },
     };
     this.dome = new THREE.Mesh(
-      new THREE.SphereGeometry(1800, 32, 16),
+      new THREE.SphereGeometry(1800, 48, 24),
       new THREE.ShaderMaterial({ uniforms: this.uniforms, vertexShader: SKY_VERTEX, fragmentShader: SKY_FRAGMENT, side: THREE.BackSide, depthWrite: false, fog: false }),
     );
     this.dome.frustumCulled = false;
@@ -90,32 +135,33 @@ export class SkyAndSun {
     this.sun = new THREE.DirectionalLight(0xffffff, 2.5);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
+    // A low sun stretches the shadow map along the ground, so the box is wide across the light and short along it.
     const shadowCamera = this.sun.shadow.camera;
-    shadowCamera.left = -95; shadowCamera.right = 95; shadowCamera.top = 95; shadowCamera.bottom = -95;
-    shadowCamera.near = 10; shadowCamera.far = 600;
-    this.sun.shadow.bias = -0.0006;
-    this.sun.shadow.normalBias = 0.5;
+    shadowCamera.left = -80; shadowCamera.right = 80; shadowCamera.top = 34; shadowCamera.bottom = -30;
+    shadowCamera.near = 10; shadowCamera.far = 640;
+    this.sun.shadow.bias = -0.0005;
+    this.sun.shadow.normalBias = 0.35;
     scene.add(this.sun, this.sun.target);
 
     this.ambient = new THREE.HemisphereLight(0xcfe8ff, 0x9a8a76, 0.9);
     // A soft light from opposite the sun, so shaded walls keep their colour instead of going black.
     this.fill = new THREE.DirectionalLight(0xffffff, 0.5);
     scene.add(this.ambient, this.fill);
-    scene.fog = new THREE.Fog(0xbfe6f5, 140, 1150);
+    scene.fog = new THREE.Fog(0xffd59c, 70, 760);
     this.scene = scene;
     this.scratchA = new THREE.Color();
     this.scratchB = new THREE.Color();
-    this.applyHour();
+    this.applyClock(this.hour, null, 0, 1);
   }
 
   setShadows(enabled) {
     this.sun.castShadow = enabled;
   }
 
-  update(dt, focus) {
-    this.hour = (this.hour + (dt * 24) / DAY_LENGTH_SECONDS) % 24;
+  /** Follow the eclipse calendar's clock and keep the dome and the shadow box centred on the player. */
+  update(dt, focus, calendar) {
     this.uniforms.cloudTime.value += dt;
-    this.applyHour();
+    this.applyClock(calendar.hour, calendar.shadowTrack(), calendar.darkness(), calendar.sunlight());
     this.dome.position.set(focus.x, 0, focus.z);
     const dir = this.uniforms.sunDir.value;
     const snap = 4;
@@ -125,46 +171,67 @@ export class SkyAndSun {
     this.sun.position.set(fx + dir.x * 300, dir.y * 300, fz + dir.z * 300);
   }
 
-  /** Blend the two colour keys around the current hour into the sky, the sun, the ambient light and the fog. */
-  applyHour() {
-    let index = 0;
-    while (index < KEYS.length - 2 && KEYS[index + 1][0] <= this.hour) index += 1;
-    const a = KEYS[index];
-    const b = KEYS[index + 1];
-    const t = clamp((this.hour - a[0]) / (b[0] - a[0]), 0, 1);
-    const mix = (i, target) => target.copy(this.scratchA.set(a[i])).lerp(this.scratchB.set(b[i]), t);
-    mix(1, this.uniforms.topColor.value);
-    mix(2, this.uniforms.horizonColor.value);
-    mix(3, this.sun.color);
-    this.uniforms.sunColor.value.copy(this.sun.color);
-    this.sun.intensity = a[4] + (b[4] - a[4]) * t;
-    // Shade is lit by the blue of the sky from above and by warm light bounced off sand and stucco from below,
-    // so sunlit walls glow against cool shadows.
-    this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.35;
-    this.ambient.color.copy(this.uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.62);
-    this.ambient.groundColor.copy(this.sun.color).lerp(this.scratchA.set('#b98f66'), 0.55);
-    this.fill.intensity = this.sun.intensity * 0.17;
-    this.fill.color.copy(this.uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
-    this.scene.fog.color.copy(this.uniforms.horizonColor.value);
-
-    // The sun rises in the east (over the hills), sets in the west (over the ocean); the moon lights the night.
-    const dayPart = (this.hour - 6) / 13.6;
-    const up = this.hour > 6 && this.hour < 19.6;
-    const angle = (up ? dayPart : ((this.hour + 24 - 19.6) % 24) / 10.4) * Math.PI;
-    const height = Math.max(Math.sin(angle), 0.09);
-    this.uniforms.sunDir.value.set(Math.cos(angle) * 0.92, height, 0.34).normalize();
-    this.fill.position.set(-this.uniforms.sunDir.value.x, 0.55, -this.uniforms.sunDir.value.z);
-    this.night = clamp(this.hour < 12 ? (6.6 - this.hour) / 1.2 : (this.hour - 18.7) / 1.3, 0, 1);
-    this.uniforms.starAmount.value = this.night;
-    // With the sun on the horizon or gone the sky itself is the lamp: lift the ambient light so that streets in
-    // long shadow, and the asphalt most of all, stay readable through dusk and night.
-    this.ambient.intensity *= 1 + clamp(1 - height / 0.5, 0, 1) * 0.55;
+  /** Where the sun stands at an hour: up over the hills in the east, down low over the ocean, south of west. */
+  sunDirectionAt(hour, target) {
+    const up = hour > SUNRISE && hour < SUNSET;
+    const angle = (up ? (hour - SUNRISE) / (SUNSET - SUNRISE) : ((hour + 24 - SUNSET) % 24) / (24 - SUNSET + SUNRISE)) * Math.PI;
+    const west = Math.max(0, -Math.cos(angle));
+    return target.set(Math.cos(angle) * 0.9, Math.max(Math.sin(angle) * 1.02, 0.1), 0.3 + west * 2.3).normalize();
   }
 
-  /** The clock as HH:MM for the HUD. */
-  clockText() {
-    const h = Math.floor(this.hour);
-    const m = Math.floor((this.hour - h) * 60);
-    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  /**
+   * Colour the sky, the sun, the ambient light and the haze for an hour of the day, then lay the eclipse over it:
+   * `track` is the moon's place on its way across the sun (-1 to 1, null for none), `dark` the depth of its shadow
+   * and `sunlight` the share of light the crescent still gives.
+   */
+  applyClock(hour, track, dark, sunlight) {
+    this.hour = hour;
+    this.eclipseDark = dark;
+    let index = 0;
+    while (index < DAY_COLOURS.length - 2 && DAY_COLOURS[index + 1][0] <= hour) index += 1;
+    const a = DAY_COLOURS[index];
+    const b = DAY_COLOURS[index + 1];
+    const t = clamp((hour - a[0]) / (b[0] - a[0]), 0, 1);
+    const uniforms = this.uniforms;
+    const mix = (i, target) => target.copy(this.scratchA.set(a[i])).lerp(this.scratchB.set(b[i]), t);
+    mix(1, uniforms.topColor.value).lerp(this.scratchA.set(TOTALITY_SKY.top), dark * 0.94);
+    mix(2, uniforms.horizonColor.value).lerp(this.scratchA.set(TOTALITY_SKY.horizon), dark * 0.6);
+    mix(3, this.sun.color).lerp(this.scratchA.set(TOTALITY_SKY.light), dark);
+    uniforms.sunColor.value.copy(this.sun.color);
+    this.sun.intensity = (a[4] + (b[4] - a[4]) * t) * sunlight;
+    // Shade is lit by the blue of the sky from above and by warm light bounced off sand and stucco from below,
+    // so sunlit walls glow against cool shadows.
+    this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.3 * (1 - dark * 0.42);
+    this.ambient.color.copy(uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.6 - dark * 0.25);
+    this.ambient.groundColor.copy(this.sun.color).lerp(this.scratchA.set('#c0926a'), 0.55);
+    this.fill.intensity = this.sun.intensity * 0.16 + dark * 0.2;
+    this.fill.color.copy(uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
+    this.scene.fog.color.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, dark * 0.55);
+
+    const sunDir = this.sunDirectionAt(hour, uniforms.sunDir.value);
+    this.fill.position.set(-sunDir.x, 0.55, -sunDir.z);
+    const nightfall = clamp(hour < 12 ? (6.6 - hour) / 1.2 : (hour - 18.9) / 1.2, 0, 1);
+    this.night = Math.max(nightfall, dark);
+    uniforms.starAmount.value = Math.max(nightfall, dark * 0.9);
+    // With the sun on the horizon or gone the sky itself is the lamp: lift the ambient light so that streets in
+    // long shadow, and the asphalt most of all, stay readable through dusk and night.
+    this.ambient.intensity *= 1 + clamp(1 - sunDir.y / 0.5, 0, 1) * 0.5;
+
+    // The moon slides across the sun's disc along a slanted line; off the track it waits below the horizon.
+    const right = uniforms.discRight.value.set(sunDir.z, 0, -sunDir.x).normalize();
+    const up = uniforms.discUp.value.crossVectors(sunDir, right).normalize();
+    const moonDir = uniforms.moonDir.value;
+    if (track === null) {
+      moonDir.set(0, -1, 0);
+      uniforms.moonShade.value = 0;
+      uniforms.corona.value = 0;
+      uniforms.sunGlow.value = nightfall > 0.99 ? 0.5 : 1;
+    } else {
+      const slide = track * (SUN_RADIUS + MOON_RADIUS);
+      moonDir.copy(sunDir).addScaledVector(right, slide * 0.82).addScaledVector(up, slide * -0.57).normalize();
+      uniforms.moonShade.value = clamp((1 - Math.abs(track)) * 6, 0, 1);
+      uniforms.corona.value = dark;
+      uniforms.sunGlow.value = 0.25 + 0.75 * sunlight;
+    }
   }
 }

@@ -220,7 +220,7 @@ export class Minimap {
 
   /** The key in the map's corner: what each kind of marker means. */
   drawMapKey(c, x, y) {
-    const rows = [['#35d0ff', 'R', 'Street race'], ['#ff3b30', '☠', 'Marlin bounty'], ['#ffd60a', '', 'Job objective'], ['#3a7bff', '', 'Police unit']];
+    const rows = [['#35d0ff', 'R', 'Street race'], ['#ff3b30', '☠', 'Vane bounty'], ['#ffd60a', '', 'Job objective'], ['#3a7bff', '', 'Police unit']];
     c.fillStyle = 'rgba(9,13,22,0.78)';
     c.fillRect(x, y, 132, rows.length * 20 + 10);
     rows.forEach(([color, label, text], index) => {

@@ -1,4 +1,4 @@
-// Armed characters who fight the player: police officers, tactical units, Marlin enforcers and bank guards.
+// Armed characters who fight the player: police officers, tactical units, Vane enforcers and bank guards.
 import * as THREE from 'three';
 import { distance2D } from '../core/random.js';
 import { CharacterBody, LOOKS } from '../characters/characterBody.js';
@@ -109,7 +109,7 @@ class Gunman extends CharacterBody {
     const game = this.game;
     if (byPlayer) {
       if (this.faction === 'police') { game.wanted.reportCrime('killPolice'); game.stats.copsDowned += 1; game.cred.earn(CRED_AWARDS.officer, 'officer down'); }
-      else { game.stats.enforcersDowned += 1; game.cred.earn(CRED_AWARDS.enforcer, 'Marlin gun down'); }
+      else { game.stats.enforcersDowned += 1; game.cred.earn(CRED_AWARDS.enforcer, 'Vane gun down'); }
     }
     if (this.kind === 'capo') game.bounties.onCapoDown(this, byPlayer);
     game.pickups.drop(Math.random() < 0.6 ? 'ammo' : 'cash', this.position.x, this.position.z, Math.random() < 0.6 ? 24 : 80);

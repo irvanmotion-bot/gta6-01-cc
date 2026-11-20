@@ -1,16 +1,16 @@
 // The start screen and the pause menu: continue, new game and load across three save slots (shown as cards with
 // rank, cash, completion and time played), statistics, controls and settings, by keyboard or mouse.
 import { SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
-import { GAME_TITLE } from '../core/config.js';
+import { CITY_NAME, GAME_TITLE } from '../core/config.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
 import { createElement, formatCash } from './domBuilder.js';
 
 export class Menus {
   constructor(game) {
     this.game = game;
-    this.start = this.buildScreen('start-menu', `<h1>SOLMARA<em>HEAT</em></h1><p>An open-world crime story · Solmara, the sun coast</p>`);
-    this.pause = this.buildScreen('pause-menu', '<h2>PAUSED</h2><p>Solmara waits for nobody.</p>');
-    createElement('footer', 'title-footer', this.start, 'WASD move · Mouse look · F steal a car · Click to shoot · M city atlas · Z X C crew favors · Esc pause');
+    this.start = this.buildScreen('start-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>An open-world crime story · ${CITY_NAME}, eclipse week</p>`);
+    this.pause = this.buildScreen('pause-menu', `<h2>PAUSED</h2><p>The moon waits for nobody.</p>`);
+    createElement('footer', 'title-footer', this.start, 'WASD move · Mouse look · F steal a car · Click to shoot · M city atlas · Z X C crew favors · L lights · Esc pause');
     this.screen = null;
     this.page = 'main';
     this.index = 0;
@@ -53,7 +53,7 @@ export class Menus {
       const items = [];
       const latest = latestSaveSlot();
       if (latest) items.push({ label: 'CONTINUE', hint: `Load slot ${latest}, your latest save`, run: () => game.continueGame(latest) });
-      items.push({ label: 'NEW GAME', hint: 'Nova Reyes comes home to Solmara', run: () => (latest ? this.open('new') : game.newGame(freeSaveSlot())) });
+      items.push({ label: 'NEW GAME', hint: 'Monday of eclipse week: Nova Reyes comes home', run: () => (latest ? this.open('new') : game.newGame(freeSaveSlot())) });
       if (latest) items.push({ label: 'LOAD GAME', hint: 'Pick one of three save slots', run: () => this.open('load') });
       items.push({ label: 'CONTROLS', hint: 'Keyboard and mouse', run: () => this.open('controls') });
       items.push({ label: 'SETTINGS', hint: 'Sound, mouse and graphics', run: () => this.open('settings') });
@@ -62,7 +62,7 @@ export class Menus {
     return [
       { label: 'RESUME', hint: 'Back to the streets', run: () => game.setState('play') },
       { label: 'CITY ATLAS', hint: 'Map, jobs, progress and save slots', run: () => game.setState('map') },
-      { label: 'STATISTICS', hint: 'Your record in Solmara', run: () => this.open('stats') },
+      { label: 'STATISTICS', hint: `Your record in ${CITY_NAME}`, run: () => this.open('stats') },
       { label: 'CONTROLS', hint: 'Keyboard and mouse', run: () => this.open('controls') },
       { label: 'SETTINGS', hint: 'Sound, mouse and graphics', run: () => this.open('settings') },
       { label: 'QUIT TO TITLE', hint: 'Progress since the last save is lost', run: () => game.quitToTitle() },
@@ -178,8 +178,8 @@ export function statisticRows(game) {
   return [
     ['Story jobs passed', `${game.missions.completed.size} / ${STORY_MISSIONS.length}`], ['Jobs failed', s.missionsFailed], ['Cash earned', formatCash(s.earned)], ['Cash spent', formatCash(s.spent)],
     ['Cars stolen', s.carsStolen], ['Distance driven', `${(s.metresDriven / 1000).toFixed(1)} km`], ['Street races won', `${s.racesWon} of ${s.racesRun}`], ['Taxi fares delivered', s.faresDone],
-    ['Sun Tokens found', game.activities.tokenCount()], ['Bounties claimed', game.bounties.tally()], ['Highest wanted level', '★'.repeat(s.maxStars) || 'none'], ['Police escapes', s.escapes],
-    ['Officers downed', s.copsDowned], ['Marlin guns downed', s.enforcersDowned], ['Helicopters downed', s.choppersDowned], ['Shots fired', s.shotsFired],
+    ['Corona Tokens found', game.activities.tokenCount()], ['Bounties claimed', game.bounties.tally()], ['Highest wanted level', '★'.repeat(s.maxStars) || 'none'], ['Police escapes', s.escapes],
+    ['Officers downed', s.copsDowned], ['Vane guns downed', s.enforcersDowned], ['Helicopters downed', s.choppersDowned], ['Shots fired', s.shotsFired],
     ['Crew favors called', s.favorsUsed], ['Times arrested', s.timesBusted], ['Times wiped out', s.timesWiped], ['Time played', formatPlayTime(s.playSeconds)],
   ];
 }
@@ -196,6 +196,6 @@ function slotLine(card) {
 const CONTROLS = [
   ['W A S D', 'Walk · steer, accelerate, brake'], ['Mouse', 'Look around · aim'], ['Shift', 'Sprint · nitro in a car'], ['Space', 'Jump · handbrake'],
   ['F', 'Enter / exit vehicle · carjack'], ['Left click', 'Punch · shoot'], ['Right click', 'Aim'], ['1-5 · Q · wheel', 'Switch weapon'],
-  ['R', 'Reload · next radio station'], ['E', 'Shop · workshop · race · save'], ['T', 'Taxi fares (in a Sol Cab)'], ['Z · X · C', 'Crew favors: car, signal jam, patch-up'],
+  ['R', 'Reload · next radio station'], ['E', 'Shop · workshop · race · save'], ['T', 'Taxi fares (in a Saros Cab)'], ['L', 'Headlights off and on: run dark'], ['Z · X · C', 'Crew favors: car, signal jam, patch-up'],
   ['H', 'Horn'], ['M · Tab', `${GAME_TITLE} city atlas`], ['Esc · P', 'Pause'],
 ];

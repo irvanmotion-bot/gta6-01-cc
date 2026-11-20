@@ -41,7 +41,7 @@ export class CrewFavors {
     ride.parked = true;
     ride.stolen = true;
     ride.ambient = true;
-    game.hud.say('TÍO BRAVO', 'Orange Coyote, at the kerb. Try to bring this one back.', '#f6b042');
+    game.hud.say('TÍO BRAVO', 'Orange Coyote, at the kerb. Try to bring this one back.', '#ffb547');
     return true;
   }
 
@@ -51,7 +51,7 @@ export class CrewFavors {
     if (game.wanted.stars === 0) { game.hud.notify('Jazz: "Nobody is looking for you, baby."'); return false; }
     this.jamTime = 12;
     game.wanted.dropStar();
-    game.hud.say('JAZZ', 'Tidewave is all over their band. They are deaf for twelve seconds!', '#f062b0');
+    game.hud.say('JAZZ', 'Penumbra is all over their band. They are deaf for twelve seconds!', '#f4ecd8');
     return true;
   }
 
@@ -63,7 +63,7 @@ export class CrewFavors {
     player.health = 100;
     player.armor = Math.max(player.armor, 50);
     if (player.vehicle) player.vehicle.health = Math.max(player.vehicle.health, player.vehicle.maxHealth * 0.6);
-    game.hud.say('DOC INÉS', 'Hold still. There. Now stop getting shot.', '#7be0c3');
+    game.hud.say('DOC INÉS', 'Hold still. There. Now stop getting shot.', '#cfe8d8');
     return true;
   }
 
@@ -90,7 +90,7 @@ export class CrewFavors {
 
 /** The favors: the key that calls each, the crew member who grants it, the rank it unlocks at and its cooldown. */
 export const CREW_FAVORS = [
-  { id: 'wheels', key: 'Z', code: 'KeyZ', name: 'WHEELS ON CALL', who: 'BRAVO', rank: 2, cooldown: 120, color: '#f6b042' },
-  { id: 'jam', key: 'X', code: 'KeyX', name: 'SIGNAL JAM', who: 'JAZZ', rank: 3, cooldown: 150, color: '#f062b0' },
-  { id: 'patch', key: 'C', code: 'KeyC', name: 'PATCH-UP', who: 'INÉS', rank: 4, cooldown: 180, color: '#7be0c3' },
+  { id: 'wheels', key: 'Z', code: 'KeyZ', name: 'WHEELS', who: 'BRAVO', rank: 2, cooldown: 120, color: '#ffb547' },
+  { id: 'jam', key: 'X', code: 'KeyX', name: 'SIGNAL JAM', who: 'JAZZ', rank: 3, cooldown: 150, color: '#ffb547' },
+  { id: 'patch', key: 'C', code: 'KeyC', name: 'PATCH-UP', who: 'INÉS', rank: 4, cooldown: 180, color: '#ffb547' },
 ];

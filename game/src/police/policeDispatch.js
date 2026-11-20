@@ -1,4 +1,4 @@
-// Solmara P.D.'s dispatcher: scales the response with the wanted level, names each unit, hands out pursuit tactics,
+// The Saros P.D. dispatcher: scales the response with the wanted level, names each unit, hands out pursuit tactics,
 // orders roadblocks and the helicopter, and reports the whole force to the HUD's dispatch panel and the minimap.
 import { PursuitDriver, assignPursuitTactics } from './pursuitTactics.js';
 import { Roadblocks } from './roadblocks.js';

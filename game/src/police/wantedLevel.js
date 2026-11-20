@@ -1,4 +1,5 @@
 // The wanted level: crimes add heat, heat becomes one to five stars, and staying unseen long enough clears them.
+// What "unseen" means changes with the light: eclipse/darknessCover.js shortens police sight when the sun is gone.
 import { CRED_AWARDS } from '../progression/streetCred.js';
 import { responseTierName } from './unitCallsigns.js';
 
@@ -92,8 +93,10 @@ export class WantedLevel {
     if (this.stars === 0) { this.evading = false; return; }
     this.locked = Math.max(0, this.locked - dt);
     const jammed = this.game.crew.isJamming();
-    const seen = !jammed && (this.game.police.anyUnitWithin(SEEN_RANGE) || this.locked > 0);
-    this.unseen = seen ? 0 : this.unseen + dt * (jammed ? 1.6 : 1);
+    // In the dark of totality or of the night, a Nova no light is on is seen from a quarter as far and lost twice as fast.
+    const cover = this.game.darkness;
+    const seen = !jammed && (this.game.police.anyUnitWithin(cover.sightRange(SEEN_RANGE)) || this.locked > 0);
+    this.unseen = seen ? 0 : this.unseen + dt * (jammed ? 1.6 : 1) * cover.escapePace();
     this.evading = this.unseen > 3;
     if (this.unseen > this.escapeTime()) this.clear();
   }

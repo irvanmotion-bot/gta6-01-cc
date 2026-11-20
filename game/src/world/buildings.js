@@ -1,4 +1,4 @@
-// Raises Solmara's buildings block by block: glass towers downtown, pastel hotels on the beach, shops, houses and warehouses.
+// Raises the buildings of Saros block by block: glass towers on Orrery Square, pastel hotels on the Strand, shops, houses and warehouses.
 import * as THREE from 'three';
 import { CITY } from '../core/config.js';
 import { SeededRandom } from '../core/random.js';
@@ -8,23 +8,23 @@ import { blockRect, districtOfBlock, LANDMARKS } from './cityLayout.js';
 import { ShopFronts } from './shopFronts.js';
 
 const TINTS = {
-  centro: ['#8fd3e8', '#a8c8e8', '#f2d7b6', '#9ad1c4', '#e6eef5', '#f4b6a6', '#7fb8d8', '#c5b8e8'],
-  playa: ['#ffd1dc', '#bfe9e3', '#fff1b8', '#ffcba4', '#c9d8ff', '#f9f3e6', '#aee6f5', '#ffb3a7'],
-  mercado: ['#f6d6ad', '#e9967a', '#f7e7ce', '#d8a48f', '#c8d6c1', '#e8c4a0', '#f0e0d0', '#b5cde0', '#f2b872'],
-  colinas: ['#fff4e0', '#ffe0c2', '#e8f0d8', '#f7d9d0', '#dfeaf5', '#fbe8a6'],
-  puerto: ['#9db4c0', '#c2b8a3', '#b56b5a', '#7d9a8c', '#d0d0cc', '#6f8fae'],
+  orrery: ['#8fd3e8', '#a8c8e8', '#f2d7b6', '#9ad1c4', '#e6eef5', '#f4b6a6', '#7fb8d8', '#c5b8e8'],
+  strand: ['#ffd1dc', '#bfe9e3', '#fff1b8', '#ffcba4', '#c9d8ff', '#f9f3e6', '#aee6f5', '#ffb3a7'],
+  azimuth: ['#f6d6ad', '#e9967a', '#f7e7ce', '#d8a48f', '#c8d6c1', '#e8c4a0', '#f0e0d0', '#b5cde0', '#f2b872'],
+  hill: ['#fff4e0', '#ffe0c2', '#e8f0d8', '#f7d9d0', '#dfeaf5', '#fbe8a6'],
+  yards: ['#9db4c0', '#c2b8a3', '#b56b5a', '#7d9a8c', '#d0d0cc', '#6f8fae'],
 };
 const AWNINGS = ['#e74c3c', '#16a085', '#f39c12', '#2980b9', '#e84393', '#27ae60', '#ffffff'];
 const CONTAINER_COLORS = ['#c0392b', '#2471a3', '#d68910', '#1e8449', '#7d3c98', '#839192', '#e67e22'];
 
-/** Solmara's own brands, on the rooftop billboards. */
+/** The brands of Saros, on the rooftop billboards: half the town is selling the eclipse. */
 export const BRANDS = [
-  { name: 'SOL COLA', slogan: 'Drink the sunshine.', colors: ['#ff5e3a', '#ffb347'], ink: '#fff8e7' },
-  { name: 'BRISA AIR', slogan: 'Solmara to anywhere.', colors: ['#1fa2ff', '#a6ffcb'], ink: '#0b2a4a' },
-  { name: 'TIDEWAVE 98.6', slogan: 'Jazz spins the coast.', colors: ['#e84393', '#6c5ce7'], ink: '#ffffff' },
-  { name: 'MANGO MOTORS', slogan: 'Zero down. Zero questions.', colors: ['#f7b733', '#fc4a1a'], ink: '#2d1600' },
-  { name: 'BANCO MARLIN', slogan: 'Your money sleeps with us.', colors: ['#0f2027', '#2c5364'], ink: '#e8c96a' },
-  { name: 'PALMETTO GYM', slogan: 'Beach body. Bail money.', colors: ['#11998e', '#38ef7d'], ink: '#06281f' },
+  { name: 'ECLIPSE WEEK', slogan: 'Totality · Friday 17:12', colors: ['#1a1640', '#f08a5d'], ink: '#fff3d6' },
+  { name: 'UMBRA COLA', slogan: 'Drink it in the dark.', colors: ['#ff5e3a', '#ffb347'], ink: '#fff8e7' },
+  { name: 'PENUMBRA 98.6', slogan: 'Jazz counts you down.', colors: ['#f08a5d', '#5b3a8c'], ink: '#ffffff' },
+  { name: 'GNOMON SHADES', slogan: 'Look up. Safely.', colors: ['#f7b733', '#fc4a1a'], ink: '#2d1600' },
+  { name: 'ORRERY TRUST', slogan: 'Your money sleeps with us.', colors: ['#0f2027', '#2c5364'], ink: '#e8c96a' },
+  { name: 'AVOCET AIR', slogan: 'Fly in for four minutes of night.', colors: ['#1fa2ff', '#a6ffcb'], ink: '#0b2a4a' },
 ];
 const BILLBOARD_BLOCKS = [[2, 5], [5, 2], [7, 6], [1, 2], [9, 4], [4, 6]];
 
@@ -132,10 +132,10 @@ export class CityBuildings {
     const s = CITY.sidewalk;
     const lot = { minX: rect.minX + s, maxX: rect.maxX - s, minZ: rect.minZ + s, maxZ: rect.maxZ - s };
     let tallest = 0;
-    if (district === 'centro') {
+    if (district === 'orrery') {
       const cells = rng.chance(0.45) ? splitLot(lot, 1, 1, 0) : rng.chance(0.5) ? splitLot(lot, 2, 1, 5) : splitLot(lot, 1, 2, 5);
       for (const cell of cells) {
-        const tint = rng.pick(TINTS.centro);
+        const tint = rng.pick(TINTS.orrery);
         const podium = this.raise(cell, 1, rng.range(7, 11), 'shop', '#e9e4da');
         this.shopfronts(cell, 1);
         const height = rng.range(48, cells.length === 1 ? 165 : 120);
@@ -152,35 +152,35 @@ export class CityBuildings {
         }
         tallest = Math.max(tallest, tower.top, podium.top);
       }
-    } else if (district === 'playa') {
+    } else if (district === 'strand') {
       for (const cell of splitLot(lot, 2, 2, 5)) {
-        const tint = rng.pick(TINTS.playa);
+        const tint = rng.pick(TINTS.strand);
         const roof = this.raise(cell, rng.range(0.5, 2.5), rng.range(13, 36), 'hotel', tint);
         this.plain.addBox(roof.cx, roof.top, roof.cz, roof.width * 0.4, 2.2, roof.depth * 0.4, tint);
         this.awnings(cell, 0.5, rng.pick(AWNINGS));
         tallest = Math.max(tallest, roof.top);
       }
-    } else if (district === 'mercado') {
+    } else if (district === 'azimuth') {
       for (const cell of splitLot(lot, rng.chance(0.5) ? 3 : 2, 2, 3)) {
-        const roof = this.raise(cell, rng.range(0, 1.5), rng.range(8, 26), rng.chance(0.55) ? 'shop' : 'hotel', rng.pick(TINTS.mercado));
+        const roof = this.raise(cell, rng.range(0, 1.5), rng.range(8, 26), rng.chance(0.55) ? 'shop' : 'hotel', rng.pick(TINTS.azimuth));
         this.roofClutter(roof, rng.int(0, 2));
         this.awnings(cell, 0, rng.pick(AWNINGS));
         tallest = Math.max(tallest, roof.top);
       }
-    } else if (district === 'colinas') {
+    } else if (district === 'hill') {
       for (const cell of splitLot(lot, 3, 3, 6)) {
         if (rng.chance(0.14)) continue;
         const height = rng.range(4.4, 7.2);
-        const roof = this.raise(cell, rng.range(1.5, 3), height, 'house', rng.pick(TINTS.colinas));
+        const roof = this.raise(cell, rng.range(1.5, 3), height, 'house', rng.pick(TINTS.hill));
         this.plain.addGeometry(cone4, placement(roof.cx, roof.top + 1.3, roof.cz, 0, roof.width * 1.05, 3, roof.depth * 1.05), rng.pick(['#c0553a', '#a8432c', '#d06b45', '#8c5a3c']));
         tallest = Math.max(tallest, roof.top);
       }
-    } else if (district === 'puerto') {
+    } else if (district === 'yards') {
       const cells = rng.chance(0.5) ? splitLot(lot, 2, 1, 14) : splitLot(lot, 1, 2, 14);
       const warehouse = cells[rng.int(0, 1)];
       for (const cell of cells) {
         if (cell === warehouse || rng.chance(0.35)) {
-          const roof = this.raise(cell, 2, rng.range(9, 15), 'warehouse', rng.pick(TINTS.puerto));
+          const roof = this.raise(cell, 2, rng.range(9, 15), 'warehouse', rng.pick(TINTS.yards));
           this.roofClutter(roof, 2);
           tallest = Math.max(tallest, roof.top);
         } else {

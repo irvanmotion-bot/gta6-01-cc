@@ -1,4 +1,5 @@
 // The police helicopter of three stars and up: it circles over the player with a searchlight and opens fire at four.
+// In the dark of totality its searchlight is the only way the police find a Nova who keeps out of the light.
 import * as THREE from 'three';
 import { MeshBatcher } from '../render/meshBatcher.js';
 import { distance2D } from '../core/random.js';
@@ -12,6 +13,9 @@ export class PoliceHelicopter {
     this.cooldown = 0;
     this.returnClock = 0;
     this.crashing = 0;
+    this.aim = new THREE.Vector3();
+    this.lastSeen = new THREE.Vector3();
+    this.sweep = 0;
     const batch = new MeshBatcher();
     batch.addBox(0, -0.9, 0.2, 1.9, 1.9, 4.2, '#f4f6f7');
     batch.addBox(0, -0.5, 1.9, 1.7, 1.2, 1.4, '#1b2a38');
@@ -69,6 +73,8 @@ export class PoliceHelicopter {
     this.crashing = 0;
     this.mesh.visible = true;
     this.setSearchlight(true);
+    this.aim.copy(player);
+    this.lastSeen.copy(player);
     this.mesh.position.set(player.x + 150, HOVER_HEIGHT + 30, player.z - 120);
     this.mesh.rotation.set(0, 0, 0);
   }
@@ -136,22 +142,41 @@ export class PoliceHelicopter {
     mesh.position.y += (HOVER_HEIGHT + Math.sin(game.time * 0.8) * 1.5 - mesh.position.y) * ease;
     const face = Math.atan2(player.position.x - mesh.position.x, player.position.z - mesh.position.z);
     mesh.rotation.set(0.16, face, Math.sin(game.time * 0.6) * 0.06);
-    // The searchlight is a cone from the nose down to the player.
+    // The searchlight is a cone from the nose down to where the crew is looking. In daylight that is Nova. In the
+    // dark, a Nova with no light on her is lost: the beam sweeps the streets round where she was last seen, and
+    // finds her again only if its pool of light crosses her.
+    const cover = game.darkness;
+    const aim = this.aim;
+    if (cover.isHidden()) {
+      this.sweep += dt;
+      const goalAimX = this.lastSeen.x + Math.sin(this.sweep * 0.9) * SWEEP_REACH;
+      const goalAimZ = this.lastSeen.z + Math.sin(this.sweep * 0.63 + 1.3) * SWEEP_REACH;
+      aim.x += (goalAimX - aim.x) * Math.min(1, dt * 1.6);
+      aim.z += (goalAimZ - aim.z) * Math.min(1, dt * 1.6);
+      aim.y = 0;
+      if (distance2D(aim.x, aim.z, player.position.x, player.position.z) < POOL_RADIUS) cover.noteSearchlight();
+    } else {
+      aim.x += (player.position.x - aim.x) * Math.min(1, dt * 9);
+      aim.z += (player.position.z - aim.z) * Math.min(1, dt * 9);
+      aim.y = player.position.y;
+      this.lastSeen.copy(player.position);
+      if (cover.isDark() && distance2D(aim.x, aim.z, player.position.x, player.position.z) < POOL_RADIUS) cover.noteSearchlight();
+    }
     this.beam.position.copy(mesh.position);
     this.beam.position.y -= 1;
-    const reach = new THREE.Vector3(player.position.x - mesh.position.x, player.position.y - mesh.position.y + 1, player.position.z - mesh.position.z);
+    const reach = new THREE.Vector3(aim.x - mesh.position.x, aim.y - mesh.position.y + 1, aim.z - mesh.position.z);
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
     this.beam.material.opacity = 0.2 + night * 0.1;
     this.lamp.position.copy(this.beam.position);
-    this.lamp.target.position.set(player.position.x, player.position.y, player.position.z);
+    this.lamp.target.position.set(aim.x, aim.y, aim.z);
     this.lamp.intensity = 900 + night * 5200;
-    this.pool.position.set(player.position.x, player.position.y + 0.12, player.position.z);
+    this.pool.position.set(aim.x, aim.y + 0.12, aim.z);
     this.pool.material.opacity = 0.1 + night * 0.3;
 
     this.cooldown -= dt;
-    if (stars >= 4 && this.cooldown <= 0 && player.alive) {
+    if (stars >= 4 && this.cooldown <= 0 && player.alive && !cover.isHidden()) {
       this.cooldown = 0.3 + Math.random() * 0.5;
       const hit = Math.random() < 0.13;
       const from = new THREE.Vector3(mesh.position.x, mesh.position.y - 1.4, mesh.position.z);
@@ -164,5 +189,8 @@ export class PoliceHelicopter {
   }
 }
 
+/** How far from Nova's last known place the searchlight sweeps, and how wide its pool of light is on the ground. */
+const SWEEP_REACH = 24;
+const POOL_RADIUS = 3.6;
 const HOVER_HEIGHT = 26;
 const ORBIT_RADIUS = 46;

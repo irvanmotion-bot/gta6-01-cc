@@ -1,4 +1,4 @@
-// Solmara's citizens: they stroll the sidewalks and the boardwalk, cross at corners, run from danger and can be hurt.
+// The citizens of Saros: they stroll the sidewalks and the boardwalk, cross at corners, run from danger and can be hurt.
 import { CITY, POPULATION } from '../core/config.js';
 import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, blockIndexAt } from '../world/cityLayout.js';
@@ -65,6 +65,10 @@ class Pedestrian extends CharacterBody {
       this.timer -= dt;
       speed = 0;
       if (this.timer <= 0) this.state = 'walk';
+    } else if (this.state === 'watch') {
+      // An eclipse watcher: stands at a watch party, turned to the sun, one hand up against the glare.
+      speed = 0;
+      this.turnToward(this.watchHeading, dt, 3);
     } else if (Math.hypot(dirX, dirZ) < 0.9) {
       this.chooseGoal(rng);
       if (rng.chance(0.12)) { this.state = 'idle'; this.timer = rng.range(2, 6); }
@@ -80,8 +84,24 @@ class Pedestrian extends CharacterBody {
     this.animate(dt);
   }
 
+  /** Join a watch party: stand still and look where the sun is. */
+  watchSky(heading) {
+    this.state = 'watch';
+    this.watchHeading = heading;
+    this.gazing = true;
+  }
+
+  /** Leave the party and go back to strolling. */
+  stopWatching() {
+    this.gazing = false;
+    this.cheering = false;
+    if (this.state === 'watch') this.state = 'walk';
+  }
+
   scare(x, z, seconds) {
     if (!this.alive) return;
+    this.gazing = false;
+    this.cheering = false;
     this.state = 'flee';
     this.fearX = x;
     this.fearZ = z;
@@ -184,14 +204,14 @@ export class PedestrianCrowd {
   }
 
   clear() {
-    for (const ped of this.list) ped.dispose();
+    for (const ped of this.list) { ped.dispose(); ped.gone = true; }
     this.list.length = 0;
   }
 
   update(dt) {
     const player = this.game.player.position;
     this.spawnClock -= dt;
-    if (this.spawnClock <= 0 && this.list.length < POPULATION.pedestrians) {
+    if (this.spawnClock <= 0 && this.list.length - this.game.watchParties.watcherCount() < POPULATION.pedestrians) {
       this.spawnClock = 0.25;
       const spot = this.findSpawn(POPULATION.spawnNear - 8, POPULATION.pedestrianFar);
       if (spot) this.spawnAt(spot);
@@ -200,8 +220,9 @@ export class PedestrianCrowd {
       const ped = this.list[index];
       ped.update(dt, this.rng);
       const distance = distance2D(ped.position.x, ped.position.z, player.x, player.z);
-      if (distance > POPULATION.pedestrianFar + 45 || (!ped.alive && (ped.deadTime > 40 || (ped.deadTime > 8 && distance > 80)))) {
+      if (distance > POPULATION.pedestrianFar + 45 + (ped.gazing ? 60 : 0) || (!ped.alive && (ped.deadTime > 40 || (ped.deadTime > 8 && distance > 80)))) {
         ped.dispose();
+        ped.gone = true;
         this.list.splice(index, 1);
       }
     }

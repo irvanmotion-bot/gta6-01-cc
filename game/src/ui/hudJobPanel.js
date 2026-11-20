@@ -2,6 +2,7 @@
 // and timer; a street race or taxi fare when one is running; and in free roam, where the next job waits.
 import { completionPercent } from '../progression/completionTracker.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
+import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { createElement, formatClock } from './domBuilder.js';
 
 export class HudJobPanel {
@@ -35,10 +36,12 @@ export class HudJobPanel {
   freeRoamInfo() {
     const game = this.game;
     const offer = game.missions.offers()[0];
+    const waiting = game.missions.waitingForDay();
     const percent = completionPercent(game);
     return {
-      header: 'FREE ROAM', title: 'Solmara is open', stageLine: `STORY ${game.missions.completed.size}/${STORY_MISSIONS.length} · ${percent}% COMPLETE`, share: percent / 100,
-      objective: offer ? `Next job: ${offer.title} · find ${offer.at.name} (${offer.at.icon} on the radar)` : 'The story is done. The city is yours.',
+      header: 'FREE ROAM', title: 'Saros is open', stageLine: `STORY ${game.missions.completed.size}/${STORY_MISSIONS.length} · ${percent}% COMPLETE`, share: percent / 100,
+      objective: offer ? `Next job: ${offer.title} · find ${offer.at.name} (${offer.at.icon} on the radar)`
+        : waiting ? `${waiting.title} opens ${ECLIPSE_WEEK[waiting.day - 1].name} · rest at CASA REYES (H) to sleep till then` : 'The story is done. The city is yours.',
       next: 'Races R · bounties ☠ · taxi fares T', timer: null, kind: 'roam',
     };
   }

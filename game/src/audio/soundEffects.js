@@ -93,6 +93,14 @@ export class SoundEffects {
   checkpoint() { this.tone(660, 990, 0.14, 0.22, 'sine'); }
   cashRegister() { this.tone(1200, 1500, 0.06, 0.18, 'square'); this.tone(1800, 2100, 0.1, 0.14, 'square', 0.07); }
 
+  /** Totality: a long low drone as the light goes, and the gasp of a city full of people looking up. */
+  totalityFalls() {
+    this.tone(110, 55, 3.2, 0.3, 'sine');
+    this.tone(165, 82, 3.2, 0.18, 'triangle', 0.1);
+    this.noise(2.4, 1800, 0.22, 'bandpass', 700);
+    [523, 659, 784].forEach((note, index) => this.tone(note, note * 1.01, 1.6, 0.07, 'sine', 0.5 + index * 0.18));
+  }
+
   /** The rising fanfare of a passed mission, or the falling one of a failed one. */
   jingle(passed) {
     const notes = passed ? [392, 494, 587, 784, 988] : [392, 330, 262, 196];

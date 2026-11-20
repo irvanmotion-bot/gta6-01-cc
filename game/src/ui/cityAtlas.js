@@ -1,4 +1,4 @@
-// The city atlas (M): the full map of Solmara beside the progress of the save: completion percentage, the list of
+// The city atlas (M): the full map of Saros beside the progress of the save: completion percentage, the list of
 // story jobs with their state, activity tallies, the record of the playthrough and the three save slots.
 import { listSaveSlots } from '../core/saveGame.js';
 import { completionPercent, completionRows } from '../progression/completionTracker.js';
@@ -48,7 +48,7 @@ export class CityAtlas {
     const stats = statisticRows(game).filter(([label]) => RECORD_ROWS.includes(label)).map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
     this.caption.textContent = 'CITY ATLAS · M or Esc to close';
     this.side.innerHTML = `
-      <div class="atlas-head"><div><h2>SOLMARA</h2><p>RANK ${cred.rank} · ${cred.title().toUpperCase()} · ${cred.points.toLocaleString('en-US')} CRED · ${formatCash(game.player.cash)}</p></div>
+      <div class="atlas-head"><div><h2>SAROS</h2><p>RANK ${cred.rank} · ${cred.title().toUpperCase()} · ${cred.points.toLocaleString('en-US')} CRED · ${formatCash(game.player.cash)}</p></div>
         <div class="atlas-percent"><b>${percent}%</b><span>COMPLETE</span></div></div>
       <div class="atlas-bar"><i style="width:${percent}%"></i></div>
       <h3>STORY JOBS · ${game.missions.completed.size}/${game.missions.jobList().length}</h3><div class="atlas-jobs">${this.jobsMarkup()}</div>
@@ -59,4 +59,4 @@ export class CityAtlas {
 }
 
 /** The statistics the atlas has room for; the pause menu's statistics page shows them all. */
-const RECORD_ROWS = ['Cash earned', 'Cash spent', 'Cars stolen', 'Distance driven', 'Highest wanted level', 'Police escapes', 'Officers downed', 'Marlin guns downed', 'Helicopters downed', 'Shots fired', 'Crew favors called', 'Time played'];
+const RECORD_ROWS = ['Cash earned', 'Cash spent', 'Cars stolen', 'Distance driven', 'Highest wanted level', 'Police escapes', 'Officers downed', 'Vane guns downed', 'Helicopters downed', 'Shots fired', 'Crew favors called', 'Time played'];

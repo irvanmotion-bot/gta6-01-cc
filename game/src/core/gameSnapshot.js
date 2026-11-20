@@ -8,7 +8,7 @@ import { freshStats } from './saveGame.js';
 export function summarizeGame(game) {
   const p = game.player.position;
   return {
-    percent: completionPercent(game), rank: game.cred.rank, title: game.cred.title(), cash: game.player.cash,
+    percent: completionPercent(game), rank: game.cred.rank, title: game.cred.title(), cash: game.player.cash, day: game.calendar.dayName(),
     jobs: game.missions.completed.size, district: districtNameAt(p.x, p.z), playSeconds: Math.round(game.stats.playSeconds),
   };
 }
@@ -16,7 +16,7 @@ export function summarizeGame(game) {
 /** Everything the systems need to come back as they were: story, cred, workshop, weapons, activities and statistics. */
 export function captureGame(game) {
   return {
-    cash: game.player.cash, armor: game.player.armor, hour: game.sky.hour, missions: [...game.missions.completed], cred: game.cred.points,
+    cash: game.player.cash, armor: game.player.armor, day: game.calendar.day, hour: game.calendar.hour, missions: [...game.missions.completed], cred: game.cred.points,
     workshop: { ...game.workshop.levels }, weapons: game.weapons.serialize(), tokens: [...game.activities.tokens], faresDone: game.activities.faresDone,
     races: { ...game.races.best }, bounties: [...game.bounties.claimed], stats: { ...game.stats },
   };
@@ -34,5 +34,6 @@ export function restoreGame(game, save) {
   game.stats = { ...freshStats(), ...save.stats };
   game.player.cash = save.cash;
   game.player.armor = save.armor || 0;
-  game.sky.hour = save.hour;
+  // A save from before the week had days opens on the day its story has earned.
+  game.calendar.reset(save.day || game.missions.earliestDayOfStory(), save.hour);
 }

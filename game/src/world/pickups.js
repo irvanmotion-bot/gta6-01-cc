@@ -1,4 +1,4 @@
-// Things to grab off the street: dropped cash, health, armor, ammo and the hidden Sun Tokens.
+// Things to grab off the street: dropped cash, health, armor, ammo and the hidden Corona Tokens.
 import * as THREE from 'three';
 import { distance2D } from '../core/random.js';
 import { groundHeight } from './cityLayout.js';

@@ -1,4 +1,4 @@
-// Shopfronts: name boards for Solmara's own shops above the awnings, and neon blade signs that stick out from the
+// Shopfronts: name boards for the shops of Saros above the awnings, and neon blade signs that stick out from the
 // walls and glow after dark. Every board shares one painted atlas, so all of them draw in one call.
 import * as THREE from 'three';
 import { SeededRandom } from '../core/random.js';
@@ -92,10 +92,10 @@ const ATLAS_COLUMNS = 2;
 const ATLAS_ROWS = 8;
 const NEON_COLORS = ['#ff2d95', '#35d0ff', '#ffe14d', '#7dff6a', '#b06cff', '#ff7a1a'];
 
-/** Solmara's shops: name, board colour, lettering colour. */
+/** The shops of Saros, half of them renamed for eclipse week: name, board colour, lettering colour. */
 const SHOP_NAMES = [
-  ['CAFÉ LUNA', '#3b1f5e', '#ffe14d'], ['TACO BRAVO', '#d93a1f', '#fff3d6'], ['SURF SHACK', '#0e8fa8', '#ffffff'], ['MODA ROSA', '#ff5fa2', '#2b0a1c'],
-  ['PIXEL ARCADE', '#141a3a', '#35d0ff'], ['FARMACIA SOL', '#ffffff', '#1f9d55'], ['DISCOS DEL MAR', '#15151a', '#ff7a1a'], ['PAN DE ORO', '#f2c14e', '#4a2a0a'],
-  ['HOTEL CORAL', '#ff7b6b', '#ffffff'], ['JUGOS TRÓPICO', '#2bb673', '#fff9c4'], ['BARBERÍA REY', '#1c2a4a', '#f5f5f5'], ['GELATO NUBE', '#bfe9ff', '#b0306a'],
-  ['EL FARO BAR', '#0b3b5a', '#ffd60a'], ['LAVANDERÍA OLA', '#e8f6ff', '#1f6fd8'], ['MERCADO 24', '#e74c3c', '#ffffff'], ['TATTOO SIRENA', '#101014', '#7dff6a'],
+  ['CAFÉ LUNA', '#3b1f5e', '#ffe14d'], ['TACO BRAVO', '#d93a1f', '#fff3d6'], ['SHADOW BAND SURF', '#0e8fa8', '#ffffff'], ['ECLIPSE SHADES $5', '#1a1640', '#ffb547'],
+  ['PIXEL ARCADE', '#141a3a', '#35d0ff'], ['FARMACIA ZENIT', '#ffffff', '#1f9d55'], ['DISCOS UMBRA', '#15151a', '#ff7a1a'], ['PAN DE LUNA', '#f2c14e', '#4a2a0a'],
+  ['HOTEL ASTROLABE', '#ff7b6b', '#ffffff'], ['JUGOS TRÓPICO', '#2bb673', '#fff9c4'], ['BARBERÍA REY', '#1c2a4a', '#f5f5f5'], ['GELATO CORONA', '#bfe9ff', '#b0306a'],
+  ['THE GNOMON BAR', '#0b3b5a', '#ffd60a'], ['LAVANDERÍA OLA', '#e8f6ff', '#1f6fd8'], ['AZIMUTH 24', '#e74c3c', '#ffffff'], ['TATTOO SIRENA', '#101014', '#7dff6a'],
 ];

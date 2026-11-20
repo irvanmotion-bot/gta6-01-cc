@@ -1,4 +1,4 @@
-// What stands on Solmara's pavements between the trees and lamps: benches, bins, hydrants, news boxes, planters,
+// What stands on the pavements of Saros between the trees and lamps: benches, bins, hydrants, news boxes, planters,
 // parking meters, bus shelters and corner bollards, plus the kiosks, surfboard racks and benches of the boardwalk.
 // The city is cut into chunks of three blocks by three, one merged mesh each, so furniture out of view is not drawn.
 import * as THREE from 'three';
@@ -22,7 +22,7 @@ export class StreetFurniture {
     for (let i = 0; i < CITY.roadsX - 1; i += 1) {
       for (let j = 0; j < CITY.roadsZ - 1; j += 1) {
         const district = districtOfBlock(i, j);
-        if (district !== 'jardin') this.furnishBlock(blockRect(i, j), district, this.chunkOf(`${Math.floor(i / CHUNK_BLOCKS)},${Math.floor(j / CHUNK_BLOCKS)}`));
+        if (district !== 'jacaranda') this.furnishBlock(blockRect(i, j), district, this.chunkOf(`${Math.floor(i / CHUNK_BLOCKS)},${Math.floor(j / CHUNK_BLOCKS)}`));
       }
     }
     for (let z = 20; z < CITY.depth - 10; z += 240) this.furnishBoardwalk(z, Math.min(z + 240, CITY.depth - 10), this.chunkOf(`boardwalk${z}`));
@@ -44,7 +44,7 @@ export class StreetFurniture {
   furnishBlock(rect, district, batch) {
     const rng = this.rng;
     const size = rect.maxX - rect.minX;
-    const busy = district === 'centro' || district === 'mercado' || district === 'playa';
+    const busy = district === 'orrery' || district === 'azimuth' || district === 'strand';
     const edges = [
       [rect.minX, rect.minZ + KERB_GAP, 1, 0, 0, -1], [rect.minX, rect.maxZ - KERB_GAP, 1, 0, 0, 1],
       [rect.minX + KERB_GAP, rect.minZ, 0, 1, -1, 0], [rect.maxX - KERB_GAP, rect.minZ, 0, 1, 1, 0],
@@ -95,7 +95,7 @@ export class StreetFurniture {
         box(y, 0.36, 0.12, 0.3, '#22252a', 0, (k - (count - 1) / 2) * 0.6);
       }
     } else if (roll < 0.78) {
-      box(y, 1.5, 0.5, 1.0, district === 'centro' ? '#d9d4c7' : '#c96f4a');
+      box(y, 1.5, 0.5, 1.0, district === 'orrery' ? '#d9d4c7' : '#c96f4a');
       batch.addGeometry(shrub, placement(x, y + 0.75, z, rng.range(0, 3), tx ? 0.75 : 0.5, 0.45, tz ? 0.75 : 0.5), '#3f9b4b');
       for (let k = 0; k < 4; k += 1) box(y + 0.85 + (k % 2) * 0.12, 0.2, 0.18, 0.2, rng.pick(FLOWERS), rng.range(-0.25, 0.25), -0.5 + k * 0.33);
     } else if (roll < 0.9) {

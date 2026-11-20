@@ -32,7 +32,7 @@ export function buildStreetsAndGround(scene) {
       const cz = (rect.minZ + rect.maxZ) / 2;
       const size = rect.maxX - rect.minX;
       const district = districtOfBlock(i, j);
-      slabs.addBox(cx, 0, cz, size, CITY.curb, size, district === 'jardin' ? '#cfc6b0' : '#c9c5bb');
+      slabs.addBox(cx, 0, cz, size, CITY.curb, size, district === 'jacaranda' ? '#cfc6b0' : '#c9c5bb');
       const inner = size - CITY.sidewalk * 2;
       slabs.addBox(cx, CITY.curb, cz, inner, 0.03, inner, DISTRICTS[district].ground);
     }

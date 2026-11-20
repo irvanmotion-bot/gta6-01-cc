@@ -35,9 +35,10 @@ export class HudDispatchPanel {
     if (this.clock > 0 || stars === 0) return;
     this.clock = 0.25;
     const roster = game.police.roster();
-    cache.text(this.head, `SOLMARA P.D. DISPATCH · ${roster.length} ${roster.length === 1 ? 'UNIT' : 'UNITS'}`);
+    cache.text(this.head, `SAROS P.D. · ${roster.length} ${roster.length === 1 ? 'UNIT' : 'UNITS'} ON YOU`);
     cache.html(this.rows, this.rosterMarkup(roster));
   }
 }
 
-const MAX_ROWS = 6;
+/** Five rows read at a glance; a bigger response is counted in the caption. */
+const MAX_ROWS = 5;

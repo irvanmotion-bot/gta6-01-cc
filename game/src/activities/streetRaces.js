@@ -236,18 +236,18 @@ const PLACE_NAMES = ['1ST', '2ND', '3RD', '4TH'];
  */
 export const STREET_RACES = [
   {
-    id: 'oceanDash', name: 'Ocean Drive Dash', x: 2.7, z: 100, heading: 0, purse: 2000, limit: 200,
+    id: 'coronaDash', name: 'Corona Drive Dash', x: 2.7, z: 100, heading: 0, purse: 2000, limit: 200,
     route: [[0, 3], [0, 6], [0, 9], [3, 9], [3, 6], [3, 3], [3, 1], [1, 1], [0, 1]],
-    rivals: [['VEGA', 'coyote', '#35d0ff', 0.74], ['KIKO', 'estela', '#ff2d95', 0.78], ['LUZ', 'brisa', '#b6ff3b', 0.8]],
+    rivals: [['VEGA', 'coyote', '#35d0ff', 0.74], ['KIKO', 'estela', '#ff2d95', 0.78], ['LUZ', 'avocet', '#b6ff3b', 0.8]],
   },
   {
-    id: 'centroCircuit', name: 'Centro Circuit', x: 334, z: 242.7, heading: Math.PI / 2, purse: 4000, limit: 210,
+    id: 'orreryCircuit', name: 'Orrery Circuit', x: 334, z: 242.7, heading: Math.PI / 2, purse: 4000, limit: 210,
     route: [[6, 3], [8, 3], [8, 6], [6, 6], [4, 6], [4, 3], [6, 3], [8, 3], [8, 6], [4, 6], [4, 3]],
-    rivals: [['VEGA', 'marlinGT', '#35d0ff', 0.72], ['DUQUE', 'coyote', '#ffd60a', 0.8], ['ROSA', 'coyote', '#ff2d95', 0.77]],
+    rivals: [['VEGA', 'coronaGT', '#35d0ff', 0.72], ['DUQUE', 'coyote', '#ffd60a', 0.8], ['ROSA', 'coyote', '#ff2d95', 0.77]],
   },
   {
-    id: 'harborSprint', name: 'Harbor Night Sprint', x: 786, z: 637.3, heading: -Math.PI / 2, purse: 6500, limit: 220,
+    id: 'drydockSprint', name: 'Drydock Night Sprint', x: 786, z: 637.3, heading: -Math.PI / 2, purse: 6500, limit: 220,
     route: [[8, 8], [5, 8], [2, 8], [2, 6], [5, 6], [8, 6], [10, 6], [10, 8], [8, 8]],
-    rivals: [['VEGA', 'rayo', '#35d0ff', 0.7], ['DUQUE', 'marlinGT', '#ffd60a', 0.76], ['SOMBRA', 'marlinGT', '#8a5cff', 0.78]],
+    rivals: [['VEGA', 'rayo', '#35d0ff', 0.7], ['DUQUE', 'coronaGT', '#ffd60a', 0.76], ['SOMBRA', 'coronaGT', '#8a5cff', 0.78]],
   },
 ];

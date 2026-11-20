@@ -172,6 +172,9 @@ export class CharacterBody {
       m.armR.rotation.x = this.aiming ? -Math.PI / 2 + 0.05 : swing * 0.9;
     }
     if (this.aiming && this.armed) m.armL.rotation.x = -1.1;
+    // Eclipse watchers shade their eyes with one hand, and throw both arms up when the sun goes out.
+    if (this.gazing) m.armL.rotation.x = -2.35 + Math.sin(this.stride + this.deadTime) * 0.04;
+    if (this.cheering) { m.armL.rotation.x = -2.9 + Math.sin(this.game.time * 9 + this.stride) * 0.25; m.armR.rotation.x = -2.9 - Math.sin(this.game.time * 9 + this.stride) * 0.25; }
     m.gun.visible = this.armed;
   }
 

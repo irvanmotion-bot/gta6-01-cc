@@ -1,6 +1,7 @@
 // Runs the story: offers jobs at their givers, steps through each one stage by stage, tracks timers and progress,
 // and passes or fails it. The HUD's job panel reads its stage number, progress bar and next step from here.
-import { CHARACTERS, STORY_MISSIONS } from './storyMissions.js';
+import { CHARACTERS, SETUP_JOB_COUNT, STORY_MISSIONS } from './storyMissions.js';
+import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { CRED_AWARDS } from '../progression/streetCred.js';
 import { leaveVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
@@ -20,9 +21,38 @@ export class MissionDirector {
     this.completed = new Set(completed);
   }
 
-  /** The jobs on offer now: not yet passed, with everything they require passed. */
+  /** The jobs on offer now: not yet passed, with everything they require passed, on or after the day they open. */
   available() {
+    const day = this.game.calendar.day;
+    return this.unlocked().filter((m) => m.day <= day);
+  }
+
+  /** The jobs the story has reached, whatever the day. */
+  unlocked() {
     return STORY_MISSIONS.filter((m) => !this.completed.has(m.id) && m.requires.every((id) => this.completed.has(id)));
+  }
+
+  /** The next job that is only waiting for its day of the week, when nothing is on offer today. */
+  waitingForDay() {
+    return this.available().length === 0 ? this.unlocked()[0] || null : null;
+  }
+
+  /** How many of the nine setup jobs are still to do: eclipse day does not dawn until this is zero. */
+  setupJobsLeft() {
+    return STORY_MISSIONS.slice(0, SETUP_JOB_COUNT).filter((m) => !this.completed.has(m.id)).length;
+  }
+
+  /** The day of the week a story that has come this far must have reached: the day of its latest passed job. */
+  earliestDayOfStory() {
+    return STORY_MISSIONS.reduce((day, m) => (this.completed.has(m.id) ? Math.max(day, m.day) : day), 1);
+  }
+
+  /** How much faster the week's clock runs right now: Nova holding the door of the Trust hurries the moon along. */
+  clockRush() {
+    const run = this.active;
+    if (!run || !run.step || run.step.kind !== 'awaitTotality') return 1;
+    const p = this.game.player.position;
+    return distance2D(p.x, p.z, run.step.at[0], run.step.at[1]) < run.step.radius ? TOTALITY_RUSH : 1;
   }
 
   /** One start marker per giver: the first job that giver has on offer. */
@@ -39,8 +69,8 @@ export class MissionDirector {
   jobList() {
     return STORY_MISSIONS.map((mission, index) => {
       const done = this.completed.has(mission.id);
-      const open = !done && mission.requires.every((id) => this.completed.has(id));
-      return { number: index + 1, title: mission.title, giver: CHARACTERS[mission.giver].name, reward: mission.reward, state: done ? 'done' : this.active && this.active.mission === mission ? 'active' : open ? 'open' : 'locked' };
+      const open = !done && mission.requires.every((id) => this.completed.has(id)) && mission.day <= this.game.calendar.day;
+      return { number: index + 1, title: mission.title, giver: CHARACTERS[mission.giver].name, reward: mission.reward, day: ECLIPSE_WEEK[mission.day - 1].short, state: done ? 'done' : this.active && this.active.mission === mission ? 'active' : open ? 'open' : 'locked' };
     });
   }
 
@@ -48,8 +78,8 @@ export class MissionDirector {
     const game = this.game;
     const stages = mission.steps.filter((step) => step.stage).map((step) => step.stage);
     this.active = { mission, index: -1, step: null, timer: null, vehicle: null, tag: mission.id, remaining: [], targets: [], total: 0, progress: 0, stages, stage: 0, number: STORY_MISSIONS.indexOf(mission) + 1 };
-    if (mission.hour !== undefined) game.sky.hour = mission.hour;
-    game.hud.banner(mission.title.toUpperCase(), `Job ${this.active.number} · ${CHARACTERS[mission.giver].name} · reward $${mission.reward.toLocaleString('en-US')}`, '#ffd60a');
+    if (mission.hour !== undefined) game.calendar.setHour(mission.hour);
+    game.hud.banner(mission.title.toUpperCase(), `Job ${this.active.number} · ${CHARACTERS[mission.giver].name} · reward $${mission.reward.toLocaleString('en-US')}`, '#ffb547');
     game.audio.menuSelect();
     this.advance();
   }
@@ -123,6 +153,7 @@ export class MissionDirector {
     if (step.kind === 'eliminate') return (run.total - this.game.gunmen.countAlive(run.tag)) / run.total;
     if (step.kind === 'destroy') return run.targets.filter((target) => target.dead).length / run.total;
     if (step.kind === 'wait') return run.progress / step.seconds;
+    if (step.kind === 'awaitTotality') return this.game.calendar.coverage();
     if (step.kind === 'loseCops') return this.game.wanted.escapeProgress();
     return 0;
   }
@@ -148,6 +179,7 @@ export class MissionDirector {
     if (step.kind === 'eliminate') return `${step.text} (${this.game.gunmen.countAlive(run.tag)} left)`;
     if (step.kind === 'destroy') return `${step.text} (${run.targets.filter((target) => target.dead).length}/${run.total})`;
     if (step.kind === 'wait') return `${step.text} (${Math.ceil(step.seconds - run.progress)}s)`;
+    if (step.kind === 'awaitTotality') return `${step.text} (sun ${Math.round(this.game.calendar.coverage() * 100)}% covered)`;
     if ((step.kind === 'deliver' || step.vehicle) && run.vehicle && this.game.player.vehicle !== run.vehicle) return `Get back in the ${run.vehicle.spec.name}`;
     return step.text;
   }
@@ -214,6 +246,12 @@ export class MissionDirector {
       game.markers.show(step.at[0], step.at[1], '#ff9f1c', step.radius);
       if (distance2D(px, pz, step.at[0], step.at[1]) < step.radius) run.progress += dt;
       if (run.progress >= step.seconds) { game.audio.cashRegister(); this.advance(); }
+    } else if (step.kind === 'awaitTotality') {
+      // The vault's daylight lock lets go only when the sun does. A sun that has already come back means a missed window.
+      game.markers.show(step.at[0], step.at[1], '#f4ecd8', step.radius);
+      const phase = game.calendar.phase();
+      if (phase === 'totality') this.advance();
+      else if (phase === 'waning' || phase === 'after') this.fail('The sun came back. The daylight lock is shut again.');
     } else if (step.kind === 'loseCops') {
       if (game.wanted.stars === 0) this.advance();
     }
@@ -289,7 +327,7 @@ export class MissionDirector {
     this.cleanup();
     this.cooldown = 4;
     game.stats.missionsFailed += 1;
-    game.hud.banner('JOB FAILED', reason, '#ff3b30');
+    game.hud.banner('JOB FAILED', reason, '#ff6a4d');
     game.audio.jingle(false);
   }
 
@@ -301,14 +339,18 @@ export class MissionDirector {
     this.cooldown = 5;
     game.player.addCash(mission.reward);
     game.stats.missionsPassed += 1;
-    game.hud.banner('JOB PASSED', `+$${mission.reward.toLocaleString('en-US')} · +${mission.cred} cred`, '#2ecc71');
+    game.hud.banner('JOB PASSED', `+$${mission.reward.toLocaleString('en-US')} · +${mission.cred} cred`, '#f4ecd8');
+    const waiting = this.waitingForDay();
+    if (waiting) game.hud.notify(`Next job opens ${ECLIPSE_WEEK[waiting.day - 1].name}. Rest at Casa Reyes to sleep till then.`);
     game.cred.earn(mission.cred, mission.title);
     game.audio.jingle(true);
     if (this.isStoryComplete()) {
-      setTimeout(() => game.hud.banner('SOLMARA IS YOURS', 'Story complete. The city stays open: races, fares, bounties and trouble.', '#ffd60a'), 6500);
+      setTimeout(() => game.hud.banner('SAROS IS YOURS', 'Story complete. The city stays open, and the observatory can show you the eclipse again.', '#ffb547'), 6500);
     }
     game.saveGame(true);
   }
 }
 
-const OBJECTIVE_COLOR = '#ffd60a';
+const OBJECTIVE_COLOR = '#ffb547';
+/** How many times faster the clock runs while Nova waits at the door for the dark. */
+const TOTALITY_RUSH = 12;

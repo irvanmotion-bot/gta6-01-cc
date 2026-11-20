@@ -1,4 +1,4 @@
-// Street cred: the progression of Solmara Heat. Jobs, escapes, races and takedowns earn cred, cred raises Nova's
+// Street cred: the progression of Totality. Jobs, escapes, races and takedowns earn cred, cred raises Nova's
 // rank, and each rank unlocks something real: crew favors, workshop tiers, guns at Ammo Amigo, armor and discounts.
 
 export class StreetCred {
@@ -22,7 +22,7 @@ export class StreetCred {
     if (rank > this.rank) {
       this.rank = rank;
       const earned = CRED_RANKS[rank - 1];
-      this.game.hud.banner(`RANK ${rank} · ${earned.title.toUpperCase()}`, `Unlocked: ${earned.unlocks}`, '#35d0ff');
+      this.game.hud.banner(`RANK ${rank} · ${earned.title.toUpperCase()}`, `Unlocked: ${earned.unlocks}`, '#f4ecd8');
       this.game.audio.jingle(true);
     }
   }
@@ -67,14 +67,14 @@ export function rankForPoints(points) {
 
 /** The ladder: the cred each rank needs and what reaching it unlocks. */
 export const CRED_RANKS = [
-  { title: 'Newcomer', cred: 0, unlocks: 'the streets of Solmara' },
+  { title: 'Newcomer', cred: 0, unlocks: 'the streets of Saros' },
   { title: 'Runner', cred: 250, unlocks: 'Bravo\'s WHEELS ON CALL favor · workshop tier 1' },
   { title: 'Hustler', cred: 700, unlocks: 'Jazz\'s SIGNAL JAM favor · Hornet SMG · workshop tier 2' },
   { title: 'Getaway Ace', cred: 1500, unlocks: 'Inés\'s PATCH-UP favor · Boomstick 12 · nitro' },
   { title: 'Fixer', cred: 2800, unlocks: 'Longshot AR · workshop tier 3' },
   { title: 'Shot Caller', cred: 4500, unlocks: 'heavy armor: 150 points' },
-  { title: 'Coast Boss', cred: 7000, unlocks: '20% off at every counter' },
-  { title: 'Queen of Solmara', cred: 10000, unlocks: 'the crown' },
+  { title: 'Shadow Boss', cred: 7000, unlocks: '20% off at every counter' },
+  { title: 'Queen of Saros', cred: 10000, unlocks: 'the crown' },
 ];
 
 /** What each deed is worth; the systems that pay cred read their amount here. */

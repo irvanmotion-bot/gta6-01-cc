@@ -164,6 +164,7 @@ export class Weapons {
     camera.shake(0.05);
     game.pedestrians.scareNear(player.position.x, player.position.z, 38);
     game.wanted.reportCrime('gunfire');
+    game.darkness.noteGunfire();
     if (this.clip[this.current] === 0 && this.reserve[this.current] > 0) this.startReload();
   }
 

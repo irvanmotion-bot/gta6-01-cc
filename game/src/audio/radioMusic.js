@@ -1,10 +1,10 @@
-// The car radio: three Solmara stations, each a generative synth loop sequenced live (no audio files).
+// The car radio: the three stations of Saros, each a generative synth loop sequenced live (no audio files).
 
 /** Each station: tempo, a scale in semitones from its root, a bass line and how its lead plays. */
 export const STATIONS = [
-  { name: 'Tidewave 98.6', host: 'Jazz spins sunset synth', bpm: 104, root: 45, scale: [0, 3, 5, 7, 10, 12, 15], bass: [0, 0, 5, 5, 3, 3, 7, 7], wave: 'sawtooth', leadEvery: 2 },
-  { name: 'Radio Coral 101', host: 'Latin heat, all day', bpm: 122, root: 48, scale: [0, 2, 4, 7, 9, 12, 14], bass: [0, 7, 0, 7, 5, 9, 5, 7], wave: 'triangle', leadEvery: 1 },
-  { name: 'Low Tide FM', host: 'Slow grooves after dark', bpm: 84, root: 41, scale: [0, 3, 7, 10, 12, 14, 15], bass: [0, 0, 0, 3, 5, 5, 5, 7], wave: 'square', leadEvery: 4 },
+  { name: 'Penumbra 98.6', host: 'Jazz counts down to totality', bpm: 104, root: 45, scale: [0, 3, 5, 7, 10, 12, 15], bass: [0, 0, 5, 5, 3, 3, 7, 7], wave: 'sawtooth', leadEvery: 2 },
+  { name: 'Radio Azimuth 101', host: 'Latin brass, all afternoon', bpm: 122, root: 48, scale: [0, 2, 4, 7, 9, 12, 14], bass: [0, 7, 0, 7, 5, 9, 5, 7], wave: 'triangle', leadEvery: 1 },
+  { name: 'Umbra After Hours', host: 'Slow grooves for the dark', bpm: 84, root: 41, scale: [0, 3, 7, 10, 12, 14, 15], bass: [0, 0, 0, 3, 5, 5, 5, 7], wave: 'square', leadEvery: 4 },
   { name: 'Radio off', host: '', bpm: 0 },
 ];
 

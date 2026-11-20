@@ -1,4 +1,4 @@
-// Things to do between missions: taxi fares in a Sol Cab, the twelve hidden Sun Tokens and rampage cash for stunts.
+// Things to do between missions: taxi fares in a Saros Cab, the twelve hidden Corona Tokens and cash for powerslides.
 import { CITY } from '../core/config.js';
 import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, districtNameAt, kerbSpot } from '../world/cityLayout.js';
@@ -37,16 +37,16 @@ export class SideActivities {
     this.tokens.add(index);
     this.game.player.addCash(TOKEN_REWARD);
     const left = TOKEN_SPOTS.length - this.tokens.size;
-    this.game.hud.banner('SUN TOKEN', left > 0 ? `+$${TOKEN_REWARD} · ${left} still hidden in Solmara` : 'All twelve found! +$10,000 bonus', '#ffd60a');
+    this.game.hud.banner('CORONA TOKEN', left > 0 ? `+$${TOKEN_REWARD} · ${left} still hidden in Saros` : 'All twelve found! +$10,000 bonus', '#ffb547');
     if (left === 0) this.game.player.addCash(10000);
-    this.game.cred.earn(CRED_AWARDS.token, 'Sun Token');
+    this.game.cred.earn(CRED_AWARDS.token, 'Corona Token');
   }
 
   tokenCount() {
     return `${this.tokens.size}/${TOKEN_SPOTS.length}`;
   }
 
-  /** Start or stop taking fares; only a Sol Cab can. */
+  /** Start or stop taking fares; only a Saros Cab can. */
   toggleTaxi() {
     const game = this.game;
     const vehicle = game.player.vehicle;
@@ -80,7 +80,7 @@ export class SideActivities {
     if (!fare) return null;
     const pickup = fare.stage === 'pickup';
     return {
-      header: `SOL CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STAGE 1/2 · PICK UP' : 'STAGE 2/2 · DROP OFF', share: pickup ? 0.1 : 0.55,
+      header: `SAROS CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STAGE 1/2 · PICK UP' : 'STAGE 2/2 · DROP OFF', share: pickup ? 0.1 : 0.55,
       objective: pickup ? 'Stop at the yellow marker for your fare' : `Drive the fare to ${fare.to}`, next: pickup ? `Drop off in ${fare.to}` : `$${fare.pay} + tip for speed`, timer: pickup ? null : fare.timer, counting: 'down',
     };
   }
@@ -142,7 +142,7 @@ export class SideActivities {
   }
 }
 
-/** Where the Sun Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */
+/** Where the Corona Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */
 const TOKEN_SPOTS = [
   [0, 0, 34, 1.6], [1, 7, 1.6, 34], [3, 3, 20, 20], [3, 4, 48, 50], [5, 1, 66.4, 30], [7, 4, 34, 66.4],
   [9, 8, 1.6, 12], [10, 0, 40, 1.6], [10, 5, 66.4, 60], [6, 8, 30, 66.4], [2, 6, 1.6, 50], [8, 3, 50, 1.6],

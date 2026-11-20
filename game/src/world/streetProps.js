@@ -94,7 +94,7 @@ export class StreetProps {
   decorateBlock(i, j, district) {
     const rng = this.rng;
     const rect = blockRect(i, j);
-    if (district === 'jardin') { this.plantPark(rect); return; }
+    if (district === 'jacaranda') { this.plantPark(rect); return; }
     const edge = 0.9;
     for (let t = 9; t < rect.maxX - rect.minX - 6; t += 13) {
       const lamp = Math.round(t / 13) % 3 === 1;
@@ -104,18 +104,18 @@ export class StreetProps {
       ];
       for (const [x, z, dx, dz] of spots) {
         if (lamp) this.addStreetLamp(x, z, dx, dz);
-        else if (district === 'playa') this.addPalm(x, z, CITY.curb);
-        else if (district === 'puerto') { if (rng.chance(0.15)) this.addShadeTree(x, z, CITY.curb, 0.8); }
-        else if (district === 'centro') { if (rng.chance(0.5)) this.addPalm(x, z, CITY.curb); else if (rng.chance(0.4)) this.addShadeTree(x, z, CITY.curb, 0.8); }
+        else if (district === 'strand') this.addPalm(x, z, CITY.curb);
+        else if (district === 'yards') { if (rng.chance(0.15)) this.addShadeTree(x, z, CITY.curb, 0.8); }
+        else if (district === 'orrery') { if (rng.chance(0.5)) this.addPalm(x, z, CITY.curb); else if (rng.chance(0.4)) this.addShadeTree(x, z, CITY.curb, 0.8); }
         else if (rng.chance(0.62)) { if (rng.chance(0.3)) this.addPalm(x, z, CITY.curb); else this.addShadeTree(x, z, CITY.curb); }
       }
     }
-    if (district === 'colinas') {
+    if (district === 'hill') {
       for (let k = 0; k < 7; k += 1) this.addShadeTree(rng.range(rect.minX + 8, rect.maxX - 8), rng.range(rect.minZ + 8, rect.maxZ - 8), CITY.curb, 1.2);
     }
   }
 
-  /** Jardín del Sol: lawns, crossing paths, a fountain plaza, benches and a grove of trees. */
+  /** Jacaranda Gardens: lawns, crossing paths, a fountain plaza, benches and a grove of trees. */
   plantPark(rect) {
     const rng = this.rng;
     const cx = (rect.minX + rect.maxX) / 2;

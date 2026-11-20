@@ -109,7 +109,7 @@ export function createSignTexture(text, background, foreground = '#ffffff', subt
   return textureOf(canvas, false);
 }
 
-/** A rooftop billboard for one of Solmara's own brands. */
+/** A rooftop billboard for one of the city's own brands. */
 export function createBillboardTexture(brand) {
   const canvas = canvasOf(512, 256);
   const c = canvas.getContext('2d');

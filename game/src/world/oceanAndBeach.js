@@ -1,4 +1,4 @@
-// Everything around the grid: the animated ocean, Playa Dorada's sand and umbrellas, the docks, lawns and far hills.
+// Everything around the grid: the animated ocean, Gnomon Strand's sand and umbrellas, the docks, lawns and far hills.
 import * as THREE from 'three';
 import { CITY } from '../core/config.js';
 import { SeededRandom } from '../core/random.js';
@@ -60,7 +60,7 @@ export class OceanAndBeach {
 
     const rng = new SeededRandom(CITY.seed + 5);
     const land = new MeshBatcher();
-    // Sand west of Ocean Drive, the boardwalk beside it, the dock apron south of the grid and lawns north and east.
+    // Sand west of Corona Drive, the boardwalk beside it, the dock apron south of the grid and lawns north and east.
     land.addBox(-42, -1.2, CITY.depth / 2 - 20, 72, 1.2, CITY.depth + 52, '#f1dfb0');
     land.addBox(-9.5, 0, CITY.depth / 2, 5, 0.22, CITY.depth + 12, '#c9a678');
     land.addBox(CITY.width / 2 + 40, -1.2, CITY.depth + 26, CITY.width + 200, 1.2, 40, '#8f9094');

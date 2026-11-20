@@ -1,12 +1,14 @@
 // The scripted playthrough behind `captureScreenshots.mjs --smoke`. It runs inside the page: plays every story job
-// by teleporting between objectives, then shops, tunes a car, races, claims a bounty, calls the crew, drives a
+// by teleporting between objectives and sleeping through the days of eclipse week into totality, then shops, tunes a car, races, claims a bounty, calls the crew, drives a
 // fare, survives a five-star response, is arrested and wiped out, and saves and loads across slots.
 
 /** Runs in the browser (page.evaluate): returns a report of what each system did. */
 export function playWholeGame() {
-  const game = window.solmara;
+  const game = window.totality;
   const player = game.player;
-  for (let slot = 1; slot <= 3; slot += 1) window.localStorage.removeItem(`solmara-heat-save-v1-slot-${slot}`);
+  const calendar = game.calendar;
+  const saveKey = (slot) => `totality-saros-save-v1-slot-${slot}`;
+  for (let slot = 1; slot <= 3; slot += 1) window.localStorage.removeItem(saveKey(slot));
   game.newGame(2);
   const started = performance.now();
   let steps = 0;
@@ -21,14 +23,28 @@ export function playWholeGame() {
     if (!player.vehicle) { teleport(car.position.x + 2.4, car.position.z); press('KeyF'); }
   };
 
-  // The story: ten jobs, each stage counted as it goes by.
+  // The story: ten jobs across the five days of eclipse week, each stage counted as it goes by. When the next job
+  // is waiting for its day, Nova rests at Casa Reyes; the last job runs through first contact into totality.
   const missions = [];
+  const eclipse = { startedOn: `${calendar.dayName()} ${calendar.clockText()}`, daysSeen: [calendar.dayName()], phasesSeen: [], heldOnEve: false, hiddenInDark: false, litByHeadlights: false, sunlightAtTotality: null, watchers: 0 };
+  // Eclipse eve must not turn into eclipse day while setup jobs are left: midnight on Thursday holds the week there.
+  calendar.reset(4, 23.9);
+  run(600);
+  eclipse.heldOnEve = calendar.day === 4;
+  calendar.reset();
   let stagesSeen = 0;
-  for (let round = 0; round < 14; round += 1) {
+  for (let round = 0; round < 24; round += 1) {
     run(360);
     game.wanted.reset();
+    eclipse.watchers = Math.max(eclipse.watchers, game.watchParties.watcherCount());
     const offer = game.missions.offers()[0];
-    if (!offer) break;
+    if (!offer) {
+      if (!game.missions.waitingForDay()) break;
+      if (player.vehicle) press('KeyF');
+      game.shops.rest();
+      if (!eclipse.daysSeen.includes(calendar.dayName())) eclipse.daysSeen.push(calendar.dayName());
+      continue;
+    }
     if (player.vehicle) press('KeyF');
     teleport(offer.at.x, offer.at.z);
     run(3);
@@ -39,8 +55,16 @@ export function playWholeGame() {
       const info = game.missions.stageInfo();
       if (info && info.stage !== lastStage) { lastStage = info.stage; stagesSeen += 1; }
       player.health = 100;
+      const phase = calendar.phase();
+      if (!eclipse.phasesSeen.includes(phase)) eclipse.phasesSeen.push(phase);
+      if (phase === 'totality') {
+        eclipse.sunlightAtTotality = calendar.sunlight();
+        // The rules of the dark: unseen on foot away from the lamps, lit as soon as a car's headlights are on.
+        if (game.darkness.isHidden()) eclipse.hiddenInDark = true;
+        if (game.darkness.litBy === 'HEADLIGHTS') eclipse.litByHeadlights = true;
+      }
       if (step.kind === 'steal') boardCar(active.vehicle);
-      else if (step.kind === 'goto' || step.kind === 'deliver' || step.kind === 'wait') {
+      else if (step.kind === 'goto' || step.kind === 'deliver' || step.kind === 'wait' || step.kind === 'awaitTotality') {
         if ((step.kind === 'deliver' || step.vehicle) && player.vehicle !== active.vehicle) boardCar(active.vehicle);
         else teleport(step.at[0], step.at[1]);
       } else if (step.kind === 'collect' || step.kind === 'race') teleport(active.remaining[0].x, active.remaining[0].z);
@@ -52,6 +76,21 @@ export function playWholeGame() {
     const passed = game.missions.completed.has(offer.id);
     missions.push(passed ? `${offer.id}:passed` : `${offer.id}:NOT PASSED (${document.querySelector('.banner-sub').textContent}; ${game.down ? game.down.kind : 'standing'})`);
   }
+  eclipse.endedOn = `${calendar.dayName()} ${calendar.clockText()}`;
+  eclipse.storyComplete = game.missions.isStoryComplete();
+  // After the story the observatory replays the eclipse: totality must fall again and police sight must shrink in it.
+  calendar.relive();
+  for (let safety = 0; !calendar.isTotality() && safety < 3000; safety += 1) calendar.update(1);
+  if (player.vehicle) press('KeyF');
+  teleport(40, 40);
+  run(20);
+  eclipse.relivedTotality = calendar.isTotality();
+  eclipse.sightInDark = game.darkness.sightRange(80);
+  eclipse.darkReadout = game.darkness.readout();
+  eclipse.hudCountdown = document.querySelector('.eclipse-big').textContent;
+  for (let safety = 0; calendar.phase() !== 'after' && safety < 3000; safety += 1) calendar.update(1);
+  run(5);
+  eclipse.sightInDaylight = game.darkness.sightRange(80);
   const afterStory = { cash: player.cash, cred: game.cred.points, rank: game.cred.rank, title: game.cred.title(), stagesSeen };
   game.wanted.reset();
   run(30);
@@ -101,8 +140,8 @@ export function playWholeGame() {
   const bounty = { capoSpawned, tally: game.bounties.tally() };
   game.gunmen.clear();
 
-  // Taxi fares in a Sol Cab.
-  const cab = game.vehicles.spawn('solCab', player.position.x + 2.4, player.position.z, 0);
+  // Taxi fares in a Saros Cab.
+  const cab = game.vehicles.spawn('sarosCab', player.position.x + 2.4, player.position.z, 0);
   cab.parked = true;
   press('KeyF');
   game.activities.toggleTaxi();
@@ -165,9 +204,9 @@ export function playWholeGame() {
     job: document.querySelector('.job-header').textContent, tier: document.querySelector('.wanted-tier').textContent, rank: document.querySelector('.rank-meter .meter-label').textContent,
     slots: document.querySelectorAll('.weapon-slot.owned').length, favors: document.querySelectorAll('.favor').length, atlasJobs,
   };
-  const slotCards = JSON.parse(window.localStorage.getItem('solmara-heat-save-v1-slot-2')).summary;
+  const slotCards = JSON.parse(window.localStorage.getItem(saveKey(2))).summary;
   return {
-    missions, afterStory, workshop, race, bounty, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
+    missions, eclipse, afterStory, workshop, race, bounty, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
     hud, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
   };
 }

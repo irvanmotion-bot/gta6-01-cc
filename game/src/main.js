@@ -1,5 +1,9 @@
-// Solmara Heat: boots the city, owns every system and runs the game loop and its states (title, play, pause, atlas, shop).
+// Totality: boots the city of Saros, owns every system and runs the game loop and its states (title, play, pause,
+// atlas, shop). The eclipse calendar is the first system it loads: every other one asks it what day and hour it is.
 import * as THREE from 'three';
+import { ECLIPSE_DAY, EclipseCalendar } from './eclipse/eclipseCalendar.js';
+import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
+import { DarknessCover } from './eclipse/darknessCover.js';
 import { LANDMARKS } from './world/cityLayout.js';
 import { PoliceDispatch } from './police/policeDispatch.js';
 import { WantedLevel } from './police/wantedLevel.js';
@@ -8,10 +12,10 @@ import { StreetCred } from './progression/streetCred.js';
 import { CrewFavors } from './progression/crewFavors.js';
 import { TuningWorkshop } from './garage/tuningWorkshop.js';
 import { StreetRaces } from './activities/streetRaces.js';
-import { MarlinBounties } from './activities/marlinBounties.js';
+import { VaneBounties } from './activities/vaneBounties.js';
 import { SideActivities } from './missions/sideActivities.js';
 import { captureGame, restoreGame, summarizeGame } from './core/gameSnapshot.js';
-import { freshStats, loadSaveSlot, loadSettings, writeSaveSlot } from './core/saveGame.js';
+import { freshStats, loadSaveSlot, loadSettings, migrateRetiredSaves, writeSaveSlot } from './core/saveGame.js';
 import { PedestrianCrowd } from './characters/pedestrians.js';
 import { Player } from './characters/player.js';
 import { Hud } from './ui/hud.js';
@@ -44,6 +48,7 @@ import { Particles } from './effects/particles.js';
 import { SkidMarks } from './effects/skidMarks.js';
 import { SoundEffects } from './audio/soundEffects.js';
 import { Input } from './core/input.js';
+import { CITY_NAME, GAME_TITLE } from './core/config.js';
 import { distance2D } from './core/random.js';
 import { stageScreenshot } from './debug/screenshotScenes.js';
 
@@ -66,6 +71,7 @@ class Game {
     this.frozen = false;
     this.titleAngle = 0.6;
     this.saveSlot = 1;
+    migrateRetiredSaves();
     this.settings = loadSettings();
     this.stats = freshStats();
     this.characters = [];
@@ -73,6 +79,7 @@ class Game {
     this.input = new Input(canvas);
     this.audio = new SoundEffects();
     this.camera = new ChaseCamera(window.innerWidth / window.innerHeight);
+    this.calendar = new EclipseCalendar(this);
     this.sky = new SkyAndSun(this.scene);
     this.collision = new CollisionWorld();
     buildStreetsAndGround(this.scene);
@@ -105,8 +112,10 @@ class Game {
     this.missions = new MissionDirector(this);
     this.activities = new SideActivities(this);
     this.races = new StreetRaces(this);
-    this.bounties = new MarlinBounties(this);
+    this.bounties = new VaneBounties(this);
     this.shops = new Shops(this);
+    this.darkness = new DarknessCover(this);
+    this.watchParties = new EclipseWatchParties(this);
     this.hud = new Hud(this);
     this.atlas = new CityAtlas(this);
     this.minimap = new Minimap(this);
@@ -175,6 +184,7 @@ class Game {
     this.crew.reset();
     this.workshop.reset();
     this.bounties.reset();
+    this.darkness.headlightsOn = true;
     this.stats = freshStats();
     this.player.armor = 0;
     this.player.cash = 250;
@@ -189,6 +199,7 @@ class Game {
     this.camera.snapBehind(heading);
     this.traffic.populate();
     this.pedestrians.populate();
+    this.watchParties.populate();
     this.setState('play');
   }
 
@@ -196,15 +207,15 @@ class Game {
     this.saveSlot = slot;
     this.resetWorld();
     this.activities.reset();
-    this.sky.hour = 9.5;
+    this.calendar.reset();
     this.enterCity();
-    const ride = this.vehicles.spawn('brisa', LANDMARKS.safehouse.kerb.x - 3, LANDMARKS.safehouse.kerb.z, -Math.PI / 2, '#1abc9c');
+    const ride = this.vehicles.spawn('avocet', LANDMARKS.safehouse.kerb.x - 3, LANDMARKS.safehouse.kerb.z, -Math.PI / 2, '#1abc9c');
     ride.parked = true;
     ride.stolen = true;
     ride.ambient = true;
-    this.hud.banner('SOLMARA HEAT', 'Welcome home, Nova.', '#ffd60a');
-    this.hud.say('NOVA', 'Three years away and the city still smells like salt and exhaust.', '#ff7b6b');
-    this.hud.say('NOVA', 'Tío Bravo runs a garage on Neon Street. Follow the B on the radar.', '#ff7b6b');
+    this.hud.banner(GAME_TITLE, 'Monday in Saros. Four days until the sun goes out.', '#ffb547');
+    this.hud.say('NOVA', 'Three years away, and I come home the week the whole world comes to watch the sky.', '#ff9e7a');
+    this.hud.say('NOVA', 'Tío Bravo runs a garage on Gnomon Street. Follow the B on the radar.', '#ff9e7a');
     this.hud.notify('Press F beside a car to take it. Press M for the city atlas.');
   }
 
@@ -216,7 +227,7 @@ class Game {
     this.resetWorld();
     restoreGame(this, save);
     this.enterCity();
-    this.hud.notify(`Slot ${slot} loaded. Welcome back to Solmara.`);
+    this.hud.notify(`Slot ${slot} loaded. Welcome back to ${CITY_NAME}.`);
   }
 
   saveGame(auto) {
@@ -229,12 +240,14 @@ class Game {
     this.showTitle();
   }
 
+  /** The start screen looks over the Strand on eclipse afternoon, the moon a third of the way across the sun. */
   showTitle() {
-    this.sky.hour = 17.45;
+    this.calendar.reset(ECLIPSE_DAY, TITLE_HOUR);
     this.player.revive(TITLE_SPOT.x, TITLE_SPOT.z, 2.2);
     this.player.invulnerable = 0;
     this.traffic.populate();
     this.pedestrians.populate();
+    this.watchParties.populate();
     this.setState('title');
   }
 
@@ -265,10 +278,10 @@ class Game {
     this.player.frozen = true;
     if (kind === 'busted') {
       this.stats.timesBusted += 1;
-      this.hud.showDown('ARRESTED', 'Solmara P.D. keeps your weapons and a cut of your cash.');
+      this.hud.showDown('ARRESTED', 'Saros P.D. keeps your weapons and a cut of your cash.');
     } else {
       this.stats.timesWiped += 1;
-      this.hud.showDown('WIPED OUT', 'Santa Brisa Medical will patch you up, for a price.');
+      this.hud.showDown('WIPED OUT', 'Avocet Medical will patch you up, for a price.');
     }
     this.audio.jingle(false);
   }
@@ -284,7 +297,7 @@ class Game {
     this.gunmen.clear();
     this.police.clear();
     for (const vehicle of [...this.vehicles.list]) if (vehicle.spec.police) this.vehicles.remove(vehicle);
-    this.sky.hour = (this.sky.hour + 5) % 24;
+    this.calendar.skipHours(2);
     this.player.frozen = false;
     this.player.revive(place.x - 8, place.z, Math.PI / 2);
     this.camera.snapBehind(Math.PI / 2);
@@ -320,8 +333,10 @@ class Game {
       this.activities.update(dt);
       this.shops.update(dt);
       this.workshop.update(dt);
+      this.darkness.update(dt);
       this.stats.playSeconds += dt;
     }
+    this.watchParties.update(dt);
     this.markers.end();
   }
 
@@ -332,6 +347,7 @@ class Game {
     const vehicle = this.player.vehicle;
     if (vehicle && input.wasPressed('KeyH')) this.audio.horn();
     if (vehicle && input.wasPressed('KeyR')) this.hud.showRadio(this.audio.radio.nextStation());
+    if (vehicle && input.wasPressed('KeyL')) this.darkness.toggleHeadlights();
   }
 
   /** How loud the siren loop should be: the nearest live siren, faded over 130 metres. */
@@ -380,14 +396,16 @@ class Game {
     }
     const live = this.state === 'play' || this.state === 'title';
     if (live) {
-      this.sky.update(this.state === 'title' ? 0 : dt, this.camera.target);
+      // The week's clock runs while Nova is in the streets; the title screen holds its eclipse afternoon still.
+      if (this.state === 'play' && !this.down) this.calendar.update(dt, this.missions.clockRush());
+      this.sky.update(dt, this.camera.target, this.calendar);
       this.ocean.update(dt, this.scene.fog.color);
       this.props.update(this.time, this.sky.night);
       this.buildings.setNight(this.sky.night);
       this.cityLights.setNight(this.sky.night);
       setVehicleLightsNight(this.sky.night);
       for (const material of this.glossy) material.envMapIntensity = 1 - this.sky.night * 0.82;
-      this.headlamp.update(this.state === 'play' ? this.player.vehicle : null, this.sky.night);
+      this.headlamp.update(this.state === 'play' && this.darkness.headlightsOn ? this.player.vehicle : null, this.sky.night);
       this.boats.update(dt, this.time);
       this.particles.update(dt);
     }
@@ -417,9 +435,10 @@ class Game {
 }
 
 const TITLE_SPOT = { x: -9.5, z: 318 };
+const TITLE_HOUR = 16.72;
 
 const game = new Game();
-window.solmara = game;
+window.totality = game;
 const shot = new URLSearchParams(window.location.search).get('shot');
 if (shot) stageScreenshot(game, shot);
 else game.showTitle();

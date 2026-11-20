@@ -1,7 +1,22 @@
 // Saving and loading through localStorage: three save slots with a summary card each, and the player's settings.
-import { SAVE_KEY, SETTINGS_KEY } from './config.js';
+import { RETIRED_KEYS, SAVE_KEY, SETTINGS_KEY } from './config.js';
 
 export const SAVE_SLOT_COUNT = 3;
+
+/** Move saves and settings an earlier build left under its own keys to today's keys, once, and drop the old ones. */
+export function migrateRetiredSaves() {
+  try {
+    const store = window.localStorage;
+    const moves = [[RETIRED_KEYS.settings, SETTINGS_KEY]];
+    for (let slot = 1; slot <= SAVE_SLOT_COUNT; slot += 1) moves.push([`${RETIRED_KEYS.save}-slot-${slot}`, slotKey(slot)]);
+    for (const [from, to] of moves) {
+      const old = store.getItem(from);
+      if (old === null) continue;
+      if (store.getItem(to) === null) store.setItem(to, old);
+      store.removeItem(from);
+    }
+  } catch (error) { /* storage is blocked: there is nothing to move */ }
+}
 
 /** The summary of every slot, for the start screen's cards and the map screen: null where nothing is saved. */
 export function listSaveSlots() {
