@@ -1,6 +1,6 @@
 [
   { "name": "1-eclipse-chase.jpg", "query": "?shot=chase", "wait": 4800 },
-  { "name": "2-boardwalk-shootout.jpg", "query": "?shot=bounty", "wait": 4800 },
+  { "name": "2-totality-shootout.jpg", "query": "?shot=bounty&when=totality", "wait": 4800 },
   { "name": "3-bravo-workshop.jpg", "query": "?shot=workshop", "wait": 2500 },
-  { "name": "4-title-menu.jpg", "query": "?shot=title", "wait": 2500 }
+  { "name": "4-pause-menu.jpg", "query": "?shot=pause", "wait": 2500 }
 ]

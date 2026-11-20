@@ -56,9 +56,9 @@ export class HudEclipsePanel {
     const cache = this.cache;
     const calendar = game.calendar;
     const readout = calendar.readout();
-    // The huge HUD puts the caption's last words over the figure: SUN 61% COVERED, DAY 4/5, CITY IS DARK.
-    cache.text(this.caption, game.hud.essentials ? readout.caption.split(' · ').pop() : readout.caption);
-    cache.text(this.big, game.hud.essentials && !readout.ticking ? `${readout.big} ${readout.line.split(/ · |: /)[0]}` : readout.big);
+    // The huge HUD has room for two words over the figure: TOTALITY IN, then 1 DAY or 01:59.
+    cache.text(this.caption, game.hud.essentials ? readout.short : readout.caption);
+    cache.text(this.big, readout.big);
     // The panel has room for the first words of the line; the atlas prints it whole.
     cache.text(this.line, readout.line.split(/ · |: /)[0]);
     cache.width(this.fill, readout.share);

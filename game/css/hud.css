@@ -273,7 +273,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 #hud.essentials .eclipse-panel { display: block; }
 #hud.essentials .eclipse-caption { font-size: var(--t8); letter-spacing: 0; }
 #hud.essentials .eclipse-big { font-weight: 700; font-size: var(--t12); }
-#hud.essentials .eclipse-cover { margin: 0; font-size: var(--t8); letter-spacing: 0; }
+#hud.essentials .eclipse-cover { margin: 0; font-size: var(--t8); letter-spacing: 0; white-space: normal; line-height: 1.1; }
 #hud.essentials .status-panel { border-radius: 0 0 0.6vh 0.6vh; }
 #hud.essentials .status-top { display: block; }
 #hud.essentials .wanted-stars { font-size: 3.5vh; }

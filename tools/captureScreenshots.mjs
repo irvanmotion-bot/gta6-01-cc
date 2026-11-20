@@ -83,7 +83,8 @@ if (smoke) {
 } else if (sheetDir) {
   await previewContactSheet(page, base);
 } else {
-  const shots = JSON.parse(readFileSync(join(root, 'shots.json'), 'utf8'));
+  // `--shots <file>` takes another list of scenes (candidates to compare) in place of the entry's shots.json.
+  const shots = JSON.parse(readFileSync(option('--shots') ? resolve(option('--shots')) : join(root, 'shots.json'), 'utf8'));
   mkdirSync(outDir, { recursive: true });
   for (const shot of shots) {
     if (only && !shot.name.includes(only)) continue;

@@ -101,9 +101,35 @@ export function playWholeGame() {
   eclipse.hiddenRunningDark = game.darkness.isHidden();
   press('KeyL');
   press('KeyF');
+  game.vehicles.remove(darkCar);
   for (let safety = 0; calendar.phase() !== 'after' && safety < 3000; safety += 1) calendar.update(1);
   run(5);
   eclipse.sightInDaylight = game.darkness.sightRange(80);
+  // The eclipse is the heist's clock: started again and left on the Strand until the sun goes out, the job fails
+  // for that reason, and the job panel has named its limit and what fails it all along.
+  const deadline = { limit: null, failIf: '', failedBecause: '' };
+  game.missions.completed.delete('totality');
+  calendar.reset(5, 16.3);
+  const heist = game.missions.offers().find((mission) => mission.id === 'totality');
+  if (heist) {
+    game.missions.start(heist);
+    run(3);
+    deadline.limit = game.missions.timeLimit();
+    deadline.failIf = document.querySelector('.job-fail .job-text').textContent;
+    deadline.panelLimit = document.querySelector('.job-limit .job-text').textContent;
+    deadline.panelNext = document.querySelector('.job-next .job-text').textContent;
+    teleport(40, 40);
+    for (let safety = 0; !calendar.isTotality() && safety < 3000; safety += 1) calendar.update(1);
+    run(3);
+    deadline.failedBecause = game.missions.active ? 'still running' : document.querySelector('.banner-sub').textContent;
+  }
+  game.missions.abandon();
+  game.missions.completed.add('totality');
+  if (!deadline.limit || deadline.limit.until !== 'TOTALITY' || !(deadline.limit.seconds > 0)) failures.push(`the heist shows no countdown to totality as its time limit: ${JSON.stringify(deadline.limit)}`);
+  if (!deadline.failIf.includes('TOTALITY') || !deadline.panelNext) failures.push(`the job panel does not name what fails the heist or what comes next: "${deadline.failIf}" / "${deadline.panelNext}"`);
+  if (!deadline.failedBecause.startsWith('The sun went out')) failures.push(`the heist did not fail when totality came first: "${deadline.failedBecause}"`);
+  for (let safety = 0; calendar.phase() !== 'after' && safety < 3000; safety += 1) calendar.update(1);
+  run(5);
   const afterStory = { cash: player.cash, cred: game.cred.points, rank: game.cred.rank, title: game.cred.title(), stagesSeen };
   game.wanted.reset();
   run(30);
@@ -264,12 +290,12 @@ export function playWholeGame() {
   }
   // Lose the stars with a full panel on screen, then be wanted again one frame later: no stale count may show.
   game.wanted.setStars(5, 60);
-  run(240);
+  for (let k = 0; k < 24; k += 1) { player.health = 100; cab.health = cab.maxHealth; run(10); }
   checkPanel('5 stars again');
   game.wanted.reset();
   checkPanel('wanted again straight after an escape');
   game.wanted.setStars(5, 60);
-  run(30);
+  for (let k = 0; k < 3; k += 1) { player.health = 100; cab.health = cab.maxHealth; run(10); }
   chase.panel = panel;
   if (panel.mismatches.length) failures.push(`dispatch panel count is wrong: ${panel.mismatches.slice(0, 3).join(' | ')}`);
   if (!panel.sawOverflow) failures.push('dispatch panel never showed more units than it lists, so the overflow line went untested');
@@ -285,6 +311,78 @@ export function playWholeGame() {
   chase.patchedHealth = player.health;
   press('KeyZ');
   chase.favorsUsed = game.stats.favorsUsed;
+
+  // Line of sight. A cruiser with a clear view of Nova has her SPOTTED. With every unit gone she is only searched
+  // for: the status line says OUT OF SIGHT, the search zone on the radar widens, and the stars fall one at a time.
+  const sweepPolice = () => {
+    for (const vehicle of [...game.vehicles.list]) if (vehicle.spec.police) game.vehicles.remove(vehicle);
+    game.gunmen.clear();
+    game.police.helicopter.dismiss(true);
+  };
+  // (If the five-star response has just taken her down, she comes round first.)
+  for (let safety = 0; game.down && safety < 600; safety += 1) run(1);
+  player.health = 100;
+  game.wanted.reset();
+  // Jazz's jam from the favors above would blind the police: it has to have run out before they can spot anybody.
+  game.crew.jamTime = 0;
+  game.police.clear();
+  sweepPolice();
+  if (player.vehicle) press('KeyF');
+  teleport(0, 250);
+  run(2);
+  game.wanted.setStars(3, 0);
+  game.police.enlist(game.vehicles.spawn('centinela', 0, 262, Math.PI), 'patrol');
+  run(20);
+  const sight = { spotted: game.wanted.sightState() === 'spotted', spottedLine: document.querySelector('.sight-label').textContent, searching: false, searchLine: '', zoneGrew: false, starDrops: 0 };
+  let zone = 0;
+  let starsHeld = game.wanted.stars;
+  for (let k = 0; k < 400 && game.wanted.stars > 0; k += 1) {
+    sweepPolice();
+    player.health = 100;
+    run(6);
+    if (game.wanted.sightState() === 'searching') {
+      sight.searching = true;
+      sight.searchLine = `${document.querySelector('.sight-label').textContent} | ${document.querySelector('.sight-detail').textContent}`;
+      if (zone > 0 && game.wanted.searchRadius() > zone) sight.zoneGrew = true;
+      zone = game.wanted.searchRadius();
+    }
+    if (game.wanted.stars < starsHeld) { sight.starDrops += 1; starsHeld = game.wanted.stars; }
+  }
+  sight.cleared = game.wanted.stars === 0;
+  if (!sight.spotted || !sight.spottedLine.includes('SPOTTED')) failures.push(`a cruiser with a clear view did not spot her: "${sight.spottedLine}"`);
+  if (!sight.searching || !sight.searchLine.includes('OUT OF SIGHT') || !sight.zoneGrew) failures.push(`out of sight, the search did not show: ${JSON.stringify(sight)}`);
+  if (sight.starDrops !== 3 || !sight.cleared) failures.push(`three stars did not fall one at a time out of sight: ${JSON.stringify(sight)}`);
+  sweepPolice();
+
+  // The radio: a station with its frequency and a named track on the car's panel, and R tunes to the next station.
+  const radioCar = game.vehicles.spawn('estela', player.position.x + 2.4, player.position.z, 0);
+  radioCar.parked = true;
+  press('KeyF');
+  run(5);
+  const tunedFirst = game.audio.radio.nowPlaying();
+  const radio = { first: tunedFirst ? `${tunedFirst.station} ${tunedFirst.frequency} · ${tunedFirst.title} · ${tunedFirst.artist}` : 'off', panel: `${document.querySelector('.radio-station').textContent} | ${document.querySelector('.radio-track').textContent}` };
+  press('KeyR');
+  run(2);
+  const tunedNext = game.audio.radio.nowPlaying();
+  radio.next = tunedNext ? `${tunedNext.station} ${tunedNext.frequency} · ${tunedNext.title}` : 'off';
+  if (!tunedFirst || !tunedNext || tunedFirst.station === tunedNext.station || !radio.panel.includes(tunedFirst.station.toUpperCase()) || !radio.panel.includes(tunedFirst.title.toUpperCase())) failures.push(`the radio did not name its station and track, or R did not tune it: ${JSON.stringify(radio)}`);
+  press('KeyF');
+  game.vehicles.remove(radioCar);
+  game.wanted.reset();
+
+  // HUD SIZE: huge keeps the essentials only, more than twice as big; standard brings every panel back.
+  const hudRoot = document.getElementById('hud');
+  game.settings.hudSize = 'huge';
+  game.applySettings();
+  run(2);
+  const hudSize = { essentials: hudRoot.classList.contains('essentials'), zoom: Number(hudRoot.style.zoom), crewHidden: getComputedStyle(document.querySelector('.crew-panel')).display === 'none' };
+  game.settings.hudSize = 'standard';
+  game.applySettings();
+  run(2);
+  hudSize.crewBack = getComputedStyle(document.querySelector('.crew-panel')).display !== 'none';
+  hudSize.crewRows = [...document.querySelectorAll('.favor')].map((row) => row.textContent).join(' | ');
+  if (!hudSize.essentials || !(hudSize.zoom >= 2) || !hudSize.crewHidden || !hudSize.crewBack) failures.push(`the HUD SIZE setting did not switch the HUD: ${JSON.stringify(hudSize)}`);
+  if (!hudSize.crewRows.includes('MECHANIC') || !hudSize.crewRows.includes('HACKER') || !hudSize.crewRows.includes('MEDIC')) failures.push(`the crew panel does not give each member's role: ${hudSize.crewRows}`);
 
   // Arrest, death, then load the save from its slot.
   player.health = 100;
@@ -312,7 +410,7 @@ export function playWholeGame() {
   // still end with every job passed.
   if (!eclipse.storyComplete) failures.push(`the story did not complete: ${missions.filter((result) => !result.endsWith(':passed')).join(', ')}`);
   return {
-    failures, missions, eclipse, afterStory, workshop, race, bounty, street, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
+    failures, missions, eclipse, deadline, afterStory, workshop, race, bounty, street, fares, chase, sight, radio, hudSize, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
     hud, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
   };
 }

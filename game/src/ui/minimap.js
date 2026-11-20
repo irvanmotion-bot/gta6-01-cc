@@ -281,19 +281,22 @@ export class Minimap {
       c.strokeStyle = '#17122b';
       c.stroke();
     }
-    c.font = `900 ${Math.max(11, 46 * scale)}px Impact, "Arial Black", sans-serif`;
+    // Each district's name in two short lines of bold capitals over its blocks, the Strand's up its coast.
+    const size = Math.max(11, 58 * scale);
+    c.font = `700 ${size}px Verdana, "DejaVu Sans", sans-serif`;
     c.textAlign = 'center';
-    c.lineWidth = 4;
+    c.lineWidth = Math.max(3, size * 0.3);
     c.lineJoin = 'round';
-    c.strokeStyle = 'rgba(23,18,43,0.7)';
+    c.strokeStyle = 'rgba(18,14,36,0.85)';
     c.fillStyle = '#ffffff';
-    for (const [id, x, z] of [['orrery', 480, 340], ['hill', 520, 96], ['azimuth', 770, 236], ['yards', 440, 652]]) {
-      const text = DISTRICTS[id].name.toUpperCase();
-      c.strokeText(text, toX(x), toY(z));
-      c.fillText(text, toX(x), toY(z));
+    for (const [id, x, z] of [['orrery', 480, 322], ['hill', 520, 62], ['azimuth', 800, 200], ['yards', 440, 622]]) {
+      DISTRICTS[id].name.toUpperCase().split(' ').forEach((word, line) => {
+        c.strokeText(word, toX(x), toY(z) + line * size * 1.05);
+        c.fillText(word, toX(x), toY(z) + line * size * 1.05);
+      });
     }
     c.save();
-    c.translate(toX(86), toY(360));
+    c.translate(toX(96), toY(360));
     c.rotate(-Math.PI / 2);
     c.strokeText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
     c.fillText(DISTRICTS.strand.name.toUpperCase(), 0, 0);

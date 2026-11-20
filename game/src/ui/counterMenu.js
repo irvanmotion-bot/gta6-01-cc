@@ -67,17 +67,19 @@ export class CounterMenu {
   }
 
   /**
-   * One line of the workshop as a card: its key, a picture of the part, the name and what it does, three pips for
-   * the tiers fitted and the price of the next one. The repair, which has no tiers, is a wide card across the top.
+   * One line of a counter as a wide row in big type: the key that buys it (over a picture of the part, in the
+   * workshop), its name with what it does in small print under it, the tier on sale with three pips for the tiers
+   * fitted, and the price.
    */
-  upgradeCardMarkup(item, index, cash) {
+  rowMarkup(item, index, cash, pictured) {
     const state = item.locked ? ' locked' : item.price > cash ? ' too-dear' : '';
-    return `<button class="shop-row upgrade-card${item.tier === undefined ? ' wide' : ''}${state}" data-item="${item.id}">
-        <span class="shop-key">${index + 1}</span>
-        <svg class="upgrade-icon" viewBox="0 0 48 48">${UPGRADE_ICONS[item.id] || UPGRADE_ICONS.repair}</svg>
-        <span class="shop-label">${item.label}<small>${item.locked || item.detail}</small></span>
-        ${this.pipsMarkup(item.tier)}
-        <span class="shop-price">${item.price === null ? 'MAX' : formatCash(item.price)}</span>
+    const [name, tier] = item.label.split(' · ');
+    const picture = pictured ? `<svg class="upgrade-icon" viewBox="0 0 48 48">${UPGRADE_ICONS[item.id] || UPGRADE_ICONS.repair}</svg>` : '';
+    return `<button class="shop-row${pictured ? ' pictured' : ''}${state}" data-item="${item.id}">
+        <span class="shop-mark">${picture}<span class="shop-key">${index + 1}</span></span>
+        <span class="shop-label"><b>${name.toUpperCase()}</b><small>${item.locked || item.detail}</small></span>
+        ${tier ? `<span class="shop-tier">${tier.toUpperCase()}${this.pipsMarkup(item.tier)}</span>` : ''}
+        <span class="shop-price">${item.price === null ? (item.tier === undefined ? 'DONE' : 'FITTED') : formatCash(item.price)}</span>
       </button>`;
   }
 
@@ -86,23 +88,16 @@ export class CounterMenu {
     const game = this.game;
     const cash = game.player.cash;
     const showroom = shop.layout === 'showroom';
-    const rows = shop.stock().map((item, index) => (showroom ? this.upgradeCardMarkup(item, index, cash) : `
-      <button class="shop-row${item.locked ? ' locked' : item.price > cash ? ' too-dear' : ''}" data-item="${item.id}">
-        <span class="shop-key">${index + 1}</span>
-        <span class="shop-label">${item.label}<small>${item.locked || item.detail}</small></span>
-        ${this.pipsMarkup(item.tier)}
-        <span class="shop-price">${item.price === null ? '—' : formatCash(item.price)}</span>
-      </button>`)).join('');
+    const rows = shop.stock().map((item, index) => this.rowMarkup(item, index, cash, showroom)).join('');
     const sheet = shop.summary ? this.specSheetMarkup(shop.summary()) : { plate: '', bars: '' };
     this.panel.innerHTML = `
       ${sheet.plate}
       <div class="shop-card" style="border-top-color:${shop.accent}">
-        <h2>${shop.title}</h2>
-        <p class="shop-tag">${shop.tagline} · Rank ${game.cred.rank} ${game.cred.title()}</p>
-        <div class="shop-cash"><span>CASH</span><b>${formatCash(cash)}</b></div>
+        <div class="shop-head"><h2>${shop.title}</h2><div class="shop-cash"><span>CASH</span><b>${formatCash(cash)}</b></div></div>
+        <p class="shop-tag">${shop.tagline} · RANK ${game.cred.rank} ${game.cred.title().toUpperCase()} · KEYS 1 TO ${shop.stock().length} BUY</p>
         ${sheet.bars}
         <div class="shop-rows">${rows}</div>
-        <button class="shop-close" data-close="1">Leave (Esc)</button>
+        <button class="shop-close" data-close="1">LEAVE · ESC</button>
       </div>`;
   }
 

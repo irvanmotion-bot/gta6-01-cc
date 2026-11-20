@@ -3,16 +3,23 @@
 // district map of Saros with its legend. By keyboard or mouse.
 import { SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
 import { CITY_NAME, GAME_TITLE } from '../core/config.js';
-import { STORY_MISSIONS } from '../missions/storyMissions.js';
+import { CHARACTERS, STORY_MISSIONS } from '../missions/storyMissions.js';
+import { STREET_RACES } from '../activities/streetRaces.js';
+import { VANE_CAPOS } from '../activities/vaneBounties.js';
+import { completionPercent, completionRows } from '../progression/completionTracker.js';
+import { CRED_RANKS } from '../progression/streetCred.js';
 import { DISTRICTS } from '../world/cityLayout.js';
 import { createElement, formatCash } from './domBuilder.js';
 import { HUD_SIZES } from './hud.js';
+
+/** The pause menu's short names for the first rows of the completion tracker. */
+const RECORD_LABELS = { 'Story jobs': 'STORY JOBS', 'Street races won': 'RACES WON', 'Vane bounties': 'BOUNTIES', 'Corona Tokens': 'TOKENS' };
 
 export class Menus {
   constructor(game) {
     this.game = game;
     this.start = this.buildScreen('start-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Open-world crime · ${CITY_NAME}, eclipse week</p>`);
-    this.pause = this.buildScreen('pause-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Paused · the moon waits for nobody</p>`);
+    this.pause = this.buildScreen('pause-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Game paused</p>`);
     createElement('footer', 'title-footer', this.start, 'WASD move · Mouse look · F steal a car · Click to shoot · M city atlas · Esc pause');
     this.screen = null;
     this.page = 'main';
@@ -120,23 +127,47 @@ export class Menus {
   }
 
   /**
-   * The menu's home panel. On top the three save slots as cards, each a button that loads its slot: the slot's
-   * name, its completion as a big figure and a bar, the day and job it stands at, the time played and the rank.
-   * Under them the district map of Saros with its legend.
+   * The menu's home panel. On top the three save slots, a wide row each and a button that loads its slot: SAVE SLOT
+   * and its number, the day and job it stands at, its completion as a big figure and a bar. Under them, the district
+   * map of Saros with its legend; and beside the map, on the pause menu, the record of the week being played.
    */
   homeMarkup() {
     const lit = this.screen === 'pause' ? this.game.saveSlot : latestSaveSlot();
-    const cards = listSaveSlots().map((card, index) => {
+    const rows = listSaveSlots().map((card, index) => {
       const slot = index + 1;
       const tag = slot === lit ? `<strong>${this.screen === 'pause' ? 'PLAYING' : 'LATEST'}</strong>` : '';
-      if (!card) return `<button class="save-card empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>NEW</span><i><u style="width:0"></u></i><em>EMPTY SLOT</em><small>Start a new week here</small>${tag}</button>`;
-      return `<button class="save-card${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>${card.percent}%</span><i><u style="width:${card.percent}%"></u></i>
-        <em>${card.day || 'MON'} · JOB ${card.jobs}/${STORY_MISSIONS.length}</em><small>${formatPlayTime(card.playSeconds)} PLAYED · RANK ${card.rank} · ${formatCash(card.cash)}</small>${tag}</button>`;
+      if (!card) return `<button class="save-row empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><em>EMPTY · NEW WEEK</em><span>NEW</span><i><u style="width:0"></u></i>${tag}</button>`;
+      return `<button class="save-row${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><em>${card.day || 'MON'} · JOB ${card.jobs}/${STORY_MISSIONS.length}</em><span>${card.percent}%</span>
+        <i><u style="width:${card.percent}%"></u></i><small>${formatPlayTime(card.playSeconds)} PLAYED · RANK ${card.rank} ${card.title.toUpperCase()} · ${formatCash(card.cash)}</small>${tag}</button>`;
     }).join('');
-    const districts = Object.values(DISTRICTS).map((district) => `<li><i style="background:${district.map}"></i>${district.name}</li>`).join('');
-    return `<div class="save-cards">${cards}</div>
-      <div class="menu-map"><canvas class="menu-map-canvas"></canvas>
-        <div class="menu-legend"><b>${CITY_NAME.toUpperCase()}</b><ul>${districts}<li><i class="sea"></i>Avocet Sound</li><li><i class="path"></i>Path of totality</li><li><i class="place"></i>Landmark</li></ul></div></div>`;
+    // The legend names each district by the word that tells it apart: Strand, Square, Market, Hill, Yards, Gardens.
+    const districts = Object.values(DISTRICTS).map((district) => `<li><i style="background:${district.map}"></i>${district.name.split(' ')[1]}</li>`).join('');
+    const legend = `<ul class="menu-legend">${districts}<li><i class="sea"></i>Sound</li><li><i class="path"></i>Totality</li><li><i class="place"></i>Landmark</li></ul>`;
+    const record = this.screen === 'pause' ? this.recordMarkup() : this.weekMarkup();
+    return `<div class="save-rows">${rows}</div>
+      <div class="menu-lower"><div class="menu-map"><div class="menu-map-title">MAP OF ${CITY_NAME.toUpperCase()} · 6 DISTRICTS</div><canvas class="menu-map-canvas"></canvas>${legend}</div>${record}</div>`;
+  }
+
+  /**
+   * The pause menu's record of the week in play, in big figures: rank and street cred, the share of the game done,
+   * then story jobs, races, bounties and tokens as done-of-total, and the crew's contacts.
+   */
+  recordMarkup() {
+    const game = this.game;
+    const cred = game.cred;
+    const tallies = completionRows(game).slice(0, 4).map((row) => `<div><span>${RECORD_LABELS[row.label] || row.label.toUpperCase()}</span><b>${row.done}/${row.total}</b></div>`).join('');
+    const contacts = Object.values(CHARACTERS).filter((character) => character.name !== 'NOVA').map((character) => `<li><b>${character.name}</b>${character.job}</li>`).join('');
+    return `<div class="menu-record"><div class="record-rank">NOVA · ${cred.title().toUpperCase()}</div>
+      <div class="record-rows"><div><span>RANK</span><b>${cred.rank} OF ${CRED_RANKS.length}</b></div><div><span>STREET CRED</span><b>${cred.points.toLocaleString('en-US')}</b></div><div><span>COMPLETE</span><b>${completionPercent(game)}%</b></div>${tallies}</div>
+      <div class="record-title">CONTACTS</div><ul class="record-contacts">${contacts}</ul></div>`;
+  }
+
+  /** The start screen's side of the map: what the week holds, as one figure a line. */
+  weekMarkup() {
+    const lines = [[STORY_MISSIONS.length, 'STORY JOBS'], [STREET_RACES.length, 'STREET RACES'], [VANE_CAPOS.length, 'BOUNTIES'], [12, 'CORONA TOKENS'], [5, 'WEAPONS'], [3, 'CREW FAVORS']];
+    return `<div class="menu-record"><div class="record-rank">ECLIPSE WEEK IN ${CITY_NAME.toUpperCase()}</div>
+      <div class="record-rows">${lines.map(([count, label]) => `<div><span>${label}</span><b>${count}</b></div>`).join('')}</div>
+      <div class="record-title">TOTALITY · FRIDAY 17:12</div></div>`;
   }
 
   statsMarkup() {
