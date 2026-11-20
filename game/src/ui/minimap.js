@@ -53,7 +53,7 @@ export class Minimap {
   /** Every blip to draw this frame: story, taxi, shops, then the police on top. */
   collectBlips() {
     const game = this.game;
-    const blips = [...game.shops.blips(), ...game.missions.blips(), ...game.activities.blips()];
+    const blips = [...game.shops.blips(), ...game.races.blips(), ...game.bounties.blips(), ...game.missions.blips(), ...game.activities.blips()];
     const flash = Math.floor(game.time * 5) % 2 === 0;
     for (const vehicle of game.vehicles.list) {
       if (vehicle.spec.police && !vehicle.dead && vehicle.siren) blips.push({ x: vehicle.position.x, z: vehicle.position.z, color: flash ? '#ff3b30' : '#3a7bff', label: '', size: 1.25 });

@@ -1,22 +1,6 @@
 // The wanted level: crimes add heat, heat becomes one to five stars, and staying unseen long enough clears them.
-
-/** Heat each crime adds; `floor` forces at least that many stars at once. */
-const CRIMES = {
-  gunfire: { heat: 1.6, throttle: 0.4 },
-  assault: { heat: 6 },
-  stealParked: { heat: 2.5 },
-  carjack: { heat: 9 },
-  hitAndRun: { heat: 4, throttle: 1 },
-  killCivilian: { heat: 15 },
-  stealPolice: { heat: 30, floor: 2 },
-  ramPolice: { heat: 9, throttle: 1.5, floor: 1 },
-  shootPolice: { heat: 12, throttle: 0.5, floor: 2 },
-  killPolice: { heat: 36, floor: 3 },
-  explosion: { heat: 26, floor: 2 },
-  heist: { heat: 200, floor: 4 },
-};
-const STAR_HEAT = [0, 8, 28, 62, 112, 185];
-const SEEN_RANGE = 80;
+import { CRED_AWARDS } from '../progression/streetCred.js';
+import { responseTierName } from './unitCallsigns.js';
 
 export class WantedLevel {
   constructor(game) {
@@ -31,6 +15,7 @@ export class WantedLevel {
     this.evading = false;
     this.lastCrime = {};
     this.locked = 0;
+    this.peakStars = 0;
   }
 
   reportCrime(type) {
@@ -54,10 +39,26 @@ export class WantedLevel {
     this.refresh();
   }
 
-  clear() {
-    if (this.stars > 0) this.game.hud.notify('You lost the police.');
+  /** Lose one star at once: Jazz's signal jam. */
+  dropStar() {
+    if (this.stars === 0) return;
+    this.heat = this.stars > 1 ? STAR_HEAT[this.stars - 1] : 0;
+    this.locked = 0;
+    this.refresh();
+  }
+
+  /** The search is called off; an escape on the player's own wheels pays cred for every star shaken. */
+  clear(earned = true) {
+    if (this.stars > 0) {
+      this.game.hud.notify('You lost the police.');
+      if (earned) {
+        this.game.stats.escapes += 1;
+        this.game.cred.earn(this.peakStars * CRED_AWARDS.escapePerStar, `escaped ${this.peakStars}★`);
+      }
+    }
     this.heat = 0;
     this.unseen = 0;
+    this.peakStars = 0;
     this.refresh();
   }
 
@@ -67,6 +68,7 @@ export class WantedLevel {
     if (stars !== this.stars) {
       if (stars > this.stars) this.game.audio.wantedUp();
       this.stars = stars;
+      this.peakStars = Math.max(this.peakStars, stars);
       this.game.stats.maxStars = Math.max(this.game.stats.maxStars, stars);
     }
   }
@@ -76,12 +78,41 @@ export class WantedLevel {
     return 9 + this.stars * 5;
   }
 
+  /** How far the escape has come, 0 to 1: the HUD's "evading" bar. */
+  escapeProgress() {
+    return this.stars === 0 ? 0 : Math.min(1, this.unseen / this.escapeTime());
+  }
+
+  /** The name of the response at this level, e.g. TACTICAL LOCKDOWN at four stars. */
+  responseTier() {
+    return responseTierName(this.stars);
+  }
+
   update(dt) {
     if (this.stars === 0) { this.evading = false; return; }
     this.locked = Math.max(0, this.locked - dt);
-    const seen = this.game.police.anyUnitWithin(SEEN_RANGE) || this.locked > 0;
-    this.unseen = seen ? 0 : this.unseen + dt;
+    const jammed = this.game.crew.isJamming();
+    const seen = !jammed && (this.game.police.anyUnitWithin(SEEN_RANGE) || this.locked > 0);
+    this.unseen = seen ? 0 : this.unseen + dt * (jammed ? 1.6 : 1);
     this.evading = this.unseen > 3;
     if (this.unseen > this.escapeTime()) this.clear();
   }
 }
+
+/** Heat each crime adds; `floor` forces at least that many stars at once. */
+const CRIMES = {
+  gunfire: { heat: 1.6, throttle: 0.4 },
+  assault: { heat: 6 },
+  stealParked: { heat: 2.5 },
+  carjack: { heat: 9 },
+  hitAndRun: { heat: 4, throttle: 1 },
+  killCivilian: { heat: 15 },
+  stealPolice: { heat: 30, floor: 2 },
+  ramPolice: { heat: 9, throttle: 1.5, floor: 1 },
+  shootPolice: { heat: 12, throttle: 0.5, floor: 2 },
+  killPolice: { heat: 36, floor: 3 },
+  explosion: { heat: 26, floor: 2 },
+  heist: { heat: 200, floor: 4 },
+};
+const STAR_HEAT = [0, 8, 28, 62, 112, 185];
+const SEEN_RANGE = 80;

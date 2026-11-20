@@ -31,18 +31,20 @@ export class Player extends CharacterBody {
     if (input.wasPressed('KeyF', 'Enter')) {
       if (this.vehicle) leaveVehicle(this.game); else tryEnterVehicle(this.game);
     }
-    if (this.vehicle) this.drive(input);
+    if (this.vehicle) this.drive(input, dt);
     else this.walk(dt, input);
     // A sliver of health comes back when Nova stays out of trouble.
     this.regenDelay -= dt;
     if (this.regenDelay <= 0 && this.health < 35) this.health = Math.min(35, this.health + dt * 2);
   }
 
-  drive(input) {
+  drive(input, dt) {
     const vehicle = this.vehicle;
     const throttle = input.axis(['KeyS', 'ArrowDown'], ['KeyW', 'ArrowUp']);
     const steer = input.axis(['KeyD', 'ArrowRight'], ['KeyA', 'ArrowLeft']);
     vehicle.setControls(throttle, steer, input.isHeld('Space'));
+    vehicle.boosting = this.game.workshop.burnNitro(dt, input.isHeld('ShiftLeft', 'ShiftRight') && throttle > 0, vehicle);
+    this.game.stats.metresDriven += Math.abs(vehicle.speed) * dt;
     this.position.copy(vehicle.position);
     this.heading = vehicle.heading;
     if (vehicle.dead) leaveVehicle(this.game, true);

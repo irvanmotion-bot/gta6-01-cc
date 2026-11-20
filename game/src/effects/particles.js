@@ -74,6 +74,13 @@ export class Particles {
     this.emit(x + (Math.random() - 0.5) * 1.2, y, z + (Math.random() - 0.5) * 1.2, (Math.random() - 0.5), 2 + Math.random() * 2, (Math.random() - 0.5), 0.5, 1.1, -0.8, 1, 0.5 + Math.random() * 0.3, 0.1, 0.9);
   }
 
+  /** The blue-white jet behind a car burning nitro. */
+  nitroFlame(x, y, z, vx, vz) {
+    for (let k = 0; k < 2; k += 1) {
+      this.emit(x + (Math.random() - 0.5) * 0.7, y, z + (Math.random() - 0.5) * 0.7, vx * 0.55, 0.4, vz * 0.55, 0.22, 0.55, 0.5, 0.35, 0.75, 1, 0.95);
+    }
+  }
+
   sparks(x, y, z, count) {
     for (let k = 0; k < count; k += 1) {
       this.emit(x, y, z, (Math.random() - 0.5) * 9, Math.random() * 5, (Math.random() - 0.5) * 9, 0.35 + Math.random() * 0.3, 0.14, 0, 1, 0.85, 0.4, 1, 14);

@@ -42,6 +42,8 @@ export const LOOKS = {
   tactical: { skin: '#c68642', shirt: '#1c2126', pants: '#1c2126', hair: '#1b1b1b', hat: '#2b3138', shorts: false, scale: 1.05 },
   enforcer: { skin: '#e0ac69', shirt: '#7d1f3a', pants: '#15151a', hair: '#1b1b1b', hat: null, shorts: false, scale: 1.04, jacket: '#f2e9dc' },
   guard: { skin: '#8d5524', shirt: '#3a3f47', pants: '#22252b', hair: '#1b1b1b', hat: '#22252b', shorts: false, scale: 1.05 },
+  capo: { skin: '#e0ac69', shirt: '#111318', pants: '#f2e9dc', hair: '#e8e8e8', hat: '#f2e9dc', shorts: false, scale: 1.12, jacket: '#d8c06a' },
+  racer: { skin: '#c68642', shirt: '#35d0ff', pants: '#15151a', hair: '#ff7eb6', hat: null, shorts: false, scale: 1 },
 };
 
 export function buildCharacterModel(look) {

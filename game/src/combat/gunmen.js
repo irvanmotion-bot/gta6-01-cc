@@ -2,12 +2,14 @@
 import * as THREE from 'three';
 import { distance2D } from '../core/random.js';
 import { CharacterBody, LOOKS } from '../characters/characterBody.js';
+import { CRED_AWARDS } from '../progression/streetCred.js';
 
 const KINDS = {
   officer: { look: 'officer', faction: 'police', health: 90, damage: 7, rate: 0.75, range: 42, accuracy: 0.42, speed: 5.4 },
   tactical: { look: 'tactical', faction: 'police', health: 160, damage: 9, rate: 0.22, range: 55, accuracy: 0.34, speed: 5 },
   enforcer: { look: 'enforcer', faction: 'gang', health: 100, damage: 8, rate: 0.6, range: 45, accuracy: 0.4, speed: 4.6 },
   guard: { look: 'guard', faction: 'gang', health: 130, damage: 9, rate: 0.5, range: 45, accuracy: 0.45, speed: 4.4 },
+  capo: { look: 'capo', faction: 'gang', health: 240, damage: 11, rate: 0.4, range: 48, accuracy: 0.5, speed: 4.8 },
 };
 
 class Gunman extends CharacterBody {
@@ -113,9 +115,10 @@ class Gunman extends CharacterBody {
     this.moveSpeed = 0;
     const game = this.game;
     if (byPlayer) {
-      if (this.faction === 'police') { game.wanted.reportCrime('killPolice'); game.stats.copsDowned += 1; }
-      else game.stats.enforcersDowned += 1;
+      if (this.faction === 'police') { game.wanted.reportCrime('killPolice'); game.stats.copsDowned += 1; game.cred.earn(CRED_AWARDS.officer, 'officer down'); }
+      else { game.stats.enforcersDowned += 1; game.cred.earn(CRED_AWARDS.enforcer, 'Marlin gun down'); }
     }
+    if (this.kind === 'capo') game.bounties.onCapoDown(this, byPlayer);
     game.pickups.drop(Math.random() < 0.6 ? 'ammo' : 'cash', this.position.x, this.position.z, Math.random() < 0.6 ? 24 : 80);
     game.missions.onGunmanDown(this);
   }

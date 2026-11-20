@@ -9,6 +9,7 @@ import { buildVehicleModel } from './vehicleModel.js';
 const WHEELBASE = 2.7;
 const MAX_LATERAL_ACCEL = 22;
 const wreckMaterial = new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 1 });
+const STOCK_TUNE = { speed: 1, accel: 1, grip: 1, plating: 1 };
 
 export class Vehicle {
   constructor(game, modelId, x, z, heading, paint) {
@@ -32,6 +33,10 @@ export class Vehicle {
     this.steerInput = 0;
     this.handbrake = false;
     this.health = this.spec.health;
+    this.maxHealth = this.spec.health;
+    this.tiresShredded = false;
+    this.boosting = false;
+    this.unit = null;
     this.driver = null;
     this.controller = null;
     this.parked = false;
@@ -79,20 +84,27 @@ export class Vehicle {
     let fz = this.forwardZ();
     let vf = this.velX * fx + this.velZ * fz;
     let vl = this.velX * -fz + this.velZ * fx;
-    const power = this.health < spec.health * 0.25 ? 0.6 : 1;
+    const power = this.health < this.maxHealth * 0.25 ? 0.6 : 1;
+    // Nova's cars carry Bravo's workshop tune; shredded tyres and a nitro burn change the numbers on top of it.
+    const tune = this.driver === 'player' ? this.game.workshop.tuning : STOCK_TUNE;
+    let maxSpeed = spec.maxSpeed * tune.speed;
+    let accel = spec.accel * tune.accel;
+    let grip = spec.grip * tune.grip;
+    if (this.tiresShredded) { maxSpeed *= 0.55; grip *= 0.45; }
+    if (this.boosting) { maxSpeed *= 1.22; accel *= 2; }
 
     let braking = false;
     if (this.throttle > 0) {
       if (vf < -1) { vf += 24 * dt; braking = true; }
-      else if (vf < spec.maxSpeed) vf += spec.accel * power * this.throttle * (1 - (vf / spec.maxSpeed) * 0.65) * dt;
+      else if (vf < maxSpeed) vf += accel * power * this.throttle * (1 - (vf / maxSpeed) * 0.65) * dt;
+      else vf -= (vf - maxSpeed) * Math.min(1, dt * 1.5);
     } else if (this.throttle < 0) {
       if (vf > 1) { vf -= 26 * dt * -this.throttle; braking = true; }
-      else if (vf > -spec.maxSpeed * 0.3) vf -= spec.accel * 0.7 * dt;
+      else if (vf > -maxSpeed * 0.3) vf -= accel * 0.7 * dt;
     } else {
       vf -= vf * 0.55 * dt;
     }
     vf -= vf * Math.abs(vf) * 0.0008 * dt;
-    let grip = spec.grip;
     if (this.handbrake) {
       vf -= Math.sign(vf) * Math.min(Math.abs(vf), 11 * dt);
       grip = 1.5;
@@ -118,7 +130,7 @@ export class Vehicle {
     const ground = groundHeight(this.position.x, this.position.z);
     this.position.y += (ground - this.position.y) * Math.min(1, dt * 14);
     this.roll += (clamp(-yawRate * vf * 0.006, -0.09, 0.09) - this.roll) * Math.min(1, dt * 6);
-    const targetPitch = braking && vf > 2 ? 0.035 : this.throttle > 0 && vf < spec.maxSpeed * 0.5 ? -0.025 : 0;
+    const targetPitch = braking && vf > 2 ? 0.035 : this.throttle > 0 && vf < maxSpeed * 0.5 ? -0.025 : 0;
     this.pitch += (targetPitch - this.pitch) * Math.min(1, dt * 5);
     this.mesh.rotation.set(this.pitch, this.heading, this.roll);
     for (const wheel of this.model.wheels) {
@@ -179,7 +191,11 @@ export class Vehicle {
   }
 
   effects(dt) {
-    if (this.skidding) this.game.particles.tireSmoke(this.position.x - this.forwardX() * 1.6, 0.2, this.position.z - this.forwardZ() * 1.6);
+    const tailX = this.position.x - this.forwardX() * (this.spec.length * 0.5);
+    const tailZ = this.position.z - this.forwardZ() * (this.spec.length * 0.5);
+    if (this.skidding) this.game.particles.tireSmoke(tailX, 0.2, tailZ);
+    if (this.tiresShredded && Math.abs(this.speed) > 6) this.game.particles.sparks(tailX, 0.15, tailZ, 1);
+    if (this.boosting) this.game.particles.nitroFlame(tailX, 0.45, tailZ, this.velX, this.velZ);
     this.smoke(dt, false);
     if (this.burning > 0) {
       this.burning += dt;
@@ -189,12 +205,12 @@ export class Vehicle {
   }
 
   smoke(dt, wreck) {
-    if (!wreck && this.health > this.spec.health * 0.4) return;
+    if (!wreck && this.health > this.maxHealth * 0.4) return;
     if (wreck && this.deadTime > 14) return;
     this.smokeClock -= dt;
     if (this.smokeClock > 0) return;
     this.smokeClock = wreck ? 0.12 : 0.09;
-    const dark = wreck || this.health < this.spec.health * 0.2;
+    const dark = wreck || this.health < this.maxHealth * 0.2;
     this.game.particles.smoke(this.position.x + this.forwardX() * 1.5, 1.2, this.position.z + this.forwardZ() * 1.5, dark);
   }
 
@@ -209,6 +225,18 @@ export class Vehicle {
     this.mesh.traverse((part) => { if (part.isMesh) part.material = wreckMaterial; });
     this.mesh.rotation.z = 0.06;
     this.game.onVehicleExploded(this);
+  }
+
+  /** Condition for the HUD: 100 is factory fresh, 0 is about to burn. */
+  conditionPercent() {
+    return Math.max(0, Math.round((this.health / this.maxHealth) * 100));
+  }
+
+  /** A workshop visit: bodywork straight, engine healthy, fresh tyres. */
+  repair() {
+    this.health = this.maxHealth;
+    this.tiresShredded = false;
+    this.burning = 0;
   }
 
   /** A respray: rebuild the body in a new colour where it stands. */

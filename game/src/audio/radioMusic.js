@@ -33,6 +33,11 @@ export class RadioMusic {
     return this.seed / 2147483647;
   }
 
+  /** The station tuned in, or null with the radio off: the HUD's now-playing line. */
+  current() {
+    return STATIONS[this.station].bpm > 0 ? STATIONS[this.station] : null;
+  }
+
   /** Tune to the next station; returns it for the HUD. */
   nextStation() {
     this.station = (this.station + 1) % STATIONS.length;

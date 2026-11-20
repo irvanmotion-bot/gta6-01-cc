@@ -3,11 +3,11 @@ import * as THREE from 'three';
 import { distance2D, angleDelta } from '../core/random.js';
 
 export const WEAPONS = {
-  fists: { name: 'Fists', slot: 1, melee: true, damage: 26, rate: 0.4 },
-  pistol: { name: 'Viper 9', slot: 2, damage: 27, rate: 0.26, clip: 12, range: 95, spread: 0.01, auto: false, pellets: 1, price: 450, ammoPack: 48, ammoPrice: 90, sound: 'pistol' },
-  smg: { name: 'Hornet SMG', slot: 3, damage: 15, rate: 0.085, clip: 32, range: 80, spread: 0.028, auto: true, pellets: 1, price: 1600, ammoPack: 128, ammoPrice: 180, sound: 'smg' },
-  shotgun: { name: 'Boomstick 12', slot: 4, damage: 14, rate: 0.85, clip: 6, range: 38, spread: 0.075, auto: false, pellets: 8, price: 2400, ammoPack: 24, ammoPrice: 160, sound: 'shotgun' },
-  rifle: { name: 'Longshot AR', slot: 5, damage: 34, rate: 0.115, clip: 30, range: 130, spread: 0.012, auto: true, pellets: 1, price: 4800, ammoPack: 120, ammoPrice: 260, sound: 'rifle' },
+  fists: { name: 'Fists', short: 'FIST', slot: 1, melee: true, damage: 26, rate: 0.4 },
+  pistol: { name: 'Viper 9', short: 'V9', rank: 1, slot: 2, damage: 27, rate: 0.26, clip: 12, range: 95, spread: 0.01, auto: false, pellets: 1, price: 450, ammoPack: 48, ammoPrice: 90, sound: 'pistol' },
+  smg: { name: 'Hornet SMG', short: 'SMG', rank: 3, slot: 3, damage: 15, rate: 0.085, clip: 32, range: 80, spread: 0.028, auto: true, pellets: 1, price: 1600, ammoPack: 128, ammoPrice: 180, sound: 'smg' },
+  shotgun: { name: 'Boomstick 12', short: '12G', rank: 4, slot: 4, damage: 14, rate: 0.85, clip: 6, range: 38, spread: 0.075, auto: false, pellets: 8, price: 2400, ammoPack: 24, ammoPrice: 160, sound: 'shotgun' },
+  rifle: { name: 'Longshot AR', short: 'AR', rank: 5, slot: 5, damage: 34, rate: 0.115, clip: 30, range: 130, spread: 0.012, auto: true, pellets: 1, price: 4800, ammoPack: 120, ammoPrice: 260, sound: 'rifle' },
 };
 const ORDER = ['fists', 'pistol', 'smg', 'shotgun', 'rifle'];
 
@@ -62,6 +62,15 @@ export class Weapons {
     const spec = WEAPONS[this.current];
     if (spec.melee) return { name: spec.name, ammo: '' };
     return { name: spec.name, ammo: this.reloading > 0 ? 'RELOADING' : `${this.clip[this.current]} / ${this.reserve[this.current]}` };
+  }
+
+  /** The five weapon slots for the HUD's weapon wheel: key, short name, whether owned, in hand, and rounds held. */
+  slots() {
+    return ORDER.map((id) => {
+      const spec = WEAPONS[id];
+      const owned = Boolean(this.owned[id]);
+      return { id, key: spec.slot, short: spec.short, owned, current: id === this.current, rounds: spec.melee || !owned ? '' : String(this.clip[id] + this.reserve[id]) };
+    });
   }
 
   update(dt) {

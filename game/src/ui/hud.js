@@ -1,69 +1,92 @@
-// The heads-up display: wanted stars, cash, health and armor, weapon, clock, objective, subtitles, banners and hints.
+// The heads-up display: builds every panel (job, status, dispatch, crew, vehicle, radar) and runs the pieces
+// that belong to no panel: the dialogue box with portraits, banners, notifications, hints and the crosshair.
 import { districtNameAt, streetNameAt } from '../world/cityLayout.js';
-
-const byId = (id) => document.getElementById(id);
+import { DomCache, createElement } from './domBuilder.js';
+import { HudJobPanel } from './hudJobPanel.js';
+import { HudStatusPanel } from './hudStatusPanel.js';
+import { HudDispatchPanel } from './hudDispatchPanel.js';
+import { HudCrewPanel } from './hudCrewPanel.js';
+import { HudVehiclePanel } from './hudVehiclePanel.js';
+import { drawSpeakerPortrait } from './speakerPortraits.js';
 
 export class Hud {
   constructor(game) {
     this.game = game;
-    this.root = byId('hud');
-    this.el = {};
-    for (const id of ['wanted-stars', 'cash', 'weapon-name', 'weapon-ammo', 'health-bar', 'armor-bar', 'clock', 'mission-panel', 'mission-title',
-      'mission-objective', 'mission-timer', 'district-name', 'street-name', 'speedometer', 'speed-value', 'vehicle-name', 'radio-station', 'crosshair',
-      'subtitles', 'notifications', 'hint', 'banner', 'banner-title', 'banner-sub', 'damage-flash', 'down-screen', 'down-title', 'down-sub']) {
-      this.el[id] = byId(id);
-    }
-    this.el['wanted-stars'].innerHTML = '<i>★</i><i>★</i><i>★</i><i>★</i><i>★</i>';
-    this.cache = {};
+    this.cache = new DomCache();
+    const root = createElement('div', 'hidden', document.body);
+    root.id = 'hud';
+    this.root = root;
+    const left = createElement('div', 'hud-column left-column', root);
+    const right = createElement('div', 'hud-column right-column', root);
+    this.jobPanel = new HudJobPanel(game, left, this.cache);
+    this.crewPanel = new HudCrewPanel(game, left, this.cache);
+    this.statusPanel = new HudStatusPanel(game, right, this.cache);
+    this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);
+    this.vehiclePanel = new HudVehiclePanel(game, root, this.cache);
+    this.buildRadar(root);
+    this.buildOverlays(root);
     this.speech = [];
     this.speechClock = 0;
     this.bannerClock = 0;
     this.hintText = '';
     this.hintClock = 0;
     this.hitClock = 0;
-    this.vehicleClock = 0;
-    this.shownCash = 0;
   }
 
-  /** Write text into an element only when it changed, so the DOM is left alone on most frames. */
-  text(id, value) {
-    if (this.cache[id] === value) return;
-    this.cache[id] = value;
-    this.el[id].textContent = value;
+  /** The radar frame in the bottom-left corner: the minimap canvas, then the clock, district and street under it. */
+  buildRadar(root) {
+    const radar = createElement('div', 'radar', root);
+    const canvas = createElement('canvas', '', radar);
+    canvas.id = 'minimap';
+    const place = createElement('div', 'hud-panel place-panel', radar);
+    this.clock = createElement('b', 'place-clock', place);
+    this.district = createElement('div', 'place-district', place);
+    this.street = createElement('div', 'place-street', place);
   }
 
-  toggle(id, name, on) {
-    const key = `${id}.${name}`;
-    if (this.cache[key] === on) return;
-    this.cache[key] = on;
-    this.el[id].classList.toggle(name, on);
+  buildOverlays(root) {
+    this.notifications = createElement('div', 'notifications', root);
+    this.crosshair = createElement('div', 'crosshair', root);
+    this.hintBox = createElement('div', 'hint', root);
+    this.dialogue = createElement('div', 'dialogue', root);
+    this.portrait = createElement('canvas', 'dialogue-portrait', this.dialogue);
+    this.portrait.width = 96;
+    this.portrait.height = 96;
+    const text = createElement('div', 'dialogue-text', this.dialogue);
+    this.speaker = createElement('b', 'dialogue-speaker', text);
+    this.line = createElement('div', 'dialogue-line', text);
+    this.damageFlash = createElement('div', 'damage-flash', root);
+    this.bannerBox = createElement('div', 'banner', root);
+    this.bannerTitle = createElement('div', 'banner-title', this.bannerBox);
+    this.bannerSub = createElement('div', 'banner-sub', this.bannerBox);
+    this.downScreen = createElement('div', 'down-screen', document.body);
+    this.downTitle = createElement('div', 'down-title', this.downScreen);
+    this.downSub = createElement('div', 'down-sub', this.downScreen);
   }
 
   setVisible(visible) {
     this.root.classList.toggle('hidden', !visible);
   }
 
-  /** A short line that slides in under the cash and fades: pickups, purchases, small news. */
+  /** A short line in the feed at the top of the screen: pickups, purchases, cred, radio chatter. */
   notify(message) {
-    const line = document.createElement('div');
-    line.className = 'note';
-    line.textContent = message;
-    this.el.notifications.prepend(line);
-    while (this.el.notifications.children.length > 4) this.el.notifications.lastChild.remove();
+    const line = createElement('div', 'note', null, message);
+    this.notifications.prepend(line);
+    while (this.notifications.children.length > 3) this.notifications.lastChild.remove();
     setTimeout(() => line.classList.add('gone'), 3600);
     setTimeout(() => line.remove(), 4300);
   }
 
-  /** The big centred title of a mission start, pass or fail. */
+  /** The big centred title of a job start, pass or fail. */
   banner(title, subtitle, color) {
-    this.el['banner-title'].textContent = title;
-    this.el['banner-title'].style.color = color;
-    this.el['banner-sub'].textContent = subtitle;
-    this.el.banner.classList.add('visible');
+    this.bannerTitle.textContent = title;
+    this.bannerTitle.style.color = color;
+    this.bannerSub.textContent = subtitle;
+    this.bannerBox.classList.add('visible');
     this.bannerClock = 4.2;
   }
 
-  /** Queue a line of dialogue; lines play one after another at the bottom of the screen. */
+  /** Queue a line of dialogue; lines play one after another in the dialogue box, each with its speaker's portrait. */
   say(speaker, line, color) {
     this.speech.push({ speaker, line, color });
   }
@@ -71,7 +94,7 @@ export class Hud {
   clearSpeech() {
     this.speech.length = 0;
     this.speechClock = 0;
-    this.el.subtitles.classList.remove('visible');
+    this.dialogue.classList.remove('visible');
   }
 
   /** A prompt that shows for as long as a system keeps asking for it each frame. */
@@ -85,95 +108,63 @@ export class Hud {
   }
 
   showVehicleName(name, kind) {
-    this.text('vehicle-name', `${name} · ${kind}`);
-    this.vehicleClock = 4;
+    this.notify(`${name} · ${kind}`);
   }
 
   showRadio(station) {
-    this.text('radio-station', station.host ? `♪ ${station.name} — ${station.host}` : `♪ ${station.name}`);
-    this.radioClock = 4;
+    this.notify(station.host ? `♪ ${station.name} · ${station.host}` : `♪ ${station.name}`);
   }
 
   /** The full-screen card when Nova is taken down or arrested. */
   showDown(title, subtitle) {
-    this.el['down-title'].textContent = title;
-    this.el['down-sub'].textContent = subtitle;
-    this.el['down-screen'].classList.add('visible');
+    this.downTitle.textContent = title;
+    this.downSub.textContent = subtitle;
+    this.downScreen.classList.add('visible');
   }
 
   hideDown() {
-    this.el['down-screen'].classList.remove('visible');
+    this.downScreen.classList.remove('visible');
+  }
+
+  /** Show the next queued line of dialogue when the current one has had its time. */
+  advanceDialogue(dt) {
+    this.speechClock -= dt;
+    if (this.speechClock > 0) return;
+    const next = this.speech.shift();
+    if (!next) { this.dialogue.classList.remove('visible'); return; }
+    drawSpeakerPortrait(this.portrait, next.speaker, next.color);
+    this.speaker.textContent = next.speaker;
+    this.speaker.style.color = next.color;
+    this.line.textContent = next.line;
+    this.dialogue.style.borderColor = next.color;
+    this.dialogue.classList.add('visible');
+    this.speechClock = 2.2 + next.line.length * 0.045;
   }
 
   update(dt) {
     const game = this.game;
+    const cache = this.cache;
     const player = game.player;
-    const wanted = game.wanted;
-    const stars = this.el['wanted-stars'].children;
-    const blink = wanted.evading && Math.floor(game.time * 4) % 2 === 0;
-    for (let index = 0; index < 5; index += 1) {
-      const on = index < wanted.stars && !blink;
-      if (stars[index].classList.contains('on') !== on) stars[index].classList.toggle('on', on);
-    }
-    this.toggle('wanted-stars', 'active', wanted.stars > 0);
+    this.jobPanel.update(dt);
+    this.statusPanel.update(dt);
+    this.dispatchPanel.update(dt);
+    this.crewPanel.update(dt);
+    this.vehiclePanel.update(dt);
+    cache.text(this.clock, game.sky.clockText());
+    cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
+    cache.text(this.street, streetNameAt(player.position.x, player.position.z));
 
-    this.shownCash += (player.cash - this.shownCash) * Math.min(1, dt * 8);
-    if (Math.abs(player.cash - this.shownCash) < 1) this.shownCash = player.cash;
-    this.text('cash', `$${Math.round(this.shownCash).toLocaleString('en-US')}`);
-    const weapon = game.weapons.status();
-    this.text('weapon-name', weapon.name);
-    this.text('weapon-ammo', weapon.ammo);
-    const health = `${Math.max(0, Math.round(player.health))}%`;
-    if (this.cache.health !== health) { this.cache.health = health; this.el['health-bar'].firstElementChild.style.width = health; }
-    const armor = `${Math.round(player.armor)}%`;
-    if (this.cache.armor !== armor) { this.cache.armor = armor; this.el['armor-bar'].firstElementChild.style.width = armor; }
-    this.toggle('health-bar', 'low', player.health < 30);
-    this.text('clock', game.sky.clockText());
-    this.text('district-name', districtNameAt(player.position.x, player.position.z));
-    this.text('street-name', streetNameAt(player.position.x, player.position.z));
-
-    const mission = game.missions.active;
-    const objective = mission ? game.missions.objectiveText() : game.activities.objectiveText();
-    const timer = mission ? mission.timer : game.activities.timer();
-    this.toggle('mission-panel', 'visible', Boolean(objective));
-    this.text('mission-title', mission ? mission.mission.title.toUpperCase() : 'SOL CAB');
-    this.text('mission-objective', objective);
-    this.text('mission-timer', timer === null ? '' : `${Math.floor(timer / 60)}:${String(Math.floor(timer % 60)).padStart(2, '0')}`);
-    this.toggle('mission-timer', 'urgent', timer !== null && timer < 20);
-
-    const vehicle = player.vehicle;
-    this.toggle('speedometer', 'visible', Boolean(vehicle));
-    if (vehicle) this.text('speed-value', String(Math.round(Math.abs(vehicle.speed) * 3.6)));
-    this.vehicleClock -= dt;
-    this.radioClock -= dt;
-    this.toggle('vehicle-name', 'visible', this.vehicleClock > 0);
-    this.toggle('radio-station', 'visible', this.radioClock > 0);
-    this.toggle('crosshair', 'visible', !vehicle && (player.aiming || game.weapons.current !== 'fists'));
+    cache.toggle(this.crosshair, 'visible', !player.vehicle && (player.aiming || game.weapons.current !== 'fists'));
     this.hitClock -= dt;
-    this.toggle('crosshair', 'hit', this.hitClock > 0);
-    this.toggle('damage-flash', 'visible', player.hurtFlash > 0);
-
+    cache.toggle(this.crosshair, 'hit', this.hitClock > 0);
+    cache.toggle(this.damageFlash, 'visible', player.hurtFlash > 0);
     this.hintClock -= dt;
-    this.toggle('hint', 'visible', this.hintClock > 0);
-    if (this.hintClock > 0) this.text('hint', this.hintText);
+    cache.toggle(this.hintBox, 'visible', this.hintClock > 0);
+    if (this.hintClock > 0) cache.text(this.hintBox, this.hintText);
     if (this.bannerClock > 0) {
       this.bannerClock -= dt;
-      if (this.bannerClock <= 0) this.el.banner.classList.remove('visible');
+      if (this.bannerClock <= 0) this.bannerBox.classList.remove('visible');
     }
-    this.speechClock -= dt;
-    if (this.speechClock <= 0) {
-      const next = this.speech.shift();
-      if (next) {
-        this.el.subtitles.innerHTML = '';
-        const who = document.createElement('b');
-        who.textContent = `${next.speaker}: `;
-        who.style.color = next.color;
-        this.el.subtitles.append(who, next.line);
-        this.el.subtitles.classList.add('visible');
-        this.speechClock = 2.2 + next.line.length * 0.045;
-      } else {
-        this.el.subtitles.classList.remove('visible');
-      }
-    }
+    this.advanceDialogue(dt);
   }
 }

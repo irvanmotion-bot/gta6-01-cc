@@ -1,22 +1,30 @@
-// Solmara Heat: boots the city, owns every system and runs the game loop and its states (title, play, pause, map, shop).
+// Solmara Heat: boots the city, owns every system and runs the game loop and its states (title, play, pause, atlas, shop).
 import * as THREE from 'three';
-import { LANDMARKS } from './world/cityLayout.js';
-import { Traffic } from './vehicles/trafficAI.js';
-import { PedestrianCrowd } from './characters/pedestrians.js';
-import { WantedLevel } from './police/wantedLevel.js';
 import { PoliceDispatch } from './police/policeDispatch.js';
+import { WantedLevel } from './police/wantedLevel.js';
 import { MissionDirector } from './missions/missionDirector.js';
+import { StreetCred } from './progression/streetCred.js';
+import { CrewFavors } from './progression/crewFavors.js';
+import { TuningWorkshop } from './garage/tuningWorkshop.js';
+import { StreetRaces } from './activities/streetRaces.js';
+import { MarlinBounties } from './activities/marlinBounties.js';
 import { SideActivities } from './missions/sideActivities.js';
+import { Shops } from './economy/shops.js';
 import { Weapons } from './combat/weapons.js';
 import { Gunmen } from './combat/gunmen.js';
 import { detonate } from './combat/explosions.js';
 import { Hud } from './ui/hud.js';
 import { Minimap } from './ui/minimap.js';
+import { CityAtlas } from './ui/cityAtlas.js';
 import { Menus } from './ui/menus.js';
+import { CounterMenu } from './ui/counterMenu.js';
 import { Player } from './characters/player.js';
+import { PedestrianCrowd } from './characters/pedestrians.js';
 import { VehicleFleet } from './vehicles/vehicleFleet.js';
-import { Shops } from './economy/shops.js';
-import { freshStats, loadSavedGame, loadSettings, writeSavedGame } from './core/saveGame.js';
+import { Traffic } from './vehicles/trafficAI.js';
+import { captureGame, restoreGame, summarizeGame } from './core/gameSnapshot.js';
+import { freshStats, loadSaveSlot, loadSettings, writeSaveSlot } from './core/saveGame.js';
+import { LANDMARKS } from './world/cityLayout.js';
 import { CityBuildings } from './world/buildings.js';
 import { buildStreetsAndGround } from './world/streetsAndGround.js';
 import { OceanAndBeach } from './world/oceanAndBeach.js';
@@ -31,8 +39,6 @@ import { SoundEffects } from './audio/soundEffects.js';
 import { Input } from './core/input.js';
 import { distance2D } from './core/random.js';
 import { stageScreenshot } from './debug/screenshotScenes.js';
-
-const TITLE_SPOT = { x: -9.5, z: 318 };
 
 class Game {
   constructor() {
@@ -52,6 +58,7 @@ class Game {
     this.down = null;
     this.frozen = false;
     this.titleAngle = 0.6;
+    this.saveSlot = 1;
     this.settings = loadSettings();
     this.stats = freshStats();
     this.characters = [];
@@ -73,14 +80,21 @@ class Game {
     this.player = new Player(this, TITLE_SPOT.x, TITLE_SPOT.z);
     this.pedestrians = new PedestrianCrowd(this);
     this.gunmen = new Gunmen(this);
+    this.cred = new StreetCred(this);
+    this.crew = new CrewFavors(this);
+    this.workshop = new TuningWorkshop(this);
     this.wanted = new WantedLevel(this);
     this.police = new PoliceDispatch(this);
     this.weapons = new Weapons(this);
     this.missions = new MissionDirector(this);
     this.activities = new SideActivities(this);
+    this.races = new StreetRaces(this);
+    this.bounties = new MarlinBounties(this);
     this.shops = new Shops(this);
     this.hud = new Hud(this);
+    this.atlas = new CityAtlas(this);
     this.minimap = new Minimap(this);
+    this.counter = new CounterMenu(this);
     this.menus = new Menus(this);
     this.applySettings();
 
@@ -120,7 +134,7 @@ class Game {
     if (!playing) this.input.releaseLock();
     this.hud.setVisible(playing || state === 'shop');
     this.menus.show(state === 'title' ? 'start' : state === 'pause' ? 'pause' : null);
-    this.menus.showMap(state === 'map');
+    this.atlas.show(state === 'map');
     if (playing) this.input.requestLock();
   }
 
@@ -129,6 +143,7 @@ class Game {
     this.down = null;
     this.hud.hideDown();
     this.hud.clearSpeech();
+    this.races.reset();
     this.missions.reset();
     this.vehicles.clear();
     this.pedestrians.clear();
@@ -138,6 +153,10 @@ class Game {
     this.police.clear();
     this.wanted.reset();
     this.weapons.reset();
+    this.cred.reset();
+    this.crew.reset();
+    this.workshop.reset();
+    this.bounties.reset();
     this.stats = freshStats();
     this.player.armor = 0;
     this.player.cash = 250;
@@ -155,7 +174,8 @@ class Game {
     this.setState('play');
   }
 
-  newGame() {
+  newGame(slot = 1) {
+    this.saveSlot = slot;
     this.resetWorld();
     this.activities.reset();
     this.sky.hour = 9.5;
@@ -167,30 +187,23 @@ class Game {
     this.hud.banner('SOLMARA HEAT', 'Welcome home, Nova.', '#ffd60a');
     this.hud.say('NOVA', 'Three years away and the city still smells like salt and exhaust.', '#ff7b6b');
     this.hud.say('NOVA', 'Tío Bravo runs a garage on Neon Street. Follow the B on the radar.', '#ff7b6b');
-    this.hud.notify('Press F beside a car to take it. Press M for the city map.');
+    this.hud.notify('Press F beside a car to take it. Press M for the city atlas.');
   }
 
-  continueGame() {
-    const save = loadSavedGame();
-    if (!save) { this.newGame(); return; }
+  /** Load a save slot and stand Nova outside Casa Reyes; an empty slot starts a new game there. */
+  continueGame(slot = this.saveSlot) {
+    const save = loadSaveSlot(slot);
+    if (!save) { this.newGame(slot); return; }
+    this.saveSlot = slot;
     this.resetWorld();
-    this.missions.reset(save.missions);
-    this.activities.reset(save.tokens, save.faresDone);
-    this.weapons.restore(save.weapons);
-    this.stats = { ...freshStats(), ...save.stats };
-    this.player.cash = save.cash;
-    this.player.armor = save.armor || 0;
-    this.sky.hour = save.hour;
+    restoreGame(this, save);
     this.enterCity();
-    this.hud.notify('Game loaded. Welcome back to Solmara.');
+    this.hud.notify(`Slot ${slot} loaded. Welcome back to Solmara.`);
   }
 
   saveGame(auto) {
-    const saved = writeSavedGame({
-      cash: this.player.cash, armor: this.player.armor, hour: this.sky.hour, missions: [...this.missions.completed],
-      tokens: [...this.activities.tokens], faresDone: this.activities.faresDone, weapons: this.weapons.serialize(), stats: this.stats,
-    });
-    this.hud.notify(saved ? (auto ? 'Progress autosaved.' : 'Game saved at Casa Reyes. Health restored.') : 'Saving is blocked in this browser.');
+    const saved = writeSaveSlot(this.saveSlot, summarizeGame(this), captureGame(this));
+    this.hud.notify(saved ? (auto ? `Autosaved to slot ${this.saveSlot}.` : `Saved to slot ${this.saveSlot} at Casa Reyes. Health restored.`) : 'Saving is blocked in this browser.');
   }
 
   quitToTitle() {
@@ -210,10 +223,13 @@ class Game {
   onPlayerEnteredVehicle(vehicle) {
     this.camera.idleLook = 2;
     if (vehicle.spec.police) vehicle.siren = false;
+    vehicle.unit = null;
+    this.workshop.fit(vehicle);
   }
 
-  onPlayerLeftVehicle() {
+  onPlayerLeftVehicle(vehicle) {
     this.camera.idleLook = 0;
+    if (vehicle) vehicle.boosting = false;
   }
 
   onVehicleExploded(vehicle) {
@@ -222,11 +238,12 @@ class Game {
     vehicle.controller = null;
   }
 
-  /** Nova is wiped out or arrested: the mission fails, the screen says so, and she wakes up elsewhere. */
+  /** Nova is wiped out or arrested: the job fails, the screen says so, and she wakes up elsewhere. */
   onPlayerDown(kind) {
     if (this.down) return;
     this.down = { kind, clock: 0 };
     this.missions.onPlayerDown(kind);
+    this.races.cancel();
     this.player.frozen = true;
     if (kind === 'busted') {
       this.stats.timesBusted += 1;
@@ -251,7 +268,7 @@ class Game {
     for (const vehicle of [...this.vehicles.list]) if (vehicle.spec.police) this.vehicles.remove(vehicle);
     this.sky.hour = (this.sky.hour + 5) % 24;
     this.player.frozen = false;
-    this.player.revive(place.x, place.z, Math.PI / 2);
+    this.player.revive(place.x - 8, place.z, Math.PI / 2);
     this.camera.snapBehind(Math.PI / 2);
     this.down = null;
     this.hud.hideDown();
@@ -277,10 +294,14 @@ class Game {
     if (playing) {
       this.police.update(dt);
       this.wanted.update(dt);
+      this.crew.update(dt);
       this.pickups.update(dt);
       this.missions.update(dt);
+      this.races.update(dt);
+      this.bounties.update(dt);
       this.activities.update(dt);
       this.shops.update(dt);
+      this.workshop.update(dt);
       this.stats.playSeconds += dt;
     }
     this.markers.end();
@@ -337,7 +358,7 @@ class Game {
     } else if (this.state === 'map') {
       if (this.input.wasPressed('KeyM', 'Tab', 'Escape')) this.setState('play');
     } else if (this.state === 'shop') {
-      this.shops.updateMenu();
+      this.counter.updateMenu();
     }
     const live = this.state === 'play' || this.state === 'title';
     if (live) {
@@ -371,6 +392,8 @@ class Game {
     requestAnimationFrame(frame);
   }
 }
+
+const TITLE_SPOT = { x: -9.5, z: 318 };
 
 const game = new Game();
 window.solmara = game;

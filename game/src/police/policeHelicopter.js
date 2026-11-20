@@ -40,7 +40,21 @@ export class PoliceHelicopter {
     this.mesh.visible = false;
     this.beam.visible = false;
     this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
-    game.scene.add(this.mesh, this.beam);
+    // The searchlight really lights the street: a spot lamp on the nose and a bright pool on the ground under it.
+    this.lamp = new THREE.SpotLight(0xfff3c4, 0, 90, 0.3, 0.5, 1.2);
+    this.lamp.visible = false;
+    this.pool = new THREE.Mesh(new THREE.CircleGeometry(6.5, 28), new THREE.MeshBasicMaterial({ color: 0xfff3c4, transparent: true, opacity: 0.22, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.pool.rotation.x = -Math.PI / 2;
+    this.pool.visible = false;
+    this.pool.renderOrder = 3;
+    game.scene.add(this.mesh, this.beam, this.lamp, this.lamp.target, this.pool);
+  }
+
+  /** Switch the searchlight's beam, lamp and ground pool on or off together. */
+  setSearchlight(on) {
+    this.beam.visible = on;
+    this.lamp.visible = on;
+    this.pool.visible = on;
   }
 
   distanceToPlayer() {
@@ -55,7 +69,7 @@ export class PoliceHelicopter {
     this.health = 400;
     this.crashing = 0;
     this.mesh.visible = true;
-    this.beam.visible = true;
+    this.setSearchlight(true);
     this.mesh.position.set(player.x + 150, HOVER_HEIGHT + 30, player.z - 120);
     this.mesh.rotation.set(0, 0, 0);
   }
@@ -63,7 +77,7 @@ export class PoliceHelicopter {
   dismiss(instant = false) {
     if (!this.active && !instant) return;
     this.active = false;
-    this.beam.visible = false;
+    this.setSearchlight(false);
     if (instant) this.mesh.visible = false;
   }
 
@@ -73,7 +87,7 @@ export class PoliceHelicopter {
     this.game.wanted.reportCrime('shootPolice');
     if (this.health <= 0) {
       this.active = false;
-      this.beam.visible = false;
+      this.setSearchlight(false);
       this.crashing = 0.001;
       this.returnClock = 45;
       this.game.stats.choppersDowned += 1;
@@ -127,6 +141,13 @@ export class PoliceHelicopter {
     const reach = new THREE.Vector3(player.position.x - mesh.position.x, player.position.y - mesh.position.y + 1, player.position.z - mesh.position.z);
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
+    const night = game.sky.night;
+    this.beam.material.opacity = 0.13 + night * 0.16;
+    this.lamp.position.copy(this.beam.position);
+    this.lamp.target.position.set(player.position.x, player.position.y, player.position.z);
+    this.lamp.intensity = 900 + night * 5200;
+    this.pool.position.set(player.position.x, player.position.y + 0.12, player.position.z);
+    this.pool.material.opacity = 0.1 + night * 0.3;
 
     this.cooldown -= dt;
     if (stars >= 4 && this.cooldown <= 0 && player.alive) {

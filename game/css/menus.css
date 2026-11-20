@@ -1,47 +1,97 @@
-/* The start screen, pause menu, city map, shop counter and loading card of Solmara Heat. */
-.menu { position: fixed; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 0 8vh; background: linear-gradient(90deg, rgba(10, 14, 22, 0.86) 0%, rgba(10, 14, 22, 0.5) 38%, rgba(10, 14, 22, 0) 68%); }
+/* The start screen, pause menu, save-slot cards, city atlas, shop counter and loading card of Solmara Heat. */
+.menu { position: fixed; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 0 7vh; background: linear-gradient(90deg, rgba(10, 14, 22, 0.88) 0%, rgba(10, 14, 22, 0.5) 40%, rgba(10, 14, 22, 0.1) 70%); }
 .menu.visible { display: flex; }
 .menu header h1, .menu header h2 { margin: 0; font-family: var(--display); font-style: italic; line-height: 0.86; letter-spacing: 0.3vh; }
-#title-logo h1 { font-size: 17vh; color: #fff; text-shadow: 0 0.8vh 0 var(--coral), 0 1.6vh 0 var(--ink), 0 0 5vh rgba(255, 94, 91, 0.55); }
-#title-logo h1 em { display: block; font-size: 22vh; color: var(--gold); text-shadow: 0 0.8vh 0 #ff8a00, 0 1.6vh 0 var(--ink), 0 0 6vh rgba(255, 190, 40, 0.6); }
-.menu header p { margin: 2.2vh 0 3vh; font-size: 2.5vh; font-weight: 700; letter-spacing: 0.25vh; text-transform: uppercase; color: #ffe9b0; text-shadow: 0 0.2vh 0.4vh var(--ink); }
+#start-menu h1 { font-size: 15vh; color: #fff; text-shadow: 0 0.8vh 0 var(--coral), 0 1.6vh 0 var(--ink), 0 0 5vh rgba(255, 94, 91, 0.55); }
+#start-menu h1 em { display: block; font-size: 20vh; color: var(--gold); text-shadow: 0 0.8vh 0 #ff8a00, 0 1.6vh 0 var(--ink), 0 0 6vh rgba(255, 190, 40, 0.6); }
+.menu header p { margin: 2vh 0 2.4vh; font-size: 2.3vh; font-weight: 700; letter-spacing: 0.25vh; text-transform: uppercase; color: #ffe9b0; text-shadow: 0 0.2vh 0.4vh var(--ink); }
 #pause-menu header h2 { font-size: 12vh; color: var(--gold); text-shadow: 0 0.6vh 0 var(--ink); }
 #pause-menu { background: linear-gradient(90deg, rgba(10, 14, 22, 0.92) 0%, rgba(10, 14, 22, 0.7) 45%, rgba(10, 14, 22, 0.35) 100%); }
 
-.menu-list { display: flex; flex-direction: column; gap: 0.8vh; width: 52vh; }
-.menu-item { all: unset; cursor: pointer; display: flex; flex-direction: column; padding: 1vh 2vh; border-left: 0.8vh solid transparent; background: rgba(10, 14, 22, 0.45); transition: 0.12s; }
-.menu-item span { font-family: var(--display); font-size: 3.8vh; letter-spacing: 0.2vh; }
+.menu-list { display: flex; flex-direction: column; gap: 0.7vh; width: 54vh; }
+.menu-item { all: unset; cursor: pointer; display: flex; flex-direction: column; padding: 0.8vh 2vh; border-left: 0.8vh solid transparent; background: rgba(10, 14, 22, 0.5); transition: 0.12s; }
+.menu-item span { font-family: var(--display); font-size: 3.5vh; letter-spacing: 0.2vh; }
 .menu-item small { font-size: 1.7vh; font-weight: 600; color: #cfd6e0; }
 .menu-item.selected { border-left-color: var(--gold); background: linear-gradient(90deg, rgba(255, 94, 91, 0.92), rgba(255, 94, 91, 0.25)); transform: translateX(1.2vh); }
 .menu-item.selected small { color: #fff; }
 
-.menu-panel { position: absolute; right: 7vh; top: 12vh; bottom: 12vh; width: 78vh; display: none; background: rgba(10, 14, 22, 0.88); border-top: 0.8vh solid var(--gold); padding: 3vh; overflow: hidden; }
+.menu-panel { position: absolute; right: 5vh; top: 9vh; bottom: 9vh; width: 66vh; display: none; background: rgba(10, 14, 22, 0.86); border-top: 0.8vh solid var(--gold); padding: 2.4vh 2.8vh; overflow: hidden; box-sizing: border-box; }
 .menu-panel.visible { display: block; }
-.menu-table { display: grid; gap: 0.9vh; font-size: 2.2vh; }
-.menu-table div { display: flex; justify-content: space-between; gap: 3vh; border-bottom: 0.15vh solid rgba(255, 255, 255, 0.14); padding-bottom: 0.6vh; }
+.panel-title { font-family: var(--display); font-size: 3.4vh; letter-spacing: 0.25vh; color: var(--gold); margin-bottom: 1.4vh; }
+.panel-note { font-size: 1.8vh; font-weight: 600; color: #aeb9c9; margin: 1.6vh 0 0; }
+.menu-table { display: grid; gap: 0.6vh; font-size: 2vh; }
+.menu-table div { display: flex; justify-content: space-between; gap: 3vh; border-bottom: 0.15vh solid rgba(255, 255, 255, 0.14); padding-bottom: 0.4vh; }
 .menu-table b { font-family: var(--display); letter-spacing: 0.1vh; color: var(--gold); font-weight: 400; }
-#title-footer { position: absolute; left: 8vh; bottom: 3.5vh; font-size: 1.8vh; font-weight: 600; color: #e6edf5; text-shadow: 0 0.2vh 0.4vh var(--ink); }
+.title-footer { position: absolute; left: 7vh; bottom: 3vh; font-size: 1.8vh; font-weight: 600; color: #e6edf5; text-shadow: 0 0.2vh 0.4vh var(--ink); }
 
-#map-screen { position: fixed; inset: 0; display: none; background: rgba(10, 14, 22, 0.9); }
-#map-screen.visible { display: block; }
-#city-map { position: absolute; inset: 4vh 4vh 8vh; width: calc(100% - 8vh); height: calc(100% - 12vh); border: 0.5vh solid var(--gold); box-sizing: border-box; }
-#map-screen p { position: absolute; bottom: 1.5vh; left: 0; right: 0; margin: 0; text-align: center; font-family: var(--display); font-size: 2.8vh; letter-spacing: 0.3vh; }
+/* Save-slot cards on the start screen */
+.slot-cards { display: flex; flex-direction: column; gap: 1.4vh; }
+.slot-card { display: grid; grid-template-columns: 13vh 1fr; column-gap: 1.6vh; align-items: center; background: rgba(255, 255, 255, 0.07); border-left: 0.8vh solid var(--teal); padding: 1.3vh 1.8vh; }
+.slot-card b { grid-row: span 4; font-family: var(--display); font-weight: 400; font-size: 4vh; font-style: italic; letter-spacing: 0.1vh; }
+.slot-card span { font-family: var(--display); font-size: 3vh; letter-spacing: 0.12vh; color: var(--gold); }
+.slot-card i { display: block; height: 1.1vh; background: rgba(255, 255, 255, 0.14); border-radius: 0.3vh; overflow: hidden; }
+.slot-card i u { display: block; height: 100%; background: linear-gradient(90deg, #12867b, var(--teal)); }
+.slot-card small { font-size: 1.8vh; font-weight: 700; color: #dfe6f0; letter-spacing: 0.05vh; }
+.slot-card.latest { border-left-color: var(--gold); background: rgba(255, 214, 10, 0.12); }
+.slot-card.empty { opacity: 0.6; border-left-color: #56607a; }
+.slot-card.empty span { color: #aeb9c9; }
 
+/* City atlas: map on the left, progress on the right */
+.atlas { position: fixed; inset: 0; display: none; background: rgba(8, 11, 19, 0.94); }
+.atlas.visible { display: block; }
+.atlas-map { position: absolute; left: 2.5vh; top: 2.5vh; bottom: 2.5vh; right: 66vh; border: 0.5vh solid var(--gold); box-sizing: border-box; }
+#city-map { position: absolute; inset: 0; width: 100%; height: 100%; }
+.atlas-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6vh 1.4vh; background: rgba(9, 13, 22, 0.82); font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.25vh; color: var(--gold); }
+.atlas-side { position: absolute; right: 2.5vh; top: 2.5vh; bottom: 2.5vh; width: 61vh; overflow: hidden; }
+.atlas-head { display: flex; justify-content: space-between; align-items: flex-end; }
+.atlas-head h2 { margin: 0; font-family: var(--display); font-style: italic; font-size: 6.4vh; line-height: 0.9; color: var(--gold); letter-spacing: 0.3vh; }
+.atlas-head p { margin: 0.6vh 0 0; font-size: 1.75vh; font-weight: 800; letter-spacing: 0.06vh; color: var(--sky); }
+.atlas-percent { text-align: right; }
+.atlas-percent b { display: block; font-family: var(--display); font-weight: 400; font-size: 7.4vh; line-height: 0.9; color: #58e08a; }
+.atlas-percent span { font-size: 1.7vh; font-weight: 800; letter-spacing: 0.2vh; }
+.atlas-bar { height: 1.4vh; margin: 0.9vh 0 0.4vh; background: rgba(255, 255, 255, 0.14); border-radius: 0.3vh; overflow: hidden; }
+.atlas-bar i { display: block; height: 100%; background: linear-gradient(90deg, #2bb673, #58e08a); }
+.atlas-side h3 { margin: 1.2vh 0 0.4vh; font-family: var(--display); font-weight: 400; font-size: 2.2vh; letter-spacing: 0.2vh; color: var(--gold); border-bottom: 0.2vh solid rgba(255, 214, 10, 0.4); }
+.atlas-job { display: grid; grid-template-columns: 3.4vh 1fr 13vh 11vh; align-items: baseline; font-size: 1.8vh; line-height: 2.55vh; }
+.atlas-job i { font-style: normal; font-family: var(--display); color: #aeb9c9; }
+.atlas-job b { font-weight: 800; }
+.atlas-job span { font-size: 1.5vh; font-weight: 700; color: #aeb9c9; }
+.atlas-job u { text-decoration: none; text-align: right; font-family: var(--display); letter-spacing: 0.06vh; }
+.atlas-job.done b { color: #9fe8bd; }
+.atlas-job.done u { color: #58e08a; }
+.atlas-job.active { background: rgba(255, 214, 10, 0.16); }
+.atlas-job.active u, .atlas-job.open u { color: var(--gold); }
+.atlas-job.locked { opacity: 0.45; }
+.atlas-activity { display: grid; grid-template-columns: 19vh 1fr 6vh; align-items: center; gap: 1.2vh; font-size: 1.75vh; font-weight: 700; line-height: 2.45vh; }
+.atlas-activity i { display: block; height: 1vh; background: rgba(255, 255, 255, 0.14); border-radius: 0.3vh; overflow: hidden; }
+.atlas-activity i u { display: block; height: 100%; background: linear-gradient(90deg, #0fa3d6, var(--sky)); }
+.atlas-activity b { text-align: right; font-family: var(--display); font-weight: 400; }
+.atlas-stats { display: grid; grid-template-columns: 1fr 1fr; column-gap: 2.4vh; font-size: 1.6vh; line-height: 2.3vh; }
+.atlas-stats div { display: flex; justify-content: space-between; border-bottom: 0.12vh solid rgba(255, 255, 255, 0.1); }
+.atlas-stats span { font-weight: 600; color: #cfd6e0; }
+.atlas-stats b { font-family: var(--display); font-weight: 400; color: var(--gold); letter-spacing: 0.05vh; }
+.atlas-slots { display: grid; gap: 0.5vh; }
+.atlas-slot { display: flex; gap: 1.4vh; align-items: baseline; padding: 0.3vh 1vh; background: rgba(255, 255, 255, 0.07); border-left: 0.6vh solid #56607a; font-size: 1.65vh; font-weight: 700; }
+.atlas-slot b { font-family: var(--display); font-weight: 400; font-size: 2vh; letter-spacing: 0.1vh; }
+.atlas-slot.active { border-left-color: var(--gold); background: rgba(255, 214, 10, 0.14); }
+
+/* Shop counter: Ammo Amigo and Bravo's workshop */
 #shop-menu { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(10, 14, 22, 0.6); }
 #shop-menu.visible { display: flex; }
-.shop-card { width: 70vh; background: rgba(16, 20, 30, 0.96); border-top: 1vh solid #c0392b; padding: 3vh 3.5vh; box-shadow: 0 2vh 6vh rgba(0, 0, 0, 0.6); }
-.shop-card h2 { margin: 0; font-family: var(--display); font-size: 6.5vh; font-style: italic; color: var(--gold); }
-.shop-tag { margin: 0.5vh 0 2vh; font-size: 2vh; color: #cfd6e0; }
-.shop-row, .shop-close { all: unset; cursor: pointer; display: flex; align-items: center; gap: 2vh; width: 100%; box-sizing: border-box; padding: 1.1vh 1.4vh; margin-bottom: 0.7vh; background: rgba(255, 255, 255, 0.06); }
+.shop-card { width: 74vh; background: rgba(16, 20, 30, 0.96); border-top: 1vh solid #c0392b; padding: 2.6vh 3.2vh; box-shadow: 0 2vh 6vh rgba(0, 0, 0, 0.6); }
+.shop-card h2 { margin: 0; font-family: var(--display); font-size: 6vh; font-style: italic; color: var(--gold); }
+.shop-tag { margin: 0.5vh 0 1.6vh; font-size: 1.9vh; color: #cfd6e0; }
+.shop-row, .shop-close { all: unset; cursor: pointer; display: flex; align-items: center; gap: 2vh; width: 100%; box-sizing: border-box; padding: 0.9vh 1.4vh; margin-bottom: 0.6vh; background: rgba(255, 255, 255, 0.06); }
 .shop-row:hover { background: rgba(255, 94, 91, 0.5); }
 .shop-key { font-family: var(--display); font-size: 2.6vh; width: 3.4vh; height: 3.4vh; display: grid; place-items: center; background: var(--gold); color: var(--ink); border-radius: 0.4vh; }
-.shop-label { flex: 1; font-size: 2.4vh; font-weight: 700; }
+.shop-label { flex: 1; font-size: 2.3vh; font-weight: 700; }
 .shop-label small { display: block; font-size: 1.6vh; font-weight: 500; color: #aab4c2; }
 .shop-price { font-family: var(--display); font-size: 2.8vh; color: #58e08a; }
-.shop-row.too-dear { opacity: 0.45; }
+.shop-row.too-dear, .shop-row.locked { opacity: 0.45; }
 .shop-row.too-dear .shop-price { color: var(--coral); }
-.shop-close { justify-content: center; font-weight: 700; font-size: 2vh; margin-top: 1.5vh; background: rgba(255, 255, 255, 0.12); }
+.shop-row.locked small { color: var(--coral); font-weight: 800; }
+.shop-close { justify-content: center; font-weight: 700; font-size: 2vh; margin-top: 1.2vh; background: rgba(255, 255, 255, 0.12); }
 
-#loading { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(#ff8a5b, #ffd27a 55%, #1fb5a6); font-family: var(--display); font-size: 12vh; font-style: italic; color: #fff; text-shadow: 0 0.8vh 0 var(--ink); transition: opacity 0.6s; }
+#loading { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(#ff8a5b, #ffd27a 55%, #1fb5a6); font-family: var(--display); font-size: 12vh; font-style: italic; color: #fff; text-shadow: 0 0.8vh 0 var(--ink); transition: opacity 0.6s; }
 #loading small { font-family: var(--body); font-size: 2.4vh; font-style: normal; font-weight: 700; letter-spacing: 0.3vh; text-shadow: none; color: var(--ink); }
 #loading.done { opacity: 0; pointer-events: none; }

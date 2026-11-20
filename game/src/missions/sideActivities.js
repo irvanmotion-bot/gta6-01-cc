@@ -2,6 +2,7 @@
 import { CITY } from '../core/config.js';
 import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, districtNameAt, kerbSpot } from '../world/cityLayout.js';
+import { CRED_AWARDS } from '../progression/streetCred.js';
 
 /** Where the Sun Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */
 const TOKEN_SPOTS = [
@@ -45,6 +46,7 @@ export class SideActivities {
     const left = TOKEN_SPOTS.length - this.tokens.size;
     this.game.hud.banner('SUN TOKEN', left > 0 ? `+$${TOKEN_REWARD} · ${left} still hidden in Solmara` : 'All twelve found! +$10,000 bonus', '#ffd60a');
     if (left === 0) this.game.player.addCash(10000);
+    this.game.cred.earn(CRED_AWARDS.token, 'Sun Token');
   }
 
   tokenCount() {
@@ -57,7 +59,7 @@ export class SideActivities {
     const vehicle = game.player.vehicle;
     if (this.fare) { this.fare = null; game.hud.notify('Taxi duty off.'); return; }
     if (!vehicle || !vehicle.spec.taxi) return;
-    if (game.missions.active) { game.hud.notify('Finish your mission first.'); return; }
+    if (game.missions.active || game.races.active) { game.hud.notify('Finish what you started first.'); return; }
     this.newFare();
     game.hud.notify('Taxi duty on. Pick up the fare.');
   }
@@ -79,9 +81,15 @@ export class SideActivities {
     this.fare = { stage: 'pickup', pickup, drop, pay: Math.round(40 + distance * 0.35), timer: 30 + distance / 9, to: districtNameAt(drop.x, drop.z) };
   }
 
-  objectiveText() {
-    if (!this.fare) return '';
-    return this.fare.stage === 'pickup' ? 'TAXI: pick up the fare' : `TAXI: drive the fare to ${this.fare.to} · $${this.fare.pay}`;
+  /** What the job panel shows on taxi duty: the fare's two stages, the pay and the clock. */
+  panelInfo() {
+    const fare = this.fare;
+    if (!fare) return null;
+    const pickup = fare.stage === 'pickup';
+    return {
+      header: `SOL CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STAGE 1/2 · PICK UP' : 'STAGE 2/2 · DROP OFF', share: pickup ? 0.1 : 0.55,
+      objective: pickup ? 'Stop at the yellow marker for your fare' : `Drive the fare to ${fare.to}`, next: pickup ? `Drop off in ${fare.to}` : `$${fare.pay} + tip for speed`, timer: pickup ? null : fare.timer, counting: 'down',
+    };
   }
 
   timer() {
@@ -120,6 +128,7 @@ export class SideActivities {
       game.stats.faresDone = this.faresDone;
       game.audio.cashRegister();
       game.hud.banner('FARE DELIVERED', `+$${fare.pay} fare · +$${tip} tip`, '#ffcc00');
+      game.cred.earn(CRED_AWARDS.fare, 'fare delivered');
       this.newFare();
     }
   }
@@ -133,6 +142,7 @@ export class SideActivities {
         const bonus = Math.round(this.airTime * 40);
         this.game.player.addCash(bonus);
         this.game.hud.notify(`Powerslide ${this.airTime.toFixed(1)}s · +$${bonus}`);
+        this.game.cred.earn(Math.round(this.airTime * CRED_AWARDS.powerslide), 'powerslide');
       }
       this.airTime = 0;
     }
