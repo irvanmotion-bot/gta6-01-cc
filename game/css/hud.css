@@ -145,7 +145,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #05070c; col
 .crosshair.hit { filter: drop-shadow(0 0 0.3vh #ff3b30) hue-rotate(0deg) saturate(8); transform: scale(1.35); }
 .hint { position: absolute; left: 50%; bottom: 19vh; transform: translateX(-50%); font-size: 2.1vh; font-weight: 700; background: var(--panel); padding: 0.7vh 1.8vh; border-radius: 0.5vh; border-bottom: 0.4vh solid var(--gold); opacity: 0; white-space: nowrap; }
 .hint.visible { opacity: 1; }
-.dialogue { position: absolute; left: 50%; bottom: 2vh; transform: translateX(-50%); width: 64vh; display: flex; gap: 1.4vh; align-items: center; background: var(--panel); border-left: 0.6vh solid var(--gold); padding: 1vh 1.4vh 1vh 1vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; box-shadow: 0 0.4vh 1.4vh rgba(0, 0, 0, 0.45); }
+.dialogue { position: absolute; left: 50%; bottom: 2vh; transform: translateX(-50%); width: 60vh; display: flex; gap: 1.4vh; align-items: center; background: var(--panel); border-left: 0.6vh solid var(--gold); padding: 1vh 1.4vh 1vh 1vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; box-shadow: 0 0.4vh 1.4vh rgba(0, 0, 0, 0.45); }
 .dialogue.visible { opacity: 1; }
 .dialogue-portrait { width: 10vh; height: 10vh; flex: none; image-rendering: pixelated; }
 .dialogue-speaker { display: block; font-family: var(--display); font-weight: 400; font-size: 2.4vh; letter-spacing: 0.14vh; }
