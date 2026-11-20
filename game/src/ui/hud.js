@@ -31,6 +31,21 @@ export class Hud {
     this.hintText = '';
     this.hintClock = 0;
     this.hitClock = 0;
+    this.fitToWindow();
+  }
+
+  /**
+   * The panels are sized in window heights and laid out for a 16:10 frame. In a narrower window the whole HUD
+   * shrinks in step, so the columns, the radar and the dialogue box never run into each other.
+   */
+  fitToWindow() {
+    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6);
+    const style = this.root.style;
+    style.zoom = String(scale);
+    style.right = 'auto';
+    style.bottom = 'auto';
+    style.width = `${100 / scale}vw`;
+    style.height = `${100 / scale}vh`;
   }
 
   /** The radar frame in the bottom-left corner: the minimap canvas, then the clock, district and street under it. */

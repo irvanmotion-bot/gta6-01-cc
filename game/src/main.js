@@ -126,6 +126,7 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.camera.view.aspect = window.innerWidth / window.innerHeight;
     this.camera.view.updateProjectionMatrix();
+    this.hud.fitToWindow();
   }
 
   applySettings() {

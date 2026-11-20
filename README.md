@@ -14,8 +14,9 @@ Banco Marlin.
 ## What is in it
 
 - **A city to explore on foot and by car**: six districts (Playa Dorada, Centro Alto, El Mercado, Las Colinas,
-  Puerto Viejo, Jardín del Sol), named streets and shops, a beach with boats offshore, docks with a container
-  ship, a park and a day-night cycle with street lamps, neon and headlights after dark.
+  Puerto Viejo, Jardín del Sol), named streets and shops, pavements with benches, bus shelters, news boxes and
+  planters, a boardwalk with kiosks and surfboard racks, a beach with boats offshore, docks with a container
+  ship, a park and a day-night cycle from golden hour to street lamps, neon and headlights after dark.
 - **Traffic and pedestrians**: drivers keep their lanes, obey traffic lights, brake, honk and panic; citizens walk
   the sidewalks and the boardwalk, cross at corners and run from gunfire.
 - **Twelve vehicles to steal and drive**, from the Brisa compact to the Rayo supercar and the Lince police
@@ -77,7 +78,7 @@ Each scene loads a save, stages a moment with the game's own systems, runs the r
 
 - `game/index.html`, `game/css/` — the page, HUD and menu styles
 - `game/src/main.js` — boots the city, owns every system, runs the loop and the game states
-- `game/src/world/` — city layout, road graph, buildings, shopfronts, streets, props, city lights, ocean, boats, collision, pickups, markers
+- `game/src/world/` — city layout, road graph, buildings, shopfronts, streets, props, street furniture, city lights, ocean, boats, collision, pickups, markers
 - `game/src/police/` — wanted level, dispatch, pursuit tactics, roadblocks, helicopter, unit callsigns
 - `game/src/missions/` — story jobs, mission director, taxi fares and Sun Tokens
 - `game/src/activities/` — street races, Marlin bounties
@@ -86,7 +87,7 @@ Each scene loads a save, stages a moment with the game's own systems, runs the r
 - `game/src/vehicles/` — catalog, models, lights, physics, fleet, traffic AI, carjacking
 - `game/src/characters/`, `game/src/combat/` — character body, player, pedestrians, weapons, gunmen, explosions
 - `game/src/ui/` — HUD panels, dialogue portraits, minimap, city atlas, menus, shop counter
-- `game/src/core/`, `render/`, `effects/`, `audio/` — config, input, save slots, snapshots, sky, camera, particles, sound, radio
+- `game/src/core/`, `render/`, `effects/`, `audio/` — config, input, save slots, snapshots, sky, sky reflections, camera, particles, sound, radio
 
 ---
 

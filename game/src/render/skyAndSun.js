@@ -37,11 +37,11 @@ void main() {
   vec3 dir = normalize(vDir);
   float h = clamp(dir.y, 0.0, 1.0);
   // Deep colour overhead, a paler tone of it lower down, and the horizon's own colour only in a low band of haze.
-  vec3 color = mix(mix(topColor, vec3(1.0), 0.42), topColor, pow(h, 0.6));
+  vec3 color = mix(mix(topColor, vec3(1.0), 0.42 * (1.0 - starAmount)), topColor, pow(h, 0.6));
   color = mix(horizonColor, color, smoothstep(0.0, 0.2, h));
   float sunAmount = max(dot(dir, sunDir), 0.0);
   color += sunColor * pow(sunAmount, 420.0) * 3.0;
-  color += sunColor * pow(sunAmount, 9.0) * 0.32;
+  color += sunColor * pow(sunAmount, 9.0) * 0.32 * (1.0 - starAmount * 0.9);
   float star = step(0.9985, hash(floor(dir * 190.0)));
   color += vec3(star) * starAmount * h;
   // Drifting cumulus on a flat layer overhead: lit by the sun on top, tinted by the horizon underneath.
@@ -56,16 +56,16 @@ void main() {
 
 /** Colour keys through the day: [hour, sky top, horizon, sun light, sun strength, ambient strength]. */
 const KEYS = [
-  [0, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.95],
-  [5, '#0c1232', '#2f2d55', '#9fb3e8', 0.9, 0.95],
+  [0, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.7],
+  [5, '#0c1232', '#2f2d55', '#9fb3e8', 0.9, 0.7],
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
   [9, '#2a8ae6', '#bfe6f5', '#fff0d0', 3.0, 0.7],
   [13, '#1578ee', '#c4ebf8', '#fff3da', 3.5, 0.72],
   [16.5, '#1c74e6', '#ffe4bd', '#ffd9a0', 3.4, 0.66],
   [18.6, '#3a56b4', '#ff9a5a', '#ff9a52', 2.3, 0.62],
   [19.8, '#231d66', '#ee5f7c', '#d8708c', 0.8, 0.7],
-  [21, '#0a1030', '#2a3a72', '#9fb3e8', 0.9, 0.95],
-  [24, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.95],
+  [21, '#0a1030', '#2a3a72', '#9fb3e8', 0.9, 0.7],
+  [24, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.7],
 ];
 
 export class SkyAndSun {
@@ -141,7 +141,7 @@ export class SkyAndSun {
     // Shade is lit by the blue of the sky from above and by warm light bounced off sand and stucco from below,
     // so sunlit walls glow against cool shadows.
     this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.35;
-    this.ambient.color.copy(this.uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.42);
+    this.ambient.color.copy(this.uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.62);
     this.ambient.groundColor.copy(this.sun.color).lerp(this.scratchA.set('#b98f66'), 0.55);
     this.fill.intensity = this.sun.intensity * 0.17;
     this.fill.color.copy(this.uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
@@ -158,7 +158,7 @@ export class SkyAndSun {
     this.uniforms.starAmount.value = this.night;
     // With the sun on the horizon or gone the sky itself is the lamp: lift the ambient light so that streets in
     // long shadow, and the asphalt most of all, stay readable through dusk and night.
-    this.ambient.intensity *= 1 + clamp(1 - height / 0.5, 0, 1) * 0.9;
+    this.ambient.intensity *= 1 + clamp(1 - height / 0.5, 0, 1) * 0.55;
   }
 
   /** The clock as HH:MM for the HUD. */
