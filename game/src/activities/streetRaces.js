@@ -72,7 +72,7 @@ export class StreetRaces {
     const game = this.game;
     const car = game.player.vehicle;
     const points = event.route.map(([i, j]) => ({ x: i * P, z: j * P }));
-    const race = { event, points, countdown: 3.4, clock: 0, index: 0, rivals: [], playerProgress: 0, place: 1, finished: false, car, lastCount: 4 };
+    const race = { event, points, countdown: 3.4, clock: 0, index: 0, rivals: [], order: [], playerProgress: 0, place: 4, car, lastCount: 4 };
     const fx = Math.sin(event.heading);
     const fz = Math.cos(event.heading);
     const slot = (row, side) => ({ x: event.x - fx * row * 8 + fz * side * 2.7, z: event.z - fz * row * 8 - fx * side * 2.7 });
@@ -141,13 +141,18 @@ export class StreetRaces {
     };
   }
 
-  /** The running order, leader first, for the HUD's race board. */
+  /** The running order, leader first: it sets the player's place and fills the HUD's race board. */
   standings() {
     const race = this.active;
     if (!race) return [];
     const rows = race.rivals.map((rival) => ({ name: rival.controller.name, progress: rival.controller.finishTime !== null ? 1000 - rival.controller.finishTime : rival.controller.progress(rival), player: false }));
     rows.push({ name: 'NOVA', progress: race.playerProgress, player: true });
     return rows.sort((a, b) => b.progress - a.progress);
+  }
+
+  /** The order as last worked out by update, so the panel and the board always agree. */
+  raceOrder() {
+    return this.active ? this.active.order : [];
   }
 
   blips() {
@@ -205,12 +210,8 @@ export class StreetRaces {
     if (race.points[race.index + 1]) game.markers.show(race.points[race.index + 1].x, race.points[race.index + 1].z, '#ff9f1c', 4, 12);
     if (distance2D(player.position.x, player.position.z, point.x, point.z) < 10) { race.index += 1; game.audio.checkpoint(); }
     race.playerProgress = raceProgress(race.points, race.index, player.position.x, player.position.z);
-    let ahead = 0;
-    for (const rival of race.rivals) {
-      const driver = rival.controller;
-      if (driver.finishTime !== null || (race.index < race.points.length && driver.progress(rival) > race.playerProgress)) ahead += 1;
-    }
-    race.place = ahead + 1;
+    race.order = this.standings();
+    race.place = race.order.findIndex((row) => row.player) + 1;
     if (race.index >= race.points.length) this.finish();
     else if (race.clock > race.event.limit) this.cancel('Too slow: the others went home.');
   }

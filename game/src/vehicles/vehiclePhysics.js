@@ -5,6 +5,7 @@ import { clamp } from '../core/random.js';
 import { groundHeight } from '../world/cityLayout.js';
 import { VEHICLE_CATALOG } from './vehicleCatalog.js';
 import { buildVehicleModel } from './vehicleModel.js';
+import { attachVehicleLights, flashSirenFlares } from './vehicleLights.js';
 
 const WHEELBASE = 2.7;
 const MAX_LATERAL_ACCEL = 22;
@@ -22,6 +23,7 @@ export class Vehicle {
     this.model = model;
     this.mesh.rotation.order = 'YXZ';
     this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
+    this.lights = attachVehicleLights(model, this.spec);
     this.position = this.mesh.position;
     this.position.set(x, groundHeight(x, z), z);
     this.heading = heading;
@@ -143,6 +145,7 @@ export class Vehicle {
       const phase = this.siren ? Math.floor(this.game.time * 7) % 2 : -1;
       this.model.lightBar[0].color.setHex(phase === 0 ? 0xff2a2a : 0x551010);
       this.model.lightBar[1].color.setHex(phase === 1 ? 0x3a7bff : 0x101c55);
+      flashSirenFlares(this.lights, phase);
     }
     this.effects(dt);
   }
@@ -222,7 +225,8 @@ export class Vehicle {
     this.velZ = 0;
     this.speed = 0;
     this.siren = false;
-    this.mesh.traverse((part) => { if (part.isMesh) part.material = wreckMaterial; });
+    this.lights.rig.visible = false;
+    this.mesh.traverse((part) => { if (part.isMesh && part.parent !== this.lights.rig) part.material = wreckMaterial; });
     this.mesh.rotation.z = 0.06;
     this.game.onVehicleExploded(this);
   }
@@ -247,6 +251,7 @@ export class Vehicle {
     this.mesh = this.model.group;
     this.mesh.rotation.order = 'YXZ';
     this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
+    this.lights = attachVehicleLights(this.model, this.spec);
     this.mesh.position.copy(old.position);
     this.mesh.rotation.copy(old.rotation);
     this.position = this.mesh.position;

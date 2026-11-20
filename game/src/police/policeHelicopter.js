@@ -127,8 +127,10 @@ export class PoliceHelicopter {
     if (stars < 3) { this.dismiss(); return; }
     const player = game.player;
     this.orbit += dt * 0.22;
-    const goalX = player.position.x + Math.cos(this.orbit) * ORBIT_RADIUS;
-    const goalZ = player.position.z + Math.sin(this.orbit) * ORBIT_RADIUS;
+    // Lead a fast car, so the helicopter holds its place over the chase instead of trailing behind it.
+    const car = player.vehicle;
+    const goalX = player.position.x + Math.cos(this.orbit) * ORBIT_RADIUS + (car ? car.velX * 0.75 : 0);
+    const goalZ = player.position.z + Math.sin(this.orbit) * ORBIT_RADIUS + (car ? car.velZ * 0.75 : 0);
     const ease = Math.min(1, dt * 1.3);
     mesh.position.x += (goalX - mesh.position.x) * ease;
     mesh.position.z += (goalZ - mesh.position.z) * ease;

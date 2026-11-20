@@ -21,7 +21,7 @@ function play(game, seconds, each = null) {
 function stagedSave(jobs, extra = {}) {
   const share = jobs / STORY_MISSIONS.length;
   return {
-    cash: 18450, armor: 64, hour: 17.2, missions: STORY_MISSIONS.slice(0, jobs).map((mission) => mission.id), cred: Math.round(260 + share * 3300),
+    cash: 3250 + jobs * 3800, armor: 64, hour: 17.2, missions: STORY_MISSIONS.slice(0, jobs).map((mission) => mission.id), cred: Math.round(260 + share * 3300),
     workshop: { engine: Math.min(3, Math.floor(jobs / 3)), plating: jobs > 3 ? 1 : 0, tires: Math.min(3, Math.floor(jobs / 3)), nitro: jobs > 3 ? 1 : 0 },
     weapons: { current: 'smg', owned: { fists: true, pistol: true, smg: jobs > 2, shotgun: jobs > 5, rifle: jobs > 8 }, clip: { pistol: 12, smg: 32, shotgun: 6, rifle: 30 }, reserve: { pistol: 60, smg: 128, shotgun: 18, rifle: 120 } },
     tokens: [0, 2, 3, 5, 8, 9, 11].slice(0, jobs + 1), faresDone: jobs + 2, races: jobs > 4 ? { oceanDash: { place: 1, time: 96.4 }, centroCircuit: { place: 2, time: 131.8 } } : {},
@@ -69,33 +69,38 @@ function clearLane(game, keep, x, zFrom, zTo) {
 
 /** The cover: Nova in Marlin's stolen Rayo on Ocean Drive at five stars, the whole response around her. */
 function chaseScene(game) {
-  loadCity(game, stagedSave(4), 17.3, 2.6, 232, 0);
+  loadCity(game, stagedSave(4), 16.7, 0, 232, 0);
   game.missions.start(missionById('paintItGone'));
   const rayo = game.missions.active.vehicle;
-  rayo.position.set(2.6, 0, 236);
+  rayo.position.set(0, 0, 236);
   rayo.heading = 0;
   tryEnterVehicle(game);
+  play(game, 0.05);
   game.hud.clearSpeech();
   rayo.velZ = 33;
   rayo.health = rayo.maxHealth * 0.78;
-  clearLane(game, rayo, 0, 150, 420);
-  spawnPursuit(game, 'interceptor', 'lince', -2.8, 244, 0, 36);
-  spawnPursuit(game, 'patrol', 'centinela', 6.2, 226, 0, 35);
-  spawnPursuit(game, 'tactical', 'bastion', -2.4, 214, 0, 35);
-  spawnPursuit(game, 'patrol', 'centinela', 2.6, 198, 0, 35);
-  play(game, 0.2);
+  clearLane(game, rayo, 0, 150, 318);
   game.wanted.setStars(5, 99);
-  game.police.roadblocks.deploy({ x: 0, z: 360, alongX: false, direction: 1 }, true);
+  // The pack: an interceptor and a cruiser boxing her in from ahead, a tactical van coming head-on, one more behind.
+  spawnPursuit(game, 'interceptor', 'lince', 4.8, 247, 0, 39);
+  spawnPursuit(game, 'patrol', 'centinela', -4.8, 244, 0, 38);
+  spawnPursuit(game, 'tactical', 'bastion', 3.4, 366, Math.PI, 6);
+  spawnPursuit(game, 'patrol', 'centinela', 3, 205, 0, 35);
+  game.police.roadblocks.deploy({ x: 0, z: 392, alongX: false, direction: 1 }, true);
+  const wreck = game.vehicles.spawn('centinela', 8.8, 336, 0.5);
+  wreck.health = 0;
+  wreck.hitByPlayer = true;
+  wreck.burning = 2.2;
   game.police.helicopter.scramble();
-  game.police.helicopter.orbit = 1.2;
-  game.police.helicopter.mesh.position.set(18, 26, 300);
+  game.police.helicopter.orbit = Math.PI / 2 + 0.1;
+  game.police.helicopter.mesh.position.set(-2, 25, 345);
   game.crew.cooldowns.jam = 96;
   game.hud.say('JAZZ', 'That is every badge on Marlin\'s payroll behind you. Fresh Coat, now!', '#f062b0');
-  const yaw = 0.2;
-  play(game, 1.6, () => {
+  play(game, 1.75, (t) => {
     game.input.held.add('KeyW');
-    game.camera.yaw = yaw;
-    game.camera.pitch = 0.16;
+    if (t > 1.45) game.input.held.add('ShiftLeft');
+    game.camera.yaw = 0.05;
+    game.camera.pitch = 0.2;
     game.camera.idleLook = 0;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
   });
@@ -104,20 +109,24 @@ function chaseScene(game) {
 /** The Sundown Heist's gunfight outside Banco Marlin: guards, tracers, a burning car and the police arriving. */
 function shootoutScene(game) {
   const bank = LANDMARKS.bank;
-  loadCity(game, stagedSave(9), 17.6, bank.x - 31, bank.z + 5.5, Math.PI / 2);
+  loadCity(game, stagedSave(9), 16.4, bank.x - 25, bank.z + 6, Math.PI / 2);
   game.player.cash = 61200;
   game.missions.start(missionById('sundownHeist'));
   game.hud.clearSpeech();
-  const wreck = game.vehicles.spawn('duna', bank.x - 10, bank.z + 10.2, Math.PI / 2, '#3498db');
+  const wreck = game.vehicles.spawn('duna', bank.x - 7, bank.z + 9.5, Math.PI / 2, '#3498db');
   wreck.health = 0;
   wreck.hitByPlayer = false;
-  wreck.burning = 2.75;
-  spawnPursuit(game, 'patrol', 'centinela', bank.x + 46, bank.z + 5, -Math.PI / 2, 14);
-  game.wanted.setStars(2, 99);
+  wreck.burning = 2.36;
+  game.wanted.setStars(3, 99);
+  spawnPursuit(game, 'patrol', 'centinela', bank.x + 30, bank.z + 5, -Math.PI / 2, 12);
+  spawnPursuit(game, 'interceptor', 'lince', bank.x + 52, bank.z + 9, -Math.PI / 2, 14);
+  game.police.helicopter.scramble();
+  game.police.helicopter.orbit = 0.2;
+  game.police.helicopter.mesh.position.set(bank.x + 40, 27, bank.z + 2);
   game.hud.say('NOVA', 'Guards on every corner. Marlin was expecting company.', '#ff7b6b');
   play(game, 1.35, (t) => {
-    game.camera.yaw = Math.PI / 2 + 0.1;
-    game.camera.pitch = 0.1;
+    game.camera.yaw = Math.PI / 2 + 0.14;
+    game.camera.pitch = 0.08;
     game.input.buttons[0] = t > 0.2;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
     game.player.health = Math.max(game.player.health, 58);
@@ -138,21 +147,21 @@ function atlasScene(game) {
   game.setState('map');
 }
 
-/** The Harbor Night Sprint: the grid away under the dock lights, nitro lit, rivals door to door. */
+/** The Centro Circuit after dark: the grid away under the neon, nitro lit, rivals door to door. */
 function raceScene(game) {
-  const event = STREET_RACES.find((entry) => entry.id === 'harborSprint');
-  loadCity(game, stagedSave(7), 21.6, event.x + 4, event.z, -Math.PI / 2);
-  const ride = game.vehicles.spawn('marlinGT', event.x, event.z, -Math.PI / 2, '#ff3b30');
+  const event = STREET_RACES.find((entry) => entry.id === 'centroCircuit');
+  loadCity(game, stagedSave(7), 21.6, event.x - 4, event.z, event.heading);
+  const ride = game.vehicles.spawn('marlinGT', event.x, event.z, event.heading, '#ff3b30');
   ride.parked = true;
   ride.stolen = true;
   tryEnterVehicle(game);
   game.races.start(event);
   game.races.active.countdown = 0.05;
-  play(game, 4.2, (t) => {
+  play(game, 3.1, (t) => {
     game.input.held.add('KeyW');
-    if (t > 2.4) game.input.held.add('ShiftLeft');
-    game.camera.yaw = -Math.PI / 2 + 0.12;
-    game.camera.pitch = 0.15;
+    if (t > 2.2) game.input.held.add('ShiftLeft');
+    game.camera.yaw = event.heading + 0.1;
+    game.camera.pitch = 0.13;
     game.camera.idleLook = 0;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
   });

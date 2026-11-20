@@ -137,7 +137,7 @@ export const STORY_MISSIONS = [
     ],
   },
   {
-    id: 'sundownHeist', title: 'Sundown Heist', giver: 'bravo', at: L.garage, requires: ['blueTide', 'loudAndClear', 'coastlineClassic', 'nightClinic'], reward: 40000, cred: 1200, hour: 17.6,
+    id: 'sundownHeist', title: 'Sundown Heist', giver: 'bravo', at: L.garage, requires: ['blueTide', 'loudAndClear', 'coastlineClassic', 'nightClinic'], reward: 40000, cred: 1200, hour: 16.4,
     brief: 'Banco Marlin holds Mateo\'s debt and everybody else\'s. Tonight the vault opens.',
     steps: [
       { kind: 'say', lines: [['bravo', 'Banco Marlin. The vault holds every debt in Solmara, your brother\'s too.'], ['nova', 'Then we burn the ledger and take the rest.'], ['bravo', 'Jazz jams the alarm for half a minute. After that, the whole city comes.']] },

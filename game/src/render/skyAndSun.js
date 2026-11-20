@@ -17,8 +17,22 @@ uniform vec3 horizonColor;
 uniform vec3 sunColor;
 uniform vec3 sunDir;
 uniform float starAmount;
+uniform float cloudTime;
 varying vec3 vDir;
 float hash(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
+float hash2(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float valueNoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), f.x), mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+float cloudCover(vec2 p) {
+  float sum = 0.0;
+  float gain = 0.5;
+  for (int k = 0; k < 4; k++) { sum += valueNoise(p) * gain; p = p * 2.03 + vec2(13.7, 7.1); gain *= 0.5; }
+  return sum;
+}
 void main() {
   vec3 dir = normalize(vDir);
   float h = clamp(dir.y, 0.0, 1.0);
@@ -26,25 +40,29 @@ void main() {
   float sunAmount = max(dot(dir, sunDir), 0.0);
   color += sunColor * pow(sunAmount, 420.0) * 3.0;
   color += sunColor * pow(sunAmount, 9.0) * 0.32;
-  float streak = sin(dir.x * 9.0 + dir.z * 5.0) * sin(dir.z * 13.0 - dir.x * 3.0);
-  color += vec3(1.0, 0.92, 0.85) * smoothstep(0.55, 1.0, streak) * (1.0 - h) * h * 0.55;
   float star = step(0.9985, hash(floor(dir * 190.0)));
   color += vec3(star) * starAmount * h;
+  // Drifting cumulus on a flat layer overhead: lit by the sun on top, tinted by the horizon underneath.
+  vec2 plane = dir.xz / (dir.y + 0.16) * 1.7 + vec2(cloudTime * 0.012, cloudTime * 0.005);
+  float cover = smoothstep(0.5, 0.78, cloudCover(plane)) * smoothstep(0.02, 0.22, dir.y);
+  vec3 cloudLit = mix(horizonColor, vec3(1.0), 0.72) + sunColor * (0.18 + pow(sunAmount, 5.0) * 0.5);
+  vec3 cloudColor = mix(cloudLit, topColor * 0.55 + horizonColor * 0.3, starAmount * 0.85);
+  color = mix(color, cloudColor, cover * 0.88);
   gl_FragColor = vec4(color, 1.0);
 }`;
 
 /** Colour keys through the day: [hour, sky top, horizon, sun light, sun strength, ambient strength]. */
 const KEYS = [
-  [0, '#0a1030', '#1b2a55', '#8fa3d8', 0.5, 0.5],
-  [5, '#0e1638', '#2f2d55', '#8fa3d8', 0.5, 0.5],
+  [0, '#0c1438', '#24346a', '#9fb3e8', 0.75, 0.66],
+  [5, '#0e1638', '#2f2d55', '#9fb3e8', 0.75, 0.66],
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
   [9, '#2f8fe0', '#bfe6f5', '#fff2d6', 2.5, 0.85],
   [13, '#1f86e6', '#c9ecf7', '#fff8e8', 2.9, 0.95],
   [16.5, '#2a80d8', '#ffe0b0', '#ffe2ae', 2.7, 0.9],
   [18.6, '#35529e', '#ff9460', '#ff9a52', 1.9, 0.62],
   [19.8, '#1a2152', '#d4577a', '#c86a8c', 0.6, 0.5],
-  [21, '#0b1232', '#1f2c58', '#8fa3d8', 0.5, 0.5],
-  [24, '#0a1030', '#1b2a55', '#8fa3d8', 0.5, 0.5],
+  [21, '#0c1438', '#2a3a72', '#9fb3e8', 0.75, 0.66],
+  [24, '#0c1438', '#24346a', '#9fb3e8', 0.75, 0.66],
 ];
 
 export class SkyAndSun {
@@ -57,6 +75,7 @@ export class SkyAndSun {
       sunColor: { value: new THREE.Color() },
       sunDir: { value: new THREE.Vector3(0, 1, 0) },
       starAmount: { value: 0 },
+      cloudTime: { value: 0 },
     };
     this.dome = new THREE.Mesh(
       new THREE.SphereGeometry(1800, 32, 16),
@@ -92,6 +111,7 @@ export class SkyAndSun {
 
   update(dt, focus) {
     this.hour = (this.hour + (dt * 24) / DAY_LENGTH_SECONDS) % 24;
+    this.uniforms.cloudTime.value += dt;
     this.applyHour();
     this.dome.position.set(focus.x, 0, focus.z);
     const dir = this.uniforms.sunDir.value;

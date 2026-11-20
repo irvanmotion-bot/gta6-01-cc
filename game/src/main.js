@@ -29,6 +29,9 @@ import { CityBuildings } from './world/buildings.js';
 import { buildStreetsAndGround } from './world/streetsAndGround.js';
 import { OceanAndBeach } from './world/oceanAndBeach.js';
 import { StreetProps } from './world/streetProps.js';
+import { CityLights } from './world/cityLights.js';
+import { BoatsAtSea } from './world/boatsAtSea.js';
+import { PlayerHeadlamp, setVehicleLightsNight } from './vehicles/vehicleLights.js';
 import { CollisionWorld } from './world/collision.js';
 import { Pickups } from './world/pickups.js';
 import { WorldMarkers } from './world/worldMarkers.js';
@@ -72,6 +75,9 @@ class Game {
     this.buildings = new CityBuildings(this.scene, this.collision);
     this.ocean = new OceanAndBeach(this.scene, this.collision);
     this.props = new StreetProps(this.scene);
+    this.cityLights = new CityLights(this.scene, this.props.lampSpots, this.buildings.fronts.neonSpots);
+    this.boats = new BoatsAtSea(this.scene);
+    this.headlamp = new PlayerHeadlamp(this.scene);
     this.particles = new Particles(this.scene);
     this.markers = new WorldMarkers(this.scene);
     this.pickups = new Pickups(this);
@@ -366,6 +372,10 @@ class Game {
       this.ocean.update(dt, this.scene.fog.color);
       this.props.update(this.time, this.sky.night);
       this.buildings.setNight(this.sky.night);
+      this.cityLights.setNight(this.sky.night);
+      setVehicleLightsNight(this.sky.night);
+      this.headlamp.update(this.state === 'play' ? this.player.vehicle : null, this.sky.night);
+      this.boats.update(dt, this.time);
       this.particles.update(dt);
     }
     if (this.state === 'play') {

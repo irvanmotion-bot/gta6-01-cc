@@ -189,29 +189,47 @@ export class Minimap {
       c.restore();
     });
     STREETS.forEach((name, j) => c.fillText(name, toX(CITY.width / 2 + (j % 2 ? 200 : -200)), toY(j * CITY.pitch) + 3));
-    c.font = `900 ${Math.max(12, 20 * scale)}px Impact, "Arial Black", sans-serif`;
-    c.fillStyle = '#ffffff';
-    c.strokeStyle = 'rgba(10,14,22,0.85)';
-    c.lineWidth = 4;
-    c.lineJoin = 'round';
-    for (const [text, x, z] of [['PLAYA DORADA', 80, 250], ['CENTRO ALTO', 480, 370], ['LAS COLINAS', 520, 80], ['EL MERCADO', 760, 440], ['PUERTO VIEJO', 440, 640], ['BAHÍA DEL SOL', -100, 520]]) {
-      c.strokeText(text, toX(x), toY(z));
-      c.fillText(text, toX(x), toY(z));
-    }
+    // District names sit large and faint under everything else, the bay's name runs up the coast.
+    c.font = `900 ${Math.max(14, 30 * scale)}px Impact, "Arial Black", sans-serif`;
+    c.fillStyle = 'rgba(255,255,255,0.62)';
+    for (const [text, x, z] of [['PLAYA DORADA', 82, 446], ['CENTRO ALTO', 480, 362], ['LAS COLINAS', 560, 82], ['EL MERCADO', 760, 286], ['PUERTO VIEJO', 400, 682]]) c.fillText(text, toX(x), toY(z));
+    c.save();
+    c.translate(toX(-104), toY(430));
+    c.rotate(-Math.PI / 2);
+    c.fillText('BAHÍA DEL SOL', 0, 0);
+    c.restore();
     const unit = Math.max(1.2, scale * 2.4);
     const places = Object.values(LANDMARKS).map((p) => ({ x: p.x, z: p.z, color: p.color, label: p.icon }));
     for (const blip of [...places, ...this.collectBlips()]) this.drawBlip(c, toX(blip.x), toY(blip.z), blip, unit);
+    // Every landmark carries its name under its icon.
+    c.font = `800 ${Math.max(9, 11.5 * scale)}px Arial, sans-serif`;
+    c.lineWidth = 3;
+    c.lineJoin = 'round';
+    c.strokeStyle = 'rgba(10,14,22,0.9)';
+    c.fillStyle = '#ffffff';
+    for (const place of Object.values(LANDMARKS)) {
+      const y = toY(place.z) + 9 * unit + 9;
+      c.strokeText(place.name, toX(place.x), y);
+      c.fillText(place.name, toX(place.x), y);
+    }
     const player = game.player.position;
     this.drawArrow(c, toX(player.x), toY(player.z), game.player.heading, 9 * unit);
-    c.textAlign = 'left';
-    c.font = `700 ${Math.max(11, 13 * scale)}px Arial, sans-serif`;
-    Object.values(LANDMARKS).forEach((place, index) => {
-      const y = offsetY + 18 + index * 20;
-      this.drawBlip(c, 22, y, { color: place.color, label: place.icon }, 1.2);
+    this.drawMapKey(c, offsetX + 10, offsetY + 12);
+  }
+
+  /** The key in the map's corner: what each kind of marker means. */
+  drawMapKey(c, x, y) {
+    const rows = [['#35d0ff', 'R', 'Street race'], ['#ff3b30', '☠', 'Marlin bounty'], ['#ffd60a', '', 'Job objective'], ['#3a7bff', '', 'Police unit']];
+    c.fillStyle = 'rgba(9,13,22,0.78)';
+    c.fillRect(x, y, 132, rows.length * 20 + 10);
+    rows.forEach(([color, label, text], index) => {
+      const rowY = y + 15 + index * 20;
+      this.drawBlip(c, x + 14, rowY, { color, label }, 1.15);
       c.textAlign = 'left';
-      c.font = '700 13px Arial, sans-serif';
+      c.font = '700 12px Arial, sans-serif';
       c.fillStyle = '#ffffff';
-      c.fillText(place.name, 40, y + 4);
+      c.fillText(text, x + 30, rowY + 4);
     });
+    c.textAlign = 'center';
   }
 }

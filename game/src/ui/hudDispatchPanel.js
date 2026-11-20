@@ -29,17 +29,15 @@ export class HudDispatchPanel {
     cache.toggle(this.root, 'visible', stars > 0);
     const racing = Boolean(game.races.active);
     cache.toggle(this.board, 'visible', racing);
-    // The lists are rebuilt a few times a second, not every frame.
-    this.clock -= dt;
-    if (this.clock > 0) return;
-    this.clock = 0.25;
-    if (stars > 0) {
-      const roster = game.police.roster();
-      cache.text(this.head, `SOLMARA P.D. DISPATCH · ${roster.length} ${roster.length === 1 ? 'UNIT' : 'UNITS'}`);
-      cache.html(this.rows, this.rosterMarkup(roster));
-    }
     if (racing) {
-      cache.html(this.boardRows, game.races.standings().map((row, index) => `<div class="racer${row.player ? ' me' : ''}"><i>${index + 1}</i><b>${row.name}</b></div>`).join(''));
+      cache.html(this.boardRows, game.races.raceOrder().map((row, index) => `<div class="racer${row.player ? ' me' : ''}"><i>${index + 1}</i><b>${row.name}</b></div>`).join(''));
     }
+    // The unit list is rebuilt a few times a second, not every frame.
+    this.clock -= dt;
+    if (this.clock > 0 || stars === 0) return;
+    this.clock = 0.25;
+    const roster = game.police.roster();
+    cache.text(this.head, `SOLMARA P.D. DISPATCH · ${roster.length} ${roster.length === 1 ? 'UNIT' : 'UNITS'}`);
+    cache.html(this.rows, this.rosterMarkup(roster));
   }
 }

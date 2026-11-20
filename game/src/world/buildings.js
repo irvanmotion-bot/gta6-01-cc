@@ -5,6 +5,7 @@ import { SeededRandom } from '../core/random.js';
 import { MeshBatcher, placement } from '../render/meshBatcher.js';
 import { createFacadeTextures, createSignTexture, createBillboardTexture, FACADE_TILE } from '../render/proceduralTextures.js';
 import { blockRect, districtOfBlock, LANDMARKS } from './cityLayout.js';
+import { ShopFronts } from './shopFronts.js';
 
 const TINTS = {
   centro: ['#8fd3e8', '#a8c8e8', '#f2d7b6', '#9ad1c4', '#e6eef5', '#f4b6a6', '#7fb8d8', '#c5b8e8'],
@@ -60,6 +61,7 @@ export class CityBuildings {
       });
     }
     this.plain = new MeshBatcher();
+    this.fronts = new ShopFronts(CITY.seed + 303);
     this.roofHeights = new Map();
 
     for (let i = 0; i < CITY.roadsX - 1; i += 1) {
@@ -69,6 +71,7 @@ export class CityBuildings {
       if (!this.batches[style].isEmpty()) scene.add(this.batches[style].build(this.materials[style]));
     }
     scene.add(this.plain.build(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 })));
+    this.fronts.build(scene);
     this.addLandmarkSigns();
     this.addBillboards();
   }
@@ -108,6 +111,19 @@ export class CityBuildings {
     if (cell.edgeN) this.plain.addBox(cx, 3.3, cell.minZ + inset - 0.7, width * 0.9, 0.25, 1.5, color);
     if (cell.edgeE) this.plain.addBox(cell.maxX - inset + 0.7, 3.3, cz, 1.5, 0.25, depth * 0.9, color);
     if (cell.edgeW) this.plain.addBox(cell.minX + inset - 0.7, 3.3, cz, 1.5, 0.25, depth * 0.9, color);
+    this.shopfronts(cell, inset);
+  }
+
+  /** Name boards and neon on every wall of a building that faces a street. */
+  shopfronts(cell, inset) {
+    const cx = (cell.minX + cell.maxX) / 2;
+    const cz = (cell.minZ + cell.maxZ) / 2;
+    const width = cell.maxX - cell.minX - inset * 2;
+    const depth = cell.maxZ - cell.minZ - inset * 2;
+    if (cell.edgeS) this.fronts.dressWall(cx, cell.maxZ - inset, 0, 1, width);
+    if (cell.edgeN) this.fronts.dressWall(cx, cell.minZ + inset, 0, -1, width);
+    if (cell.edgeE) this.fronts.dressWall(cell.maxX - inset, cz, 1, 0, depth);
+    if (cell.edgeW) this.fronts.dressWall(cell.minX + inset, cz, -1, 0, depth);
   }
 
   fillBlock(i, j, district) {
@@ -121,6 +137,7 @@ export class CityBuildings {
       for (const cell of cells) {
         const tint = rng.pick(TINTS.centro);
         const podium = this.raise(cell, 1, rng.range(7, 11), 'shop', '#e9e4da');
+        this.shopfronts(cell, 1);
         const height = rng.range(48, cells.length === 1 ? 165 : 120);
         const shrink = { minX: cell.minX + 5, maxX: cell.maxX - 5, minZ: cell.minZ + 5, maxZ: cell.maxZ - 5 };
         const tower = this.raise(shrink, rng.range(0, 3), height, 'office', tint);
@@ -215,6 +232,7 @@ export class CityBuildings {
 
   /** Light the windows as night falls. */
   setNight(night) {
-    for (const material of Object.values(this.materials)) material.emissiveIntensity = night * 1.15;
+    for (const material of Object.values(this.materials)) material.emissiveIntensity = night * 1.35;
+    this.fronts.setNight(night);
   }
 }

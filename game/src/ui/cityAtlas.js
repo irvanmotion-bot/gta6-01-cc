@@ -5,6 +5,9 @@ import { completionPercent, completionRows } from '../progression/completionTrac
 import { createElement, formatCash } from './domBuilder.js';
 import { formatPlayTime, statisticRows } from './menus.js';
 
+/** The statistics the atlas has room for; the pause menu's statistics page shows them all. */
+const RECORD_ROWS = ['Cash earned', 'Cash spent', 'Cars stolen', 'Distance driven', 'Highest wanted level', 'Police escapes', 'Officers downed', 'Marlin guns downed', 'Helicopters downed', 'Shots fired', 'Crew favors called', 'Time played'];
+
 export class CityAtlas {
   constructor(game) {
     this.game = game;
@@ -45,7 +48,7 @@ export class CityAtlas {
     const game = this.game;
     const percent = completionPercent(game);
     const cred = game.cred;
-    const stats = statisticRows(game).slice(2, 16).map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
+    const stats = statisticRows(game).filter(([label]) => RECORD_ROWS.includes(label)).map(([label, value]) => `<div><span>${label}</span><b>${value}</b></div>`).join('');
     this.caption.textContent = 'CITY ATLAS · M or Esc to close';
     this.side.innerHTML = `
       <div class="atlas-head"><div><h2>SOLMARA</h2><p>RANK ${cred.rank} · ${cred.title().toUpperCase()} · ${cred.points.toLocaleString('en-US')} CRED · ${formatCash(game.player.cash)}</p></div>

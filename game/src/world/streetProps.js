@@ -16,6 +16,7 @@ export class StreetProps {
     this.rng = new SeededRandom(CITY.seed + 11);
     this.props = new MeshBatcher();
     this.lampHeads = new MeshBatcher();
+    this.lampSpots = [];
     this.signalLamps = {};
     this.signalMaterials = {};
     for (const axis of ['ns', 'ew']) {
@@ -87,6 +88,7 @@ export class StreetProps {
     this.props.addBox(x, CITY.curb, z, 0.18, 7, 0.18, '#4a4f55');
     this.props.addBox(x + dx * 1.1, 7.1, z + dz * 1.1, dx ? 2.4 : 0.14, 0.14, dz ? 2.4 : 0.14, '#4a4f55');
     this.lampHeads.addBox(x + dx * 2.1, 6.86, z + dz * 2.1, 0.7, 0.2, 0.7, '#ffffff');
+    this.lampSpots.push({ x: x + dx * 2.1, y: 6.8, z: z + dz * 2.1 });
   }
 
   decorateBlock(i, j, district) {
