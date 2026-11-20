@@ -156,6 +156,22 @@
 .showroom-plate small { font-size: 1.6vh; font-weight: 800; letter-spacing: 0.3vh; color: var(--amber); }
 .showroom-plate b { font-family: var(--display); font-weight: 400; font-style: italic; font-size: 8vh; line-height: 1; color: #fff; letter-spacing: 0.2vh; }
 .showroom-plate span { font-size: 2vh; font-weight: 800; letter-spacing: 0.14vh; color: var(--cream); }
+/* The workshop's lines as cards, two abreast: key and picture on top, the tiers fitted and the price underneath. */
+#shop-menu.showroom .shop-rows { display: grid; grid-template-columns: 1fr 1fr; gap: 1vh; }
+.upgrade-card { display: grid; grid-template-columns: 8.6vh 1fr; grid-template-rows: auto auto; column-gap: 1.2vh; row-gap: 0.8vh; align-items: center; margin: 0; padding: 1.2vh 1.4vh; position: relative; border: 0.25vh solid rgba(244, 236, 216, 0.22); border-left: 0.9vh solid var(--amber); border-radius: 0.8vh; }
+.upgrade-card .shop-key { position: absolute; right: 1vh; top: 1vh; width: 3vh; height: 3vh; font-size: 2.2vh; }
+.upgrade-icon { width: 8.6vh; height: 8.6vh; padding: 1.3vh; box-sizing: border-box; fill: var(--amber); background: rgba(23, 18, 43, 0.75); border-radius: 0.8vh; }
+.upgrade-card .shop-label { font-family: var(--display); font-weight: 400; font-size: 2.7vh; line-height: 1.05; letter-spacing: 0.08vh; padding-right: 3.4vh; }
+.upgrade-card .shop-label small { margin-top: 0.4vh; font-family: var(--body); font-size: 1.4vh; font-weight: 600; letter-spacing: 0; }
+.upgrade-card .shop-pips { gap: 0.7vh; }
+.upgrade-card .shop-pips i { width: 2.6vh; height: 1.5vh; border-radius: 0.4vh; }
+.upgrade-card .shop-price { font-size: 3.6vh; }
+.upgrade-card.wide { grid-column: span 2; grid-template-columns: 6vh 1fr auto; grid-template-rows: auto; padding-right: 5.4vh; }
+.upgrade-card.wide .upgrade-icon { width: 6vh; height: 6vh; padding: 1vh; }
+.upgrade-card.wide .shop-label { padding-right: 0; }
+#shop-menu.showroom .spec-bar { grid-template-columns: 17vh 1fr 13vh; font-size: 1.8vh; line-height: 3.5vh; }
+#shop-menu.showroom .spec-bar i { height: 2vh; border-radius: 1vh; }
+#shop-menu.showroom .spec-bar b { font-size: 2.6vh; }
 .spec-bars { margin-bottom: 1.2vh; }
 .spec-bar { display: grid; grid-template-columns: 16vh 1fr 12vh; align-items: center; gap: 1.2vh; font-size: 1.6vh; font-weight: 800; letter-spacing: 0.1vh; line-height: 2.6vh; }
 .spec-bar i { display: block; height: 1.2vh; background: rgba(244, 236, 216, 0.14); border-radius: 0.6vh; overflow: hidden; }
