@@ -80,6 +80,29 @@ export class MeshBatcher {
     }
   }
 
+  /**
+   * Reshape the box just added: `move(point)` edits each corner in place (a THREE.Vector3), then every face gets
+   * the normal of its new plane. Turns a brick into a bonnet that falls to the nose or a boot that falls to the tail.
+   */
+  reshapeLastBox(move) {
+    const p = this.positions;
+    const n = this.normals;
+    const start = p.length - 72;
+    for (let k = start; k < p.length; k += 3) {
+      scratchVector.set(p[k], p[k + 1], p[k + 2]);
+      move(scratchVector);
+      p[k] = scratchVector.x; p[k + 1] = scratchVector.y; p[k + 2] = scratchVector.z;
+    }
+    for (let face = 0; face < 6; face += 1) {
+      const a = start + face * 12;
+      scratchEdgeA.set(p[a + 3] - p[a], p[a + 4] - p[a + 1], p[a + 5] - p[a + 2]);
+      scratchEdgeB.set(p[a + 6] - p[a], p[a + 7] - p[a + 1], p[a + 8] - p[a + 2]);
+      scratchVector.crossVectors(scratchEdgeA, scratchEdgeB).normalize();
+      if (scratchVector.x * n[a] + scratchVector.y * n[a + 1] + scratchVector.z * n[a + 2] < 0) scratchVector.negate();
+      for (let k = a; k < a + 12; k += 3) { n[k] = scratchVector.x; n[k + 1] = scratchVector.y; n[k + 2] = scratchVector.z; }
+    }
+  }
+
   /** A flat rectangle lying on the ground at height `y` (road paint, lawns, sand). */
   addFlat(cx, y, cz, width, depth, color, rotY = 0) {
     this.addBox(cx, y - 0.02, cz, width, 0.02, depth, color, { rotY });
@@ -120,4 +143,6 @@ const scratchColor = new THREE.Color();
 const scratchMatrix = new THREE.Matrix4();
 const scratchNormalMatrix = new THREE.Matrix3();
 const scratchVector = new THREE.Vector3();
+const scratchEdgeA = new THREE.Vector3();
+const scratchEdgeB = new THREE.Vector3();
 const unitBox = new THREE.BoxGeometry(1, 1, 1);

@@ -14,7 +14,7 @@ const PENNANT_COLOURS = ['#ffb547', '#f4ecd8', '#ff6a4d', '#2f2c5c'];
 const TURNOUT = [0.4, 0.55, 0.7, 0.85, 1];
 const POPULATE_WITHIN = 125;
 const MAX_WATCHERS = 44;
-const pennantShape = new THREE.ConeGeometry(0.34, 0.74, 4);
+const pennantShape = new THREE.ConeGeometry(0.27, 0.6, 4);
 const tubeShape = new THREE.CylinderGeometry(0.11, 0.15, 1.5, 8);
 const legShape = new THREE.CylinderGeometry(0.03, 0.03, 1.5, 5);
 
@@ -22,9 +22,9 @@ const legShape = new THREE.CylinderGeometry(0.03, 0.03, 1.5, 5);
 function watchSpots() {
   const spots = [];
   // Along the boardwalk and the kerb of Corona Drive, the whole length of the Strand.
-  for (let z = 44; z < CITY.depth - 30; z += 58) {
-    spots.push({ x: -10.4, z, size: 7, spreadX: 1.6, spreadZ: 7, boardwalk: true, telescope: true });
-    spots.push({ x: 7.6, z: z + 27, size: 5, spreadX: 0.8, spreadZ: 6, telescope: z % 116 === 44 });
+  for (let z = 44; z < CITY.depth - 30; z += 48) {
+    spots.push({ x: -10.4, z, size: 8, spreadX: 1.7, spreadZ: 8, boardwalk: true, telescope: true });
+    spots.push({ x: 7.7, z: z + 24, size: 5, spreadX: 0.8, spreadZ: 6, telescope: z % 96 === 44 });
   }
   // Outside the Orrery Trust, in Jacaranda Gardens and at the observatory on the hill.
   const bank = LANDMARKS.bank;
@@ -55,7 +55,7 @@ export class EclipseWatchParties {
 
   /** Strings of pennants across Corona Drive, Grand Saros Avenue and the streets round Orrery Square. */
   hangBunting(batch) {
-    for (let z = 30; z < CITY.depth - 10; z += 26) {
+    for (let z = 30; z < CITY.depth - 10; z += 40) {
       if (z % P < 9 || z % P > P - 9) continue;
       this.hangString(batch, -7.2, z, 7.2, z);
     }
@@ -74,10 +74,9 @@ export class EclipseWatchParties {
     const turn = Math.atan2(x1 - x0, z1 - z0) + Math.PI / 2;
     for (let k = 0; k <= count; k += 1) {
       const t = k / count;
-      const y = 6.9 - 1.1 * (1 - (2 * t - 1) ** 2);
-      batch.addGeometry(pennantShape, placement(x0 + (x1 - x0) * t, y - 0.37, z0 + (z1 - z0) * t, turn, 1, 1, 0.1, Math.PI), PENNANT_COLOURS[(k + Math.round(z0 + x0)) % PENNANT_COLOURS.length]);
+      const y = 7.6 - 0.9 * (1 - (2 * t - 1) ** 2);
+      batch.addGeometry(pennantShape, placement(x0 + (x1 - x0) * t, y - 0.3, z0 + (z1 - z0) * t, turn, 1, 1, 0.1, Math.PI), PENNANT_COLOURS[(k + Math.round(z0 + x0)) % PENNANT_COLOURS.length]);
     }
-    batch.addBox((x0 + x1) / 2, 6.45, (z0 + z1) / 2, Math.abs(x1 - x0) + 0.05, 0.03, Math.abs(z1 - z0) + 0.05, '#3a3640');
   }
 
   /** A brass telescope on a tripod beside a party, already pointed at the afternoon sun. */
@@ -147,6 +146,7 @@ export class EclipseWatchParties {
     for (const scope of this.telescopes) {
       if (!game.player.vehicle && game.state === 'play' && distance2D(scope.x, scope.z, player.x, player.z) < 1.8) game.hud.hint(this.telescopeLine());
     }
+    this.visitObservatory();
     this.clock -= dt;
     if (this.clock > 0) return;
     this.clock = 0.5;
@@ -169,6 +169,21 @@ export class EclipseWatchParties {
         spot.turnout = turnout;
       } else if (!near && spot.crowd.length === 0) spot.turnout = -1;
     }
+  }
+
+  /** At the door of the Saros Observatory: once the story is done, E turns the week back to first contact. */
+  visitObservatory() {
+    const game = this.game;
+    const place = LANDMARKS.observatory;
+    const player = game.player;
+    if (game.state !== 'play' || player.vehicle || distance2D(place.x, place.z, player.position.x, player.position.z) > 2.2) return;
+    if (!game.missions.isStoryComplete()) { game.hud.hint('Saros Observatory: the dome opens to visitors after the eclipse'); return; }
+    if (game.calendar.isEclipseDay() && game.calendar.phase() !== 'after') { game.hud.hint('Saros Observatory: the eclipse is on. Look up'); return; }
+    game.hud.hint('Press E to live the eclipse again, from first contact');
+    if (!game.input.wasPressed('KeyE')) return;
+    game.calendar.relive();
+    this.populate();
+    game.hud.banner('ECLIPSE DAY, AGAIN', 'First contact in a moment. Every rule of the dark is in force.', '#ffb547');
   }
 
   /** What Nova sees through a telescope. */

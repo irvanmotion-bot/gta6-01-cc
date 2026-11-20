@@ -11,6 +11,7 @@ import { MissionDirector } from './missions/missionDirector.js';
 import { StreetCred } from './progression/streetCred.js';
 import { CrewFavors } from './progression/crewFavors.js';
 import { TuningWorkshop } from './garage/tuningWorkshop.js';
+import { WorkshopShowroom } from './garage/workshopShowroom.js';
 import { StreetRaces } from './activities/streetRaces.js';
 import { VaneBounties } from './activities/vaneBounties.js';
 import { SideActivities } from './missions/sideActivities.js';
@@ -106,6 +107,7 @@ class Game {
     this.cred = new StreetCred(this);
     this.crew = new CrewFavors(this);
     this.workshop = new TuningWorkshop(this);
+    this.showroom = new WorkshopShowroom(this);
     this.wanted = new WantedLevel(this);
     this.police = new PoliceDispatch(this);
     this.weapons = new Weapons(this);
@@ -158,7 +160,7 @@ class Game {
     const playing = state === 'play';
     this.input.enabled = playing;
     if (!playing) this.input.releaseLock();
-    this.hud.setVisible(playing || state === 'shop');
+    this.hud.setVisible(playing || (state === 'shop' && !this.showroom.active));
     this.menus.show(state === 'title' ? 'start' : state === 'pause' ? 'pause' : null);
     this.atlas.show(state === 'map');
     if (playing) this.input.requestLock();
@@ -393,6 +395,7 @@ class Game {
       if (this.input.wasPressed('KeyM', 'Tab', 'Escape')) this.setState('play');
     } else if (this.state === 'shop') {
       this.counter.updateMenu();
+      this.showroom.update(realDt);
     }
     const live = this.state === 'play' || this.state === 'title';
     if (live) {
@@ -404,7 +407,7 @@ class Game {
       this.buildings.setNight(this.sky.night);
       this.cityLights.setNight(this.sky.night);
       setVehicleLightsNight(this.sky.night);
-      for (const material of this.glossy) material.envMapIntensity = 1 - this.sky.night * 0.82;
+      for (const material of this.glossy) material.envMapIntensity = 0.45 - this.sky.night * 0.36;
       this.headlamp.update(this.state === 'play' && this.darkness.headlightsOn ? this.player.vehicle : null, this.sky.night);
       this.boats.update(dt, this.time);
       this.particles.update(dt);
@@ -417,8 +420,9 @@ class Game {
     this.input.endFrame();
   }
 
+  /** Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open. */
   render() {
-    this.renderer.render(this.scene, this.camera.view);
+    this.renderer.render(this.scene, this.showroom.active ? this.showroom.view : this.camera.view);
   }
 
   run() {

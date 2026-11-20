@@ -1,4 +1,5 @@
-// The radar in the corner and the full city map: a painted map of Solmara with blips for missions, shops and police.
+// The radar in the corner and the full city map: a painted map of Saros with blips for missions, shops and police,
+// and, on the atlas, the path the moon's shadow takes across the city.
 import { CITY } from '../core/config.js';
 import { blockRect, districtOfBlock, DISTRICTS, LANDMARKS, AVENUES, STREETS } from '../world/cityLayout.js';
 
@@ -26,7 +27,7 @@ function paintCityMap() {
   for (let k = 0; k < 4; k += 1) c.fillRect(142 + k * 190, CITY.depth + 46, 16, 42);
   c.fillStyle = '#b98b5e';
   c.fillRect(-128, 297.5, 60, 5);
-  c.fillStyle = '#545861';
+  c.fillStyle = '#3f3a55';
   c.fillRect(-6, -6, CITY.width + 12, CITY.depth + 12);
   for (let i = 0; i < CITY.roadsX - 1; i += 1) {
     for (let j = 0; j < CITY.roadsZ - 1; j += 1) {
@@ -121,7 +122,7 @@ export class Minimap {
     c.fillText('N', half + sin * (half - 11 * unit), half - cos * (half - 11 * unit));
     this.drawArrow(c, half, half, player.heading - angle, 9 * unit);
     c.lineWidth = 4 * unit;
-    c.strokeStyle = game.wanted.stars > 0 && Math.floor(game.time * 4) % 2 === 0 ? '#ff3b30' : 'rgba(10,14,22,0.9)';
+    c.strokeStyle = game.wanted.stars > 0 && Math.floor(game.time * 4) % 2 === 0 ? '#ff6a4d' : 'rgba(23,18,43,0.9)';
     c.beginPath();
     c.arc(half, half, half - 2 * unit, 0, Math.PI * 2);
     c.stroke();
@@ -190,15 +191,29 @@ export class Minimap {
       c.restore();
     });
     STREETS.forEach((name, j) => c.fillText(name, toX(CITY.width / 2 + (j % 2 ? 200 : -200)), toY(j * CITY.pitch) + 3));
-    // District names sit large and faint under everything else, the bay's name runs up the coast.
-    c.font = `900 ${Math.max(14, 30 * scale)}px Impact, "Arial Black", sans-serif`;
-    c.fillStyle = 'rgba(255,255,255,0.62)';
-    for (const [text, x, z] of [['PLAYA DORADA', 82, 446], ['CENTRO ALTO', 480, 362], ['LAS COLINAS', 560, 82], ['EL MERCADO', 760, 286], ['PUERTO VIEJO', 400, 682]]) c.fillText(text, toX(x), toY(z));
-    c.save();
-    c.translate(toX(-104), toY(430));
-    c.rotate(-Math.PI / 2);
-    c.fillText('BAHÍA DEL SOL', 0, 0);
-    c.restore();
+    this.drawPathOfTotality(c, toX, toY, scale);
+    // District names sit large over their blocks; the water's name runs up the coast.
+    c.font = `900 ${Math.max(14, 34 * scale)}px Impact, "Arial Black", sans-serif`;
+    c.lineWidth = 4;
+    c.lineJoin = 'round';
+    c.strokeStyle = 'rgba(23,18,43,0.55)';
+    c.fillStyle = 'rgba(255,255,255,0.92)';
+    for (const [id, x, z] of [['orrery', 480, 352], ['hill', 520, 84], ['azimuth', 770, 250], ['yards', 420, 664]]) {
+      const text = DISTRICTS[id].name.toUpperCase();
+      c.strokeText(text, toX(x), toY(z));
+      c.fillText(text, toX(x), toY(z));
+    }
+    for (const [text, x, z] of [[DISTRICTS.strand.name.toUpperCase(), 80, 360], ['AVOCET SOUND', -104, 430]]) {
+      c.save();
+      c.translate(toX(x), toY(z));
+      c.rotate(-Math.PI / 2);
+      c.strokeText(text, 0, 0);
+      c.fillText(text, 0, 0);
+      c.restore();
+    }
+    c.font = `900 ${Math.max(10, 17 * scale)}px Impact, "Arial Black", sans-serif`;
+    c.strokeText(DISTRICTS.jacaranda.name.toUpperCase(), toX(280), toY(330));
+    c.fillText(DISTRICTS.jacaranda.name.toUpperCase(), toX(280), toY(330));
     const unit = Math.max(1.2, scale * 2.4);
     const places = Object.values(LANDMARKS).map((p) => ({ x: p.x, z: p.z, color: p.color, label: p.icon }));
     for (const blip of [...places, ...this.collectBlips()]) this.drawBlip(c, toX(blip.x), toY(blip.z), blip, unit);
@@ -218,10 +233,41 @@ export class Minimap {
     this.drawMapKey(c, offsetX + 10, offsetY + 12);
   }
 
+  /**
+   * The path of totality across the atlas: the band the moon's shadow sweeps on Friday, drawn from the sea to the
+   * hills, with its centre line and the hour it arrives.
+   */
+  drawPathOfTotality(c, toX, toY, scale) {
+    const from = { x: toX(-130), y: toY(CITY.depth + 40) };
+    const to = { x: toX(CITY.width + 60), y: toY(40) };
+    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    c.save();
+    c.translate(from.x, from.y);
+    c.rotate(angle);
+    c.fillStyle = 'rgba(23,18,43,0.2)';
+    c.fillRect(0, -150 * scale, length, 300 * scale);
+    c.strokeStyle = 'rgba(244,236,216,0.85)';
+    c.lineWidth = Math.max(1.5, 2.4 * scale);
+    c.setLineDash([14 * scale, 10 * scale]);
+    for (const offset of [-150, 0, 150]) {
+      c.beginPath();
+      c.moveTo(0, offset * scale);
+      c.lineTo(length, offset * scale);
+      c.stroke();
+    }
+    c.setLineDash([]);
+    c.fillStyle = 'rgba(244,236,216,0.95)';
+    c.font = `900 ${Math.max(10, 15 * scale)}px Arial, sans-serif`;
+    c.textAlign = 'center';
+    c.fillText('PATH OF TOTALITY · FRIDAY 17:12', length * 0.8, -160 * scale);
+    c.restore();
+  }
+
   /** The key in the map's corner: what each kind of marker means. */
   drawMapKey(c, x, y) {
-    const rows = [['#35d0ff', 'R', 'Street race'], ['#ff3b30', '☠', 'Vane bounty'], ['#ffd60a', '', 'Job objective'], ['#3a7bff', '', 'Police unit']];
-    c.fillStyle = 'rgba(9,13,22,0.78)';
+    const rows = [['#35d0ff', 'R', 'Street race'], ['#ff3b30', '☠', 'Vane bounty'], ['#ffb547', '', 'Job objective'], ['#3a7bff', '', 'Police unit']];
+    c.fillStyle = 'rgba(23,18,43,0.8)';
     c.fillRect(x, y, 132, rows.length * 20 + 10);
     rows.forEach(([color, label, text], index) => {
       const rowY = y + 15 + index * 20;

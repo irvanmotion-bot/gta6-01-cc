@@ -30,12 +30,14 @@ function kerb(i, j, t = 0.5) {
 
 const node = (i, j) => [i * CITY.pitch, j * CITY.pitch];
 const L = LANDMARKS;
+/** The coat Fresh Coat gives Vane's golden Rayo on Wednesday; the crew drives it to the heist on Friday. */
+const GETAWAY_PAINT = '#ff4b1f';
 
 /**
  * Each job: who gives it and where, the day of eclipse week it opens on, what it needs done first, its cash and
  * cred, and its steps. A step with `stage` opens a new stage of the job, which the HUD counts ("STAGE 2/3").
  * Step kinds are run by missionDirector.js: say, give, steal, deliver, goto, collect, race, eliminate, destroy,
- * loseCops, wait and awaitTotality (hold a place until the sun goes out).
+ * loseCops, wait and awaitTotality (hold a place until the sun goes out). `onFoot` lets the job's car go.
  */
 export const STORY_MISSIONS = [
   {
@@ -89,7 +91,7 @@ export const STORY_MISSIONS = [
       { kind: 'say', lines: [['jazz', 'Vane leaves his Rayo outside the Orrery Trust like nobody would dare. The vault pass is in the glovebox.'], ['nova', 'Somebody dares.'], ['jazz', 'The whole precinct is on his payroll. Get it resprayed, then to Bravo.']] },
       { kind: 'steal', stage: 'Take Vane\'s Rayo', model: 'rayo', paint: '#f5c518', at: kerb(5, 4), heading: -Math.PI / 2, text: 'Steal CASSIUS VANE\'S RAYO outside the Orrery Trust', textIn: 'The alarm is tripped!', stars: 3 },
       { kind: 'say', lines: [['jazz', 'That is every badge on Vane\'s payroll behind you. Fresh Coat, now!']] },
-      { kind: 'goto', stage: 'Lose the pursuit', at: [L.respray.kerb.x, L.respray.kerb.z], radius: 5, vehicle: true, respray: '#1fb5a6', text: 'Drive the Rayo into FRESH COAT CUSTOMS' },
+      { kind: 'goto', stage: 'Lose the pursuit', at: [L.respray.kerb.x, L.respray.kerb.z], radius: 5, vehicle: true, respray: GETAWAY_PAINT, text: 'Drive the Rayo into FRESH COAT CUSTOMS' },
       { kind: 'deliver', stage: 'Deliver to Bravo', at: [L.garage.kerb.x, L.garage.kerb.z], text: 'Deliver the resprayed Rayo to BRAVO MOTORS' },
       { kind: 'say', lines: [['vane', 'Whoever you are, enjoy the sunshine. You have two days of it left.'], ['nova', 'Funny. So do you.']] },
     ],
@@ -144,10 +146,15 @@ export const STORY_MISSIONS = [
     id: 'totality', title: 'Totality', day: 5, giver: 'bravo', at: L.garage, requires: ['borrowedSirens', 'lightsOut', 'raceTheShadow', 'nightClinic'], reward: 40000, cred: 1200, hour: CONTACTS.first - 0.02,
     brief: 'Friday. First contact is at 16:12. When the sun goes out, the vault of the Orrery Trust opens, and so does the city.',
     steps: [
-      { kind: 'say', lines: [['bravo', 'First contact. The moon has started on the sun, and Vane has every guard he owns on the square.'], ['nova', 'Then I clear the door before the dark, and take the vault in it.'], ['bravo', 'You have until the sun comes back. After that, the whole city can see you.']] },
+      { kind: 'say', lines: [['bravo', 'First contact. The moon has started on the sun, and Vane has every guard he owns on the square.'], ['nova', 'Then I clear the door before the dark, and take the vault in it.'], ['bravo', 'The Rayo you stole him is at Strand Parking, in a new coat. His lookouts are on the boardwalk beside it.']] },
       { kind: 'give', weapon: 'rifle', ammo: 150 },
       { kind: 'give', armor: 100 },
-      { kind: 'goto', stage: 'Reach the Orrery Trust', at: [L.bank.x, L.bank.z], radius: 34, text: 'Go to the ORRERY TRUST on Orrery Square' },
+      { kind: 'goto', stage: 'Reach the Strand', at: [3, 334], radius: 30, text: 'Go to the boardwalk by STRAND PARKING' },
+      { kind: 'say', lines: [['nova', 'Half of Saros is on the boardwalk looking up. Five of them are looking for me.']] },
+      { kind: 'eliminate', stage: 'Clear the lookouts', enemy: 'enforcer', text: 'Take out Vane\'s lookouts among the eclipse watchers', spots: [[-9.4, 322], [4.6, 326], [-2.5, 315], [6.9, 309], [-9.6, 304]] },
+      { kind: 'steal', stage: 'Take the getaway Rayo', model: 'rayo', paint: GETAWAY_PAINT, at: kerb(0, 3), heading: -Math.PI / 2, text: 'Get in the RAYO at Strand Parking', textIn: 'Every badge on Vane\'s payroll knows this car', stars: 3 },
+      { kind: 'say', lines: [['jazz', 'They made the car, baby. Get to the square before the sun goes, the dark will do the rest!']] },
+      { kind: 'goto', stage: 'Break through', onFoot: true, at: [L.bank.x, L.bank.z], radius: 34, text: 'Reach the ORRERY TRUST before the sun goes' },
       { kind: 'say', lines: [['nova', 'Guards on every corner, and a crowd looking at the sky. Nobody is looking at me.']] },
       { kind: 'eliminate', stage: 'Clear the guards', enemy: 'guard', text: 'Clear the Trust\'s guards before the dark', spots: [sidewalk(5, 4, 's', 0.25), sidewalk(5, 4, 's', 0.75), sidewalk(5, 4, 'e', 0.8), sidewalk(5, 4, 'w', 0.8), sidewalk(5, 5, 'n', 0.5), sidewalk(4, 4, 'e', 0.6), sidewalk(6, 4, 'w', 0.6)] },
       { kind: 'awaitTotality', stage: 'Wait for the dark', at: [L.bank.x, L.bank.z], radius: 9, text: 'Hold the door of the Trust until TOTALITY' },

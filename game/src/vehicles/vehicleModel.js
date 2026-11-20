@@ -17,21 +17,46 @@ function buildWheelGeometry() {
   return parts.build(null).geometry;
 }
 /** Every car body shares this lacquer; main.js hands it the sky to reflect. */
-export const bodyMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.26, metalness: 0.3 });
+export const bodyMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.55, metalness: 0.12 });
 const GLASS = '#16242f';
 /** Tail lamp colours: running and under braking. */
 export const TAIL_LAMP = { idle: 0xb81414, braking: 0xff4a30 };
 
 /** Cabin proportions per body shape: [start, end] along the length (0 = rear, 1 = nose), and the shell's height share. */
 const SHAPES = {
-  hatch: { cabin: [0.06, 0.72], shell: 0.52, bed: false, rake: [0.84, 0.74, -0.04] },
-  sedan: { cabin: [0.16, 0.72], shell: 0.5, bed: false, rake: [0.84, 0.64, -0.03] },
-  coupe: { cabin: [0.16, 0.66], shell: 0.52, bed: false, rake: [0.82, 0.58, -0.06] },
-  sports: { cabin: [0.2, 0.68], shell: 0.55, bed: false, rake: [0.8, 0.5, -0.07] },
-  suv: { cabin: [0.04, 0.74], shell: 0.5, bed: false, rake: [0.88, 0.8, -0.03] },
-  pickup: { cabin: [0.4, 0.76], shell: 0.48, bed: true, rake: [0.88, 0.7, -0.02] },
-  van: { cabin: [0.03, 0.9], shell: 0.45, bed: false, rake: [0.92, 0.9, -0.03] },
+  hatch: { cabin: [0.06, 0.72], shell: 0.52, bed: false, rake: [0.84, 0.74, -0.04], nose: [0.3, 0.9], tail: [0, 1] },
+  sedan: { cabin: [0.16, 0.72], shell: 0.5, bed: false, rake: [0.84, 0.64, -0.03], nose: [0.26, 0.9], tail: [0.16, 0.93] },
+  coupe: { cabin: [0.16, 0.66], shell: 0.52, bed: false, rake: [0.82, 0.58, -0.06], nose: [0.3, 0.88], tail: [0.2, 0.92] },
+  sports: { cabin: [0.2, 0.68], shell: 0.55, bed: false, rake: [0.8, 0.5, -0.07], nose: [0.46, 0.84], tail: [0.2, 0.92] },
+  suv: { cabin: [0.04, 0.74], shell: 0.5, bed: false, rake: [0.88, 0.8, -0.03], nose: [0.18, 0.93], tail: [0, 1] },
+  pickup: { cabin: [0.4, 0.76], shell: 0.48, bed: true, rake: [0.88, 0.7, -0.02], nose: [0.16, 0.93], tail: [0, 1] },
+  van: { cabin: [0.03, 0.9], shell: 0.45, bed: false, rake: [0.92, 0.9, -0.03], nose: [0.3, 0.92], tail: [0, 1] },
 };
+/** `nose` and `tail` are [how far the bonnet or boot falls toward its end, as a share of the shell's height; how much it narrows]. */
+
+/**
+ * The lower body in three pieces, so a car is not a brick: the waist under the cabin, a bonnet that falls and
+ * narrows toward the nose, and a boot that falls toward the tail.
+ */
+function addShell(batch, frame, shape, paint, width) {
+  const { at, clearance, shellHeight, cabinStart, cabinEnd } = frame;
+  const top = clearance + shellHeight - 0.001;
+  const piece = (from, to, [drop, narrow], endIsFront) => {
+    if (Math.abs(to - from) < 0.12) return;
+    const middle = (from + to) / 2;
+    batch.addBox(0, clearance, middle, width, shellHeight, Math.abs(to - from), paint);
+    batch.reshapeLastBox((point) => {
+      const atEnd = endIsFront ? point.z > middle : point.z < middle;
+      if (point.y > top) point.x *= 0.94;
+      if (!atEnd) return;
+      point.x *= narrow;
+      if (point.y > top) point.y -= shellHeight * drop;
+    });
+  };
+  piece(cabinStart, cabinEnd, [0, 1], true);
+  piece(cabinEnd, at(1), shape.nose, true);
+  piece(at(0), cabinStart, shape.tail, false);
+}
 
 function shade(hex, amount) {
   const color = new THREE.Color(hex);
@@ -42,20 +67,20 @@ function shade(hex, amount) {
 /** The small parts every body carries: wheel arches, a crease and sills, door seams, mirrors, grille and plates. */
 function addBodyTrim(batch, spec, shape, paint, frame) {
   const { length, width } = spec;
-  const { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter } = frame;
+  const { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter, cabinLength, noseHeight, tailHeight } = frame;
   for (const side of [-1, 1]) {
     const flank = side * (width / 2 - 0.01);
-    for (const t of [0.82, 0.18]) batch.addBox(flank, clearance - 0.08, at(t), 0.09, 0.52, 0.98, '#121416');
-    batch.addBox(flank, clearance + shellHeight * 0.78, 0, 0.05, 0.05, length * 0.9, shade(paint, 1.18));
+    for (const t of [0.82, 0.18]) batch.addBox(side * (width / 2 - 0.05), clearance - 0.08, at(t), 0.09, 0.5, 0.98, '#121416');
+    batch.addBox(flank, clearance + shellHeight * 0.78, cabinCenter, 0.05, 0.05, cabinLength, shade(paint, 1.18));
     batch.addBox(flank, clearance + 0.02, 0, 0.06, 0.12, length * 0.5, shade(paint, 0.6));
     batch.addBox(flank, clearance + shellHeight * 0.2, cabinCenter, 0.045, shellHeight * 0.72, 0.03, shade(paint, 0.5));
     if (!shape.bed) batch.addBox(flank, clearance + shellHeight * 0.2, cabinStart + 0.15, 0.045, shellHeight * 0.72, 0.03, shade(paint, 0.5));
     batch.addBox(side * (width / 2 + 0.1), clearance + shellHeight + 0.04, cabinEnd - 0.25, 0.2, 0.12, 0.14, shade(paint, 0.85));
   }
-  batch.addBox(0, clearance + shellHeight * 0.36, at(1) - 0.02, width * 0.4, shellHeight * 0.3, 0.07, '#101214');
-  batch.addBox(0, clearance + shellHeight * 0.06, at(1) + 0.07, 0.52, 0.13, 0.03, '#f4f1e4');
-  batch.addBox(0, clearance + shellHeight * 0.3, at(0) - 0.07, 0.52, 0.13, 0.03, '#f4f1e4');
-  batch.addBox(0, clearance + shellHeight * 0.62, at(0) - 0.015, width * 0.86, shellHeight * 0.08, 0.05, '#2a0b0b');
+  batch.addBox(0, clearance + noseHeight * 0.5, at(1) - 0.02, width * 0.36, noseHeight * 0.34, 0.07, '#101214');
+  batch.addBox(0, clearance + shellHeight * 0.06, at(1) + 0.08, 0.52, 0.13, 0.03, '#f4f1e4');
+  batch.addBox(0, clearance + tailHeight * 0.22, at(0) - 0.08, 0.52, 0.13, 0.03, '#f4f1e4');
+  batch.addBox(0, clearance + tailHeight * 0.64, at(0) - 0.015, width * 0.84 * shape.tail[1], tailHeight * 0.1, 0.05, '#2a0b0b');
 }
 
 /**
@@ -72,15 +97,17 @@ export function buildVehicleModel(spec, paint) {
   const batch = new MeshBatcher();
   const at = (t) => (t - 0.5) * length;
 
-  batch.addBox(0, clearance, 0, width, shellHeight, length, paint);
-  batch.taperLastBox(0.94, 0.97);
-  batch.addBox(0, clearance - 0.06, 0, width * 1.02, 0.2, length * 0.9, '#1d2024');
-  batch.addBox(0, clearance + shellHeight * 0.1, at(1) - 0.05, width * 0.96, shellHeight * 0.35, 0.22, '#2b2f34');
-  batch.addBox(0, clearance + shellHeight * 0.1, at(0) + 0.05, width * 0.96, shellHeight * 0.35, 0.22, '#2b2f34');
   const cabinStart = at(shape.cabin[0]);
   const cabinEnd = at(shape.cabin[1]);
   const cabinLength = cabinEnd - cabinStart;
   const cabinCenter = (cabinStart + cabinEnd) / 2;
+  // How high the body stands at its nose and at its tail, once the bonnet and the boot have fallen away.
+  const noseHeight = shellHeight * (1 - shape.nose[0]);
+  const tailHeight = shellHeight * (1 - shape.tail[0]);
+  addShell(batch, { at, clearance, shellHeight, cabinStart, cabinEnd }, shape, paint, width);
+  batch.addBox(0, clearance - 0.06, 0, width * 0.98, 0.2, length * 0.9, '#1d2024');
+  batch.addBox(0, clearance + shellHeight * 0.06, at(1) - 0.05, width * shape.nose[1] + 0.06, noseHeight * 0.42, 0.24, '#2b2f34');
+  batch.addBox(0, clearance + shellHeight * 0.06, at(0) + 0.05, width * shape.tail[1] + 0.06, tailHeight * 0.36, 0.24, '#2b2f34');
   // The glasshouse leans in toward the roof; the roof panel sits on its narrowed top.
   const [rakeX, rakeZ, rakeShift] = shape.rake;
   const roofShift = rakeShift * cabinLength;
@@ -93,27 +120,26 @@ export function buildVehicleModel(spec, paint) {
     batch.addBox(0, clearance + shellHeight, at(0.2), width, 0.28, length * 0.38, shade(paint, 0.8));
     batch.addBox(0, clearance + shellHeight - 0.02, at(0.2), width * 0.86, 0.04, length * 0.34, '#22262a');
   }
-  addBodyTrim(batch, spec, shape, paint, { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter });
+  addBodyTrim(batch, spec, shape, paint, { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter, cabinLength, noseHeight, tailHeight });
   if (spec.shape === 'sports' || spec.shape === 'coupe') {
-    // A wing on two posts over the tail, a dark bonnet vent, intakes ahead of the rear wheels and twin exhausts.
+    // A wing on two posts over the tail, intakes ahead of the rear wheels and twin exhausts.
     const wingLift = spec.shape === 'sports' ? 0.34 : 0.2;
     batch.addBox(0, clearance + shellHeight + wingLift, at(0.04), width * 0.96, 0.07, 0.46, shade(paint, 0.62));
     for (const side of [-1, 1]) {
-      batch.addBox(side * width * 0.33, clearance + shellHeight, at(0.05), 0.07, wingLift, 0.2, '#1d2024');
+      batch.addBox(side * width * 0.33, clearance + tailHeight, at(0.05), 0.07, shellHeight - tailHeight + wingLift, 0.2, '#1d2024');
       batch.addBox(side * (width / 2 + 0.005), clearance + shellHeight * 0.42, at(0.36), 0.05, shellHeight * 0.36, 0.5, '#15171a');
       batch.addBox(side * width * 0.2, clearance + 0.02, at(0) - 0.08, 0.2, 0.13, 0.16, '#9aa0a6');
     }
-    batch.addBox(0, clearance + shellHeight + 0.005, at(0.82), width * 0.5, 0.03, length * 0.2, shade(paint, 0.72));
   }
   if (spec.police) {
-    batch.addBox(0, clearance + shellHeight * 0.28, 0, width + 0.03, shellHeight * 0.3, length * 0.62, '#2e6fd8');
-    batch.addBox(0, clearance + shellHeight * 0.38, 0, width + 0.05, shellHeight * 0.1, length * 0.5, '#ffd60a');
+    batch.addBox(0, clearance + shellHeight * 0.28, cabinCenter, width + 0.03, shellHeight * 0.3, cabinLength * 1.06, '#2e6fd8');
+    batch.addBox(0, clearance + shellHeight * 0.38, cabinCenter, width + 0.05, shellHeight * 0.1, cabinLength * 0.9, '#ffd60a');
     // A push bar on the nose and the bar the roof lamps sit on.
-    batch.addBox(0, clearance - 0.02, at(1) + 0.14, width * 0.62, shellHeight * 0.8, 0.09, '#15171a');
+    batch.addBox(0, clearance - 0.02, at(1) + 0.14, width * 0.62, noseHeight * 0.95, 0.09, '#15171a');
     batch.addBox(0, height, cabinCenter + roofShift, width * 0.8, 0.07, 0.36, '#15171a');
   }
   if (spec.taxi) {
-    batch.addBox(0, clearance + shellHeight * 0.3, 0, width + 0.03, shellHeight * 0.22, length * 0.5, '#1a1a1a');
+    batch.addBox(0, clearance + shellHeight * 0.3, cabinCenter, width + 0.03, shellHeight * 0.22, cabinLength, '#1a1a1a');
     batch.addBox(0, height, cabinCenter, 0.9, 0.3, 0.38, '#fff6c2');
   }
   const body = batch.build(bodyMaterial);
@@ -126,8 +152,8 @@ export function buildVehicleModel(spec, paint) {
   const headLamps = new MeshBatcher();
   const tailLamps = new MeshBatcher();
   for (const side of [-1, 1]) {
-    headLamps.addBox(side * width * 0.33, clearance + shellHeight * 0.56, at(1) + 0.01, width * 0.27, shellHeight * 0.24, 0.08, '#ffffff');
-    tailLamps.addBox(side * width * 0.33, clearance + shellHeight * 0.58, at(0) - 0.01, width * 0.27, shellHeight * 0.24, 0.08, '#ffffff');
+    headLamps.addBox(side * width * 0.32 * shape.nose[1], clearance + noseHeight * 0.58, at(1) + 0.01, width * 0.25, noseHeight * 0.32, 0.08, '#ffffff');
+    tailLamps.addBox(side * width * 0.31 * shape.tail[1], clearance + tailHeight * 0.58, at(0) - 0.01, width * 0.3, tailHeight * 0.26, 0.08, '#ffffff');
   }
   const lampOptions = { castShadow: false, receiveShadow: false };
   const lamps = [headLamps.build(headMaterial, lampOptions), tailLamps.build(tailMaterial, lampOptions)];

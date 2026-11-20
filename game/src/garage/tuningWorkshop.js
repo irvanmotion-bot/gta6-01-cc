@@ -1,5 +1,6 @@
 // Bravo Motors' workshop: repairs, and four upgrade lines (engine, plating, tyres, nitro) in three tiers that follow
 // Nova into every car she drives. Rank gates the tiers; the nitro tank burns on Shift and refills on its own.
+// Its counter opens beside the car on the turntable of workshopShowroom.js.
 import { distance2D } from '../core/random.js';
 import { LANDMARKS } from '../world/cityLayout.js';
 
@@ -64,9 +65,9 @@ export class TuningWorkshop {
     }
     for (const line of UPGRADE_LINES) {
       const level = this.levels[line.id];
-      if (level >= 3) { rows.push({ id: line.id, label: `${line.name} · MAX`, detail: line.detail, price: null }); continue; }
+      if (level >= 3) { rows.push({ id: line.id, label: `${line.name} · MAX`, detail: line.detail, price: null, tier: 3 }); continue; }
       const rank = line.ranks[level];
-      rows.push({ id: line.id, label: `${line.name} · tier ${level + 1}`, detail: line.detail, price: cred.priceOf(line.prices[level]), locked: cred.hasRank(rank) ? '' : `Needs rank ${rank}` });
+      rows.push({ id: line.id, label: `${line.name} · tier ${level + 1}`, detail: line.detail, price: cred.priceOf(line.prices[level]), locked: cred.hasRank(rank) ? '' : `Needs rank ${rank}`, tier: level });
     }
     return rows;
   }
@@ -94,7 +95,32 @@ export class TuningWorkshop {
     if (!vehicle || distance2D(player.position.x, player.position.z, bay.x, bay.z) > 6 || Math.abs(vehicle.speed) > 3) return;
     if (game.wanted.stars > 0) { game.hud.hint('Bravo will not open the bay with the police on you'); return; }
     game.hud.hint('Press E for Bravo\'s workshop: repairs and upgrades');
-    if (game.input.wasPressed('KeyE')) game.counter.open({ title: 'BRAVO MOTORS', tagline: '"If it rolls, I can make it fly."', accent: '#f39c12', stock: () => this.stock(), purchase: (row) => this.purchase(row) });
+    if (game.input.wasPressed('KeyE')) this.openBay(vehicle);
+  }
+
+  /** Roll the car onto the turntable in Bravo's yard and open the counter beside it. */
+  openBay(vehicle) {
+    const game = this.game;
+    game.showroom.open(vehicle);
+    game.counter.open({
+      title: 'BRAVO MOTORS', tagline: '"If it rolls, I can make it fly."', accent: '#ffb547', layout: 'showroom',
+      stock: () => this.stock(), purchase: (row) => this.purchase(row), summary: () => this.specSheet(vehicle), onClose: () => game.showroom.close(),
+    });
+  }
+
+  /** The car on the turntable as the counter describes it: name, condition and four bars the upgrades move. */
+  specSheet(vehicle) {
+    const spec = vehicle.spec;
+    const tuning = this.tuning;
+    return {
+      name: spec.name.toUpperCase(), kind: spec.kind.toUpperCase(), condition: vehicle.conditionPercent(),
+      bars: [
+        ['TOP SPEED', `${Math.round(spec.maxSpeed * tuning.speed * 3.6)} km/h`, (spec.maxSpeed * tuning.speed) / 70],
+        ['ACCELERATION', `${(spec.accel * tuning.accel).toFixed(1)} m/s²`, (spec.accel * tuning.accel) / 29],
+        ['GRIP', `${(spec.grip * tuning.grip).toFixed(1)}`, (spec.grip * tuning.grip) / 11],
+        ['ARMOR', `${Math.round(spec.health * tuning.plating)}`, (spec.health * tuning.plating) / 500],
+      ],
+    };
   }
 }
 

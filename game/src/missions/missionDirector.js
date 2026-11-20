@@ -99,6 +99,8 @@ export class MissionDirector {
       if (run.stage > 1) game.cred.earn(CRED_AWARDS.stage, `stage ${run.stage - 1} done`);
     }
     if (step.stars && step.kind !== 'steal') game.wanted.setStars(step.stars, 8);
+    // From an on-foot step on, the job's car is just a car: losing it no longer fails the job.
+    if (step.onFoot && run.vehicle) { run.vehicle.missionTag = null; run.vehicle.ambient = true; run.vehicle = null; }
     if (step.kind === 'say') {
       for (const [who, line] of step.lines) game.hud.say(CHARACTERS[who].name, line, CHARACTERS[who].color);
       this.advance();

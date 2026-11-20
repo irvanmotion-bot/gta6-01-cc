@@ -156,8 +156,10 @@ export class PoliceHelicopter {
       aim.y = 0;
       if (distance2D(aim.x, aim.z, player.position.x, player.position.z) < POOL_RADIUS) cover.noteSearchlight();
     } else {
-      aim.x += (player.position.x - aim.x) * Math.min(1, dt * 9);
-      aim.z += (player.position.z - aim.z) * Math.min(1, dt * 9);
+      // In the dark the crew swings the lamp by hand: it lags a running Nova, who can get out from under it.
+      const tracking = cover.isDark() ? 1.3 : 9;
+      aim.x += (player.position.x - aim.x) * Math.min(1, dt * tracking);
+      aim.z += (player.position.z - aim.z) * Math.min(1, dt * tracking);
       aim.y = player.position.y;
       this.lastSeen.copy(player.position);
       if (cover.isDark() && distance2D(aim.x, aim.z, player.position.x, player.position.z) < POOL_RADIUS) cover.noteSearchlight();
@@ -168,10 +170,11 @@ export class PoliceHelicopter {
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
-    this.beam.material.opacity = 0.2 + night * 0.1;
+    this.beam.material.opacity = 0.15 + night * 0.15;
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(aim.x, aim.y, aim.z);
-    this.lamp.intensity = 900 + night * 5200;
+    // By day the lamp only warms what it touches; in the dark it is the brightest thing in the street.
+    this.lamp.intensity = 220 + night * 5900;
     this.pool.position.set(aim.x, aim.y + 0.12, aim.z);
     this.pool.material.opacity = 0.1 + night * 0.3;
 

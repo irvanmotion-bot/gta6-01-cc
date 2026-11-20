@@ -5,7 +5,7 @@ import { createElement } from './domBuilder.js';
 
 const DISC_PIXELS = 112;
 /** The moon crosses the icon along the same slanted line it crosses the sun in the sky (skyAndSun.js). */
-const MOON_PATH = { x: -0.82, y: 0.57 };
+const MOON_PATH = { x: -0.82, y: -0.57 };
 const SUN_SHARE = 0.3;
 const MOON_SHARE = 0.317;
 

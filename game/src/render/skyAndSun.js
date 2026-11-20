@@ -22,6 +22,7 @@ uniform vec3 discUp;
 uniform float sunRadius;
 uniform float moonRadius;
 uniform float moonShade;
+uniform vec3 moonColor;
 uniform float corona;
 uniform float sunGlow;
 uniform float starAmount;
@@ -55,14 +56,15 @@ void main() {
   vec3 dir = normalize(vDir);
   float h = clamp(dir.y, 0.0, 1.0);
   // Deep colour overhead, a paler tone of it lower down, and the horizon's own colour in a broad band of warm haze.
-  vec3 color = mix(mix(topColor, vec3(1.0), 0.3 * (1.0 - starAmount)), topColor, pow(h, 0.55));
-  color = mix(horizonColor, color, smoothstep(0.0, 0.34, h));
+  vec3 color = mix(mix(topColor, vec3(1.0), 0.2 * (1.0 - starAmount)), topColor, pow(h, 0.5));
+  color = mix(horizonColor, color, smoothstep(0.0, 0.4, h));
   float sunAmount = max(dot(dir, sunDir), 0.0);
   float sunAngle = acos(min(sunAmount, 1.0));
   float moonAngle = acos(clamp(dot(dir, moonDir), -1.0, 1.0));
   // The glow round the sun warms a wide patch of sky; it shrinks with the crescent.
-  color += sunColor * pow(sunAmount, 7.0) * 0.36 * sunGlow;
-  color += sunColor * pow(sunAmount, 60.0) * 0.5 * sunGlow;
+  color += sunColor * pow(sunAmount, 6.0) * 0.3 * sunGlow;
+  // Close to the sun the haze burns orange rather than white, so the pale disc and its crescent stand out of it.
+  color = mix(color, vec3(1.0, 0.66, 0.3), pow(sunAmount, 26.0) * 0.55 * sunGlow * (1.0 - starAmount));
   float star = step(0.9985, hash(floor(dir * 190.0)));
   color += vec3(star) * starAmount * h;
   // Drifting cumulus on a flat layer overhead, kept clear of the sun so the eclipse is never hidden.
@@ -72,11 +74,16 @@ void main() {
   vec3 cloudColor = mix(cloudLit, topColor * 0.8 + horizonColor * 0.3, starAmount * 0.96);
   color = mix(color, cloudColor, cover * 0.88);
   // The moon's disc darkens the sky it stands in front of, then the sun's disc shows wherever the moon is not.
-  float edge = sunRadius * 0.035;
+  float edge = sunRadius * 0.03;
   float moon = 1.0 - smoothstep(moonRadius - edge, moonRadius + edge, moonAngle);
-  color = mix(color, color * 0.42 + topColor * 0.1, moon * moonShade);
-  float disc = (1.0 - smoothstep(sunRadius - edge, sunRadius + edge, sunAngle)) * (1.0 - moon);
-  color = mix(color, vec3(1.0, 0.97, 0.84) * 1.25, disc);
+  float disc = 1.0 - smoothstep(sunRadius - edge, sunRadius + edge, sunAngle);
+  // A thin bright halo hugs the limb of the sun, so the crescent stands out from the haze around it.
+  float halo = (1.0 - smoothstep(sunRadius, sunRadius * 1.5, sunAngle)) * (1.0 - disc) * sunGlow;
+  color += vec3(1.0, 0.8, 0.45) * halo * 0.3;
+  color = mix(color, vec3(1.0, 0.98, 0.82), disc);
+  // The moon is a disc of deep indigo: against the sun it cuts the crescent, beside it it fades into the sky.
+  float overSun = 1.0 - smoothstep(sunRadius, sunRadius + moonRadius * 1.6, sunAngle);
+  color = mix(color, moonColor, moon * moonShade * mix(0.5, 1.0, overSun));
   color += coronaLight(dir, moonAngle) * corona;
   gl_FragColor = vec4(color, 1.0);
   #include <colorspace_fragment>
@@ -89,8 +96,8 @@ const DAY_COLOURS = [
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
   [9, '#2a84e2', '#ffeed2', '#fff0d0', 3.0, 0.7],
   [13, '#2379e4', '#ffe6bd', '#ffecc4', 3.4, 0.72],
-  [15, '#2a72dc', '#ffd59c', '#ffdc9e', 3.5, 0.7],
-  [17.4, '#3167cc', '#ffbe7c', '#ffc77c', 3.3, 0.68],
+  [15, '#2a66d8', '#ffc37a', '#ffd08a', 3.7, 0.58],
+  [17.4, '#2f55c4', '#ffa24e', '#ffb65c', 3.8, 0.5],
   [18.8, '#3a56b4', '#ff9a5a', '#ff9a52', 2.3, 0.62],
   [19.8, '#231d66', '#ee5f7c', '#d8708c', 0.8, 0.7],
   [21, '#0a1030', '#2a3a72', '#9fb3e8', 0.9, 0.7],
@@ -99,8 +106,8 @@ const DAY_COLOURS = [
 /** The sky inside the moon's shadow: indigo overhead and a ring of sunset on every horizon. */
 const TOTALITY_SKY = { top: '#0b1136', horizon: '#e9814a', light: '#c9d4ff' };
 /** The sun and moon are drawn many times their true size, so the crescent reads from any street. */
-const SUN_RADIUS = 0.088;
-const MOON_RADIUS = 0.093;
+const SUN_RADIUS = 0.104;
+const MOON_RADIUS = 0.11;
 const SUNRISE = 6;
 const SUNSET = 19.6;
 
@@ -120,6 +127,7 @@ export class SkyAndSun {
       sunRadius: { value: SUN_RADIUS },
       moonRadius: { value: MOON_RADIUS },
       moonShade: { value: 0 },
+      moonColor: { value: new THREE.Color('#1b1638') },
       corona: { value: 0 },
       sunGlow: { value: 1 },
       starAmount: { value: 0 },
@@ -147,7 +155,7 @@ export class SkyAndSun {
     // A soft light from opposite the sun, so shaded walls keep their colour instead of going black.
     this.fill = new THREE.DirectionalLight(0xffffff, 0.5);
     scene.add(this.ambient, this.fill);
-    scene.fog = new THREE.Fog(0xffd59c, 70, 760);
+    scene.fog = new THREE.Fog(0xffcf8e, 110, 820);
     this.scene = scene;
     this.scratchA = new THREE.Color();
     this.scratchB = new THREE.Color();
@@ -176,7 +184,7 @@ export class SkyAndSun {
     const up = hour > SUNRISE && hour < SUNSET;
     const angle = (up ? (hour - SUNRISE) / (SUNSET - SUNRISE) : ((hour + 24 - SUNSET) % 24) / (24 - SUNSET + SUNRISE)) * Math.PI;
     const west = Math.max(0, -Math.cos(angle));
-    return target.set(Math.cos(angle) * 0.9, Math.max(Math.sin(angle) * 1.02, 0.1), 0.3 + west * 2.3).normalize();
+    return target.set(Math.cos(angle) * 0.62, Math.max(Math.sin(angle) * 0.92, 0.1), 0.3 + west * 2.3).normalize();
   }
 
   /**
@@ -228,7 +236,8 @@ export class SkyAndSun {
       uniforms.sunGlow.value = nightfall > 0.99 ? 0.5 : 1;
     } else {
       const slide = track * (SUN_RADIUS + MOON_RADIUS);
-      moonDir.copy(sunDir).addScaledVector(right, slide * 0.82).addScaledVector(up, slide * -0.57).normalize();
+      // It comes up from below on the ocean side, so the last of the sun is a crescent high on the landward side.
+      moonDir.copy(sunDir).addScaledVector(right, slide * 0.82).addScaledVector(up, slide * 0.57).normalize();
       uniforms.moonShade.value = clamp((1 - Math.abs(track)) * 6, 0, 1);
       uniforms.corona.value = dark;
       uniforms.sunGlow.value = 0.25 + 0.75 * sunlight;

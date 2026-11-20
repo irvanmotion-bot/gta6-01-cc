@@ -88,6 +88,17 @@ export function playWholeGame() {
   eclipse.sightInDark = game.darkness.sightRange(80);
   eclipse.darkReadout = game.darkness.readout();
   eclipse.hudCountdown = document.querySelector('.eclipse-big').textContent;
+  // A car's headlights give Nova away in the dark; L switches them off and the dark hides her again.
+  const darkCar = game.vehicles.spawn('avocet', player.position.x + 2.4, player.position.z, 0);
+  darkCar.parked = true;
+  press('KeyF');
+  run(20);
+  eclipse.litInCar = game.darkness.litBy;
+  press('KeyL');
+  run(20);
+  eclipse.hiddenRunningDark = game.darkness.isHidden();
+  press('KeyL');
+  press('KeyF');
   for (let safety = 0; calendar.phase() !== 'after' && safety < 3000; safety += 1) calendar.update(1);
   run(5);
   eclipse.sightInDaylight = game.darkness.sightRange(80);
