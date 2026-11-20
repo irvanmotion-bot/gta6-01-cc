@@ -3,7 +3,6 @@
 import * as THREE from 'three';
 import { MeshBatcher } from '../render/meshBatcher.js';
 import { distance2D } from '../core/random.js';
-import { districtNameAt } from '../world/cityLayout.js';
 
 export class PoliceHelicopter {
   constructor(game) {
@@ -12,7 +11,6 @@ export class PoliceHelicopter {
     this.health = 400;
     this.orbit = 0;
     this.cooldown = 0;
-    this.firedClock = 0;
     this.returnClock = 0;
     this.crashing = 0;
     this.aim = new THREE.Vector3();
@@ -60,7 +58,7 @@ export class PoliceHelicopter {
     // A narrow shaft: the walking camera stays outside it, so it reads as a beam on Nova and never as a haze round the lens.
     const beamGeometry = new THREE.ConeGeometry(2.3, HOVER_HEIGHT, 20, 1, true);
     beamGeometry.translate(0, -HOVER_HEIGHT / 2, 0);
-    this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
+    this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
     this.beam.renderOrder = 3;
     this.mesh.add(body, this.rotor, this.tailRotor);
     this.mesh.scale.setScalar(1.6);
@@ -90,34 +88,9 @@ export class PoliceHelicopter {
     return distance2D(this.mesh.position.x, this.mesh.position.z, player.x, player.z);
   }
 
-  /**
-   * Whether the crew can see Nova from up here: near enough, a clear line down to her past the rooftops, and, in the
-   * dark, some light on her (their own searchlight counts once its pool has crossed her).
-   */
-  seesPlayer() {
-    if (!this.active) return false;
-    const game = this.game;
-    if (game.darkness.isHidden()) return false;
-    const player = game.player.position;
-    const from = this.mesh.position;
-    if (distance2D(from.x, from.z, player.x, player.z) > AIR_SIGHT_RANGE) return false;
-    const dx = player.x - from.x;
-    const dy = player.y + 1.2 - from.y;
-    const dz = player.z - from.z;
-    const length = Math.hypot(dx, dy, dz);
-    return game.collision.raycast(from.x, from.y, from.z, dx / length, dy / length, dz / length, length - 1, 1.5) >= length - 1;
-  }
-
-  /** What the dispatch panel prints for the air unit: sweeping a search zone, holding its lamp on her, or firing. */
-  tacticLabel() {
-    if (!this.game.wanted.seen) return 'SWEEPING';
-    return this.firedClock > 0 ? 'GUNSHIP FIRE' : 'SPOTLIGHT';
-  }
-
   /** Bring it in from over the hills. */
   scramble() {
     const player = this.game.player.position;
-    const called = !this.active;
     this.active = true;
     this.health = 400;
     this.crashing = 0;
@@ -127,8 +100,6 @@ export class PoliceHelicopter {
     this.lastSeen.copy(player);
     this.mesh.position.set(player.x + 150, HOVER_HEIGHT + 30, player.z - 120);
     this.mesh.rotation.set(0, 0, 0);
-    // Dispatch puts the air unit on the radio as it comes in.
-    if (called && this.unit) this.game.hud.notify(`POLICE RADIO · ${this.unit.callsign}: AIRBORNE OVER ${districtNameAt(player.x, player.z).toUpperCase()}`);
   }
 
   dismiss(instant = false) {
@@ -183,36 +154,29 @@ export class PoliceHelicopter {
     }
     if (stars < 3) { this.dismiss(); return; }
     const player = game.player;
-    const wanted = game.wanted;
     this.orbit += dt * 0.22;
-    this.firedClock = Math.max(0, this.firedClock - dt);
-    // With eyes on her the crew circles Nova herself. Once every unit has lost her it circles the place she was
-    // last seen, until someone finds her again.
-    const lost = !wanted.seen;
-    const focusX = lost ? wanted.lastKnown.x : player.position.x;
-    const focusZ = lost ? wanted.lastKnown.z : player.position.z;
     // Lead a fast car, so the helicopter holds its place over the chase instead of trailing behind it.
     // Over a car chase it comes down low and close, where its lamp can hold the car and its gunner can see it.
-    const car = lost ? null : player.vehicle;
+    const car = player.vehicle;
     const radius = car ? CHASE_ORBIT.radius : ORBIT_RADIUS;
     const hover = car ? CHASE_ORBIT.height : HOVER_HEIGHT;
-    const goalX = focusX + Math.cos(this.orbit) * radius + (car ? car.velX * CHASE_ORBIT.lead : 0);
-    const goalZ = focusZ + Math.sin(this.orbit) * radius + (car ? car.velZ * CHASE_ORBIT.lead : 0);
+    const goalX = player.position.x + Math.cos(this.orbit) * radius + (car ? car.velX * CHASE_ORBIT.lead : 0);
+    const goalZ = player.position.z + Math.sin(this.orbit) * radius + (car ? car.velZ * CHASE_ORBIT.lead : 0);
     const ease = Math.min(1, dt * 1.3);
     mesh.position.x += (goalX - mesh.position.x) * ease;
     mesh.position.z += (goalZ - mesh.position.z) * ease;
     mesh.position.y += (hover + Math.sin(game.time * 0.8) * 1.5 - mesh.position.y) * ease;
-    const face = Math.atan2(focusX - mesh.position.x, focusZ - mesh.position.z);
+    const face = Math.atan2(player.position.x - mesh.position.x, player.position.z - mesh.position.z);
     mesh.rotation.set(0.16, face, Math.sin(game.time * 0.6) * 0.06);
-    // The searchlight is a cone from the nose down to where the crew is looking. With eyes on her that is Nova.
-    // A Nova nobody can see, behind the rooftops or with no light on her in the dark, is lost: the beam sweeps the
-    // streets round where she was last seen, and in the dark finds her again only if its pool of light crosses her.
+    // The searchlight is a cone from the nose down to where the crew is looking. In daylight that is Nova. In the
+    // dark, a Nova with no light on her is lost: the beam sweeps the streets round where she was last seen, and
+    // finds her again only if its pool of light crosses her.
     const cover = game.darkness;
     const aim = this.aim;
-    if (lost || cover.isHidden()) {
+    if (cover.isHidden()) {
       this.sweep += dt;
-      const goalAimX = wanted.lastKnown.x + Math.sin(this.sweep * 0.9) * SWEEP_REACH;
-      const goalAimZ = wanted.lastKnown.z + Math.sin(this.sweep * 0.63 + 1.3) * SWEEP_REACH;
+      const goalAimX = this.lastSeen.x + Math.sin(this.sweep * 0.9) * SWEEP_REACH;
+      const goalAimZ = this.lastSeen.z + Math.sin(this.sweep * 0.63 + 1.3) * SWEEP_REACH;
       aim.x += (goalAimX - aim.x) * Math.min(1, dt * 1.6);
       aim.z += (goalAimZ - aim.z) * Math.min(1, dt * 1.6);
       aim.y = 0;
@@ -232,20 +196,17 @@ export class PoliceHelicopter {
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
-    // The shaft is added to the frame as light, which shows far more than paint would, and most of all in the dark,
-    // where the camera often looks out through it: a few hundredths are plenty.
-    this.beam.material.opacity = 0.05 - night * 0.022;
+    this.beam.material.opacity = 0.19 + night * 0.11;
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(aim.x, aim.y, aim.z);
     // By day the lamp only warms what it touches; in the dark it is the brightest thing in the street.
     this.lamp.intensity = 90 + night * 890;
     this.pool.position.set(aim.x, aim.y + 0.12, aim.z);
-    this.pool.material.opacity = 0.06 + night * 0.2;
+    this.pool.material.opacity = 0.09 + night * 0.31;
 
     this.cooldown -= dt;
-    if (stars >= 4 && this.cooldown <= 0 && player.alive && !lost && !cover.isHidden()) {
+    if (stars >= 4 && this.cooldown <= 0 && player.alive && !cover.isHidden()) {
       this.cooldown = 0.3 + Math.random() * 0.5;
-      this.firedClock = 1.2;
       const hit = Math.random() < 0.13;
       const from = new THREE.Vector3(mesh.position.x, mesh.position.y - 1.4, mesh.position.z);
       const to = new THREE.Vector3(player.position.x + (hit ? 0 : (Math.random() - 0.5) * 7), player.position.y + 0.8, player.position.z + (hit ? 0 : (Math.random() - 0.5) * 7));
@@ -260,12 +221,10 @@ export class PoliceHelicopter {
 /** How far from Nova's last known place the searchlight sweeps, and how wide its pool of light is on the ground. */
 const SWEEP_REACH = 24;
 const POOL_RADIUS = 3.6;
-/** How far along the ground the crew can make her out from the air. */
-const AIR_SIGHT_RANGE = 75;
 const HOVER_HEIGHT = 26;
 const ORBIT_RADIUS = 46;
 /**
  * Its station over a car chase: the ring it circles on, how high, and how many seconds of the car's travel it aims
  * ahead. It eases toward that point and so trails it by most of a second, which leaves it a little ahead of the car.
  */
-const CHASE_ORBIT = { radius: 26, height: 17, lead: 1.8 };
+const CHASE_ORBIT = { radius: 26, height: 17, lead: 1.2 };

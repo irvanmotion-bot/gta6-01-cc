@@ -1,6 +1,5 @@
-// The heads-up display: builds every panel (job, eclipse countdown, status, dispatch, vehicle, radar, the crew bar and the
-// record strip) and runs the pieces that belong to no panel: the dialogue box with its portraits, banners, notifications,
-// hints and the crosshair.
+// The heads-up display: builds every panel (job, crew, eclipse countdown, status, dispatch, vehicle, radar) and runs the pieces
+// that belong to no panel: the crew's dialogue ribbon with portraits, banners, notifications, hints and the crosshair.
 import { districtNameAt, streetNameAt } from '../world/cityLayout.js';
 import { DomCache, createElement } from './domBuilder.js';
 import { HudEclipsePanel } from './hudEclipsePanel.js';
@@ -10,27 +9,7 @@ import { HudDispatchPanel } from './hudDispatchPanel.js';
 import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
-import { HudFoeBars } from './hudFoeBars.js';
-import { HudUnitTags } from './hudUnitTags.js';
-import { HudWaypoint } from './hudWaypoint.js';
-import { HudRecordStrip } from './hudRecordStrip.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
-import { speakerJob } from '../missions/storyMissions.js';
-
-/** The HUD SIZE setting: how much each choice enlarges the panels, and whether it keeps only the essentials. */
-export const HUD_SIZES = {
-  standard: { label: 'STANDARD', scale: 1 },
-  large: { label: 'LARGE', scale: 1.2 },
-  huge: { label: 'HUGE · ESSENTIALS', scale: 2.5, essentials: true },
-};
-
-/** How long a line stays in the feed, in seconds of play. */
-const NOTE_SECONDS = 4.3;
-
-/** The feed's line for what the radio is playing: the station, its frequency, the track and the artist. */
-function radioLine(playing) {
-  return `♪ ${playing.station} ${playing.frequency} · ${playing.title} · ${playing.artist}`;
-}
 
 export class Hud {
   constructor(game) {
@@ -43,8 +22,8 @@ export class Hud {
     const right = createElement('div', 'hud-column right-column', root);
     const radar = this.buildRadar(root);
     this.jobPanel = new HudJobPanel(game, left, this.cache);
+    this.crewPanel = new HudCrewPanel(game, left, this.cache);
     this.buildDialogue(left);
-    this.crewPanel = new HudCrewPanel(game, root, this.cache);
     this.eclipsePanel = new HudEclipsePanel(game, right, this.cache);
     this.statusPanel = new HudStatusPanel(game, right, this.cache, radar);
     this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);
@@ -52,43 +31,22 @@ export class Hud {
     const corner = createElement('div', 'corner-stack', root);
     this.weaponBar = new HudWeaponBar(game, corner, this.cache);
     this.vehiclePanel = new HudVehiclePanel(game, corner, this.cache);
-    this.foeBars = new HudFoeBars(game, root, this.cache);
-    this.unitTags = new HudUnitTags(game, root, this.cache);
-    this.waypoint = new HudWaypoint(game, root, this.cache);
-    this.recordStrip = new HudRecordStrip(game, root, this.cache);
     this.buildOverlays(root);
-    this.notes = [];
     this.speech = [];
     this.speechClock = 0;
     this.bannerClock = 0;
     this.hintText = '';
     this.hintClock = 0;
     this.hitClock = 0;
-    this.size = 'standard';
-    this.essentials = false;
-    // The radio names its next track in the feed as it comes on.
-    game.audio.radio.onTrackChange = (playing) => { if (playing && game.player.vehicle) this.notify(radioLine(playing)); };
-    this.fitToWindow();
-  }
-
-  /**
-   * The HUD SIZE setting: 'standard', 'large', or 'huge', which keeps only the essentials (the job and its
-   * objective, the stars, the cash, the weapon, the radar and the prompts) and prints them more than twice as big.
-   */
-  setSize(size) {
-    this.size = HUD_SIZES[size] ? size : 'standard';
-    this.essentials = Boolean(HUD_SIZES[this.size].essentials);
-    this.root.classList.toggle('essentials', this.essentials);
     this.fitToWindow();
   }
 
   /**
    * The panels are sized in window heights and laid out for a 16:10 frame. In a narrower window the whole HUD
-   * shrinks in step, so the columns, the radar and the dialogue box never run into each other; the HUD SIZE setting
-   * then enlarges all of it by its own factor.
+   * shrinks in step, so the columns, the radar and the dialogue box never run into each other.
    */
   fitToWindow() {
-    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6) * HUD_SIZES[this.size].scale;
+    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6);
     const style = this.root.style;
     style.zoom = String(scale);
     style.right = 'auto';
@@ -120,9 +78,7 @@ export class Hud {
     this.portrait.width = 96;
     this.portrait.height = 96;
     const text = createElement('div', 'dialogue-text', this.dialogue);
-    const who = createElement('div', 'dialogue-who', text);
-    this.speaker = createElement('b', 'dialogue-speaker', who);
-    this.speakerJob = createElement('span', 'dialogue-job', who);
+    this.speaker = createElement('b', 'dialogue-speaker', text);
     this.line = createElement('div', 'dialogue-line', text);
   }
 
@@ -145,25 +101,13 @@ export class Hud {
     this.root.classList.toggle('hidden', !visible);
   }
 
-  /**
-   * A short line in the feed at the top of the screen: pickups, purchases, cred, radio chatter. The three newest
-   * show; each lives a few seconds of the game's own time, so the feed holds still while the game is paused.
-   */
+  /** A short line in the feed at the top of the screen: pickups, purchases, cred, radio chatter. */
   notify(message) {
     const line = createElement('div', 'note', null, message);
     this.notifications.prepend(line);
-    this.notes.unshift({ line, life: NOTE_SECONDS });
-    while (this.notes.length > 3) this.notes.pop().line.remove();
-  }
-
-  /** Age the feed: a line fades over its last moments, then goes. */
-  ageNotes(dt) {
-    for (let index = this.notes.length - 1; index >= 0; index -= 1) {
-      const note = this.notes[index];
-      note.life -= dt;
-      if (note.life < 0.7) note.line.classList.add('gone');
-      if (note.life <= 0) { note.line.remove(); this.notes.splice(index, 1); }
-    }
+    while (this.notifications.children.length > 3) this.notifications.lastChild.remove();
+    setTimeout(() => line.classList.add('gone'), 3600);
+    setTimeout(() => line.remove(), 4300);
   }
 
   /** The big centred title of a job start, pass or fail. */
@@ -209,10 +153,8 @@ export class Hud {
     this.notify(`${name} · ${kind}`);
   }
 
-  /** R in a car: the feed names the station tuned in, its frequency and the track on air. */
-  showRadio() {
-    const playing = this.game.audio.radio.nowPlaying();
-    this.notify(playing ? radioLine(playing) : '♪ Radio off');
+  showRadio(station) {
+    this.notify(station.host ? `♪ ${station.name} · ${station.host}` : `♪ ${station.name}`);
   }
 
   /** The full-screen card when Nova is taken down or arrested. */
@@ -235,8 +177,6 @@ export class Hud {
     drawSpeakerPortrait(this.portrait, next.speaker, next.color);
     this.speaker.textContent = next.speaker;
     this.speaker.style.color = next.color;
-    // Who they are to the crew, beside the name: JAZZ · RADIO HACKER.
-    this.speakerJob.textContent = speakerJob(next.speaker);
     this.line.textContent = next.line;
     this.dialogue.style.borderColor = next.color;
     this.dialogue.classList.add('visible');
@@ -254,11 +194,6 @@ export class Hud {
     this.crewPanel.update(dt);
     this.weaponBar.update(dt);
     this.vehiclePanel.update(dt);
-    this.foeBars.update(dt);
-    this.unitTags.update(dt);
-    this.waypoint.update(dt);
-    this.recordStrip.update(dt);
-    this.ageNotes(dt);
     cache.text(this.clock, `${game.calendar.dayName()} ${game.calendar.clockText()}`);
     cache.text(this.district, districtNameAt(player.position.x, player.position.z).toUpperCase());
     cache.text(this.street, streetNameAt(player.position.x, player.position.z));

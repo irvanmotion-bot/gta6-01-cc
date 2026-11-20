@@ -11,24 +11,19 @@ export class MeshBatcher {
     this.vertexCount = 0;
   }
 
-  /**
-   * Append any geometry, moved by `matrix` and tinted `color` (null keeps the colours the geometry carries itself);
-   * `uvOf(index, u, v)` may rewrite a vertex's UV.
-   */
+  /** Append any geometry, moved by `matrix` and tinted `color`; `uvOf(index, u, v)` may rewrite a vertex's UV. */
   addGeometry(geometry, matrix, color, uvOf = null) {
     const position = geometry.attributes.position;
     const normal = geometry.attributes.normal;
     const uv = geometry.attributes.uv;
-    const own = color === null ? geometry.attributes.color : null;
-    if (!own) scratchColor.set(color);
+    scratchColor.set(color);
     scratchNormalMatrix.getNormalMatrix(matrix);
     for (let i = 0; i < position.count; i += 1) {
       scratchVector.fromBufferAttribute(position, i).applyMatrix4(matrix);
       this.positions.push(scratchVector.x, scratchVector.y, scratchVector.z);
       scratchVector.fromBufferAttribute(normal, i).applyMatrix3(scratchNormalMatrix).normalize();
       this.normals.push(scratchVector.x, scratchVector.y, scratchVector.z);
-      if (own) this.colors.push(own.getX(i), own.getY(i), own.getZ(i));
-      else this.colors.push(scratchColor.r, scratchColor.g, scratchColor.b);
+      this.colors.push(scratchColor.r, scratchColor.g, scratchColor.b);
       const u = uv ? uv.getX(i) : 0;
       const v = uv ? uv.getY(i) : 0;
       const mapped = uvOf ? uvOf(i, u, v) : null;
@@ -46,11 +41,10 @@ export class MeshBatcher {
 
   /**
    * A box standing on height `y0`, centred on (cx, cz). With `tile` [metres wide, metres tall] its walls repeat
-   * a facade texture and its roof samples the texture's plain corner. `shape` is another unit shape to stretch in
-   * the box's place (a softBox: a body part with its edges rounded off).
+   * a facade texture and its roof samples the texture's plain corner.
    */
   addBox(cx, y0, cz, width, height, depth, color, options = {}) {
-    const { rotY = 0, tile = null, uvOffset = 0, shape = unitBox } = options;
+    const { rotY = 0, tile = null, uvOffset = 0 } = options;
     scratchMatrix.makeRotationY(rotY);
     scratchMatrix.scale(scratchVector.set(width, height, depth));
     scratchMatrix.setPosition(cx, y0 + height / 2, cz);
@@ -64,7 +58,7 @@ export class MeshBatcher {
         return [uvOffset + (u * span) / tile[0], (v * height) / tile[1]];
       };
     }
-    this.addGeometry(shape, scratchMatrix, color, uvOf);
+    this.addGeometry(unitBox, scratchMatrix, color, uvOf);
   }
 
   /** Narrow the top face of the box just added, and slide it along z: slopes a windscreen or a bonnet. */
@@ -132,30 +126,6 @@ export class MeshBatcher {
     mesh.matrixAutoUpdate = false;
     return mesh;
   }
-}
-
-/**
- * A unit box with its edges and corners rounded off by `roundness` (0 a brick, 0.5 a ball), smooth all over: stretched
- * by addBox it makes a torso, a head, a limb, a cushion. The rounding stretches with the box.
- */
-export function softBox(roundness) {
-  const geometry = new THREE.BoxGeometry(1, 1, 1, 4, 4, 4);
-  const position = geometry.attributes.position;
-  const normal = geometry.attributes.normal;
-  const inner = 0.5 - roundness;
-  const point = new THREE.Vector3();
-  const core = new THREE.Vector3();
-  for (let i = 0; i < position.count; i += 1) {
-    point.fromBufferAttribute(position, i);
-    // The box's quarter lines become the lines where its flat faces end and the rounding begins.
-    for (const axis of ['x', 'y', 'z']) if (Math.abs(Math.abs(point[axis]) - 0.25) < 0.001) point[axis] = Math.sign(point[axis]) * inner;
-    core.copy(point).clampScalar(-inner, inner);
-    point.sub(core);
-    if (point.lengthSq() > 0) point.normalize();
-    normal.setXYZ(i, point.x, point.y, point.z);
-    position.setXYZ(i, core.x + point.x * roundness, core.y + point.y * roundness, core.z + point.z * roundness);
-  }
-  return geometry;
 }
 
 /** A matrix that places, turns and scales a shape; shared by the prop builders. */

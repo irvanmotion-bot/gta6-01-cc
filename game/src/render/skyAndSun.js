@@ -25,7 +25,6 @@ uniform float moonShade;
 uniform vec3 moonColor;
 uniform float corona;
 uniform float sunGlow;
-uniform float discPower;
 uniform float starAmount;
 uniform float cloudTime;
 varying vec3 vDir;
@@ -97,14 +96,9 @@ void main() {
   // Where the moon has the sun behind it, it is a clean bite of deep indigo. Beside the sun it is a round dusk-violet
   // shade in the haze, plain enough to read as the moon and no darker, until totality brings the whole black disc out.
   float overSun = 1.0 - smoothstep(sunRadius * 0.97, sunRadius * 1.1, sunAngle);
-  float shade = moon * moonShade * mix(0.5, 1.0, max(overSun, corona));
-  color = mix(color, moonColor, shade);
-  // What the moon has left of the disc is far brighter than white, and so is the corona: that light is what the
-  // finished frame blooms and throws shafts from.
-  color += vec3(1.0, 0.84, 0.56) * disc * (1.0 - moon * moonShade) * discPower;
-  color += coronaLight(dir, moonAngle) * corona * 1.6;
-  // Alpha marks open sky for the passes that follow: nothing stands in front of this pixel.
-  gl_FragColor = vec4(color, 0.0);
+  color = mix(color, moonColor, moon * moonShade * mix(0.5, 1.0, max(overSun, corona)));
+  color += coronaLight(dir, moonAngle) * corona;
+  gl_FragColor = vec4(color, 1.0);
   #include <colorspace_fragment>
 }`;
 
@@ -129,33 +123,6 @@ const SUN_RADIUS = 0.104;
 const MOON_RADIUS = 0.11;
 const SUNRISE = 6;
 const SUNSET = 19.6;
-/** The exposure the finished frame is toned at; main.js gives it to the renderer. */
-export const SCREEN_EXPOSURE = 1.02;
-
-/* The renderer's filmic tone curve as three numbers a channel and the two matrices round it, to run it backwards. */
-const CURVE = { rise: 0.0245786, lift: 0.000090537, shoulder: 0.983729, slope: 0.432951, foot: 0.238081 };
-const INTO_CURVE = new THREE.Matrix3().set(0.59719, 0.35458, 0.04823, 0.076, 0.90834, 0.01566, 0.0284, 0.13383, 0.83777);
-const OUT_OF_CURVE = new THREE.Matrix3().set(1.60475, -0.53108, -0.07367, -0.10208, 1.10813, -0.00605, -0.00327, -0.07276, 1.07602);
-const BACK_INTO_CURVE = INTO_CURVE.clone().invert();
-const BACK_OUT_OF_CURVE = OUT_OF_CURVE.clone().invert();
-const channels = new THREE.Vector3();
-
-/**
- * The haze is mixed into the frame before the frame is toned for the screen (bloomAndGrade.js), while the sky is
- * painted in screen colours. So the fog is given not the horizon's colour but the light that the tone curve turns
- * into it: the curve run backwards, a channel at a time. Writes into `target` and returns it.
- */
-function lightThatTonesTo(color, target) {
-  channels.set(color.r, color.g, color.b).applyMatrix3(BACK_OUT_OF_CURVE);
-  for (const axis of ['x', 'y', 'z']) {
-    const seen = clamp(channels[axis], 0, 0.95);
-    const a = 1 - CURVE.shoulder * seen;
-    const b = CURVE.rise - CURVE.slope * seen;
-    channels[axis] = (-b + Math.sqrt(b * b + 4 * a * (CURVE.lift + CURVE.foot * seen))) / (2 * a);
-  }
-  channels.applyMatrix3(BACK_INTO_CURVE).multiplyScalar(0.6 / SCREEN_EXPOSURE);
-  return target.setRGB(Math.max(channels.x, 0), Math.max(channels.y, 0), Math.max(channels.z, 0));
-}
 
 export class SkyAndSun {
   constructor(scene) {
@@ -176,7 +143,6 @@ export class SkyAndSun {
       moonColor: { value: new THREE.Color('#1b1638') },
       corona: { value: 0 },
       sunGlow: { value: 1 },
-      discPower: { value: 7 },
       starAmount: { value: 0 },
       cloudTime: { value: 0 },
     };
@@ -204,8 +170,6 @@ export class SkyAndSun {
     scene.add(this.ambient, this.fill);
     // The haze starts well down the street, so the road ahead and the far blocks keep their detail in the glare.
     scene.fog = new THREE.Fog(0xffcf8e, 190, 1150);
-    /** The haze's colour as the eye sees it on the horizon; the fog itself is given the light that tones to it. */
-    this.haze = new THREE.Color(0xffcf8e);
     this.scene = scene;
     this.scratchA = new THREE.Color();
     this.scratchB = new THREE.Color();
@@ -214,11 +178,6 @@ export class SkyAndSun {
 
   setShadows(enabled) {
     this.sun.castShadow = enabled;
-  }
-
-  /** How bright the disc stands in the frame right now: its own power, less what the moon covers of it. */
-  discLight() {
-    return this.uniforms.discPower.value * this.sunShare * (1 - this.uniforms.corona.value);
   }
 
   /** Follow the eclipse calendar's clock and keep the dome and the shadow box centred on the player. */
@@ -250,7 +209,6 @@ export class SkyAndSun {
   applyClock(hour, track, dark, sunlight) {
     this.hour = hour;
     this.eclipseDark = dark;
-    this.sunShare = sunlight;
     let index = 0;
     while (index < DAY_COLOURS.length - 2 && DAY_COLOURS[index + 1][0] <= hour) index += 1;
     const a = DAY_COLOURS[index];
@@ -273,16 +231,13 @@ export class SkyAndSun {
     this.fill.intensity = this.sun.intensity * 0.26 * (1 - dark) + dark * 0.2;
     this.fill.color.copy(uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
     // The haze is the horizon's colour with a little of the sky's blue in it: distance reads as depth, not as glare.
-    this.haze.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, 0.22 + dark * 0.4);
-    lightThatTonesTo(this.haze, this.scene.fog.color);
+    this.scene.fog.color.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, 0.22 + dark * 0.4);
 
     const sunDir = this.sunDirectionAt(hour, uniforms.sunDir.value);
     this.fill.position.set(-sunDir.x, 0.55, -sunDir.z);
     const nightfall = clamp(hour < 12 ? (6.6 - hour) / 1.2 : (hour - 18.9) / 1.2, 0, 1);
     this.night = Math.max(nightfall, dark);
     uniforms.starAmount.value = Math.max(nightfall, dark * 0.9);
-    // By day the disc is the sun, seven times brighter than white; after dark the same disc is the moon.
-    uniforms.discPower.value = 7 - nightfall * 6.2;
     // With the sun on the horizon or gone the sky itself is the lamp: lift the ambient light so that streets in
     // long shadow, and the asphalt most of all, stay readable through dusk and night.
     this.ambient.intensity *= 1 + clamp(1 - sunDir.y / 0.5, 0, 1) * 0.5;

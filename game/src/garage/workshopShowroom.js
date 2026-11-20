@@ -99,13 +99,13 @@ export class WorkshopShowroom {
     this.active = false;
   }
 
-  /** Stand the camera off the car's quarter and aim it so the whole car sits in the left two fifths of the frame. */
+  /** Stand the camera off the car's quarter and aim it so the car sits in the left half of the frame. */
   frame() {
     const view = this.view;
     view.aspect = window.innerWidth / window.innerHeight;
     view.updateProjectionMatrix();
-    view.position.set(YARD.x + 3.5, YARD.y + 2.2, YARD.z + 12);
-    view.lookAt(YARD.x + 3.35, YARD.y + 1.0, YARD.z);
+    view.position.set(YARD.x + 2.3, YARD.y + 2.0, YARD.z + 10);
+    view.lookAt(YARD.x + 2.15, YARD.y + 1.0, YARD.z);
   }
 
   /** Called every frame while the counter is open: the table turns even though the city is paused. */

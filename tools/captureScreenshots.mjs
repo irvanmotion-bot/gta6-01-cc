@@ -20,10 +20,7 @@ const only = option('--only');
 const outDir = option('--out') ? resolve(option('--out')) : join(root, 'screenshots');
 const sheetDir = option('--sheet') ? resolve(option('--sheet')) : null;
 const smoke = args.includes('--smoke');
-// The judge's sheet fits the cover inside 768 by 480 and the others in cells a third of that, so the entry's
-// screenshots are taken at 768 by 480: the cover reaches the judge pixel for pixel, and nothing is shrunk more than
-// it has to be. (A shot of shots.json may name another "size".)
-const VIEWPORT = { width: 768, height: 480 };
+const VIEWPORT = { width: 1280, height: 800 };
 const MAX_BYTES = 250 * 1024;
 
 /** Serve game/ at the root and the entry's screenshots under /__shots/ (for the contact-sheet preview only). */
@@ -83,22 +80,18 @@ if (smoke) {
 } else if (sheetDir) {
   await previewContactSheet(page, base);
 } else {
-  // `--shots <file>` takes another list of scenes (candidates to compare) in place of the entry's shots.json.
-  const shots = JSON.parse(readFileSync(option('--shots') ? resolve(option('--shots')) : join(root, 'shots.json'), 'utf8'));
+  const shots = JSON.parse(readFileSync(join(root, 'shots.json'), 'utf8'));
   mkdirSync(outDir, { recursive: true });
   for (const shot of shots) {
     if (only && !shot.name.includes(only)) continue;
-    await page.setViewportSize(shot.size ? { width: shot.size[0], height: shot.size[1] } : VIEWPORT);
     await page.goto(base + shot.query);
     await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 120000 });
-    // A candidate scene may run a line of script in the page first, to try a setting on the staged frame.
-    if (shot.eval) await page.evaluate(shot.eval);
     // The frame is frozen; a longer wait only lets the notification toasts time out of a crowded shot.
     await page.waitForTimeout(shot.wait ?? 1500);
-    let quality = 98;
+    let quality = 92;
     let image = await page.screenshot({ type: 'jpeg', quality });
     while (image.length > MAX_BYTES && quality > 50) {
-      quality -= 2;
+      quality -= 3;
       image = await page.screenshot({ type: 'jpeg', quality });
     }
     await page.screenshot({ type: 'jpeg', quality, path: join(outDir, shot.name) });

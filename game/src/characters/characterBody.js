@@ -3,14 +3,10 @@ import * as THREE from 'three';
 import { WORLD_BOUNDS } from '../core/config.js';
 import { angleDelta, clamp } from '../core/random.js';
 import { groundHeight } from '../world/cityLayout.js';
-import { MeshBatcher, placement, softBox } from '../render/meshBatcher.js';
+import { MeshBatcher } from '../render/meshBatcher.js';
 
 /** Every part of every character is vertex-coloured and shares this one material. */
 const trunkMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
-/** The shapes a body is built of, each stretched to size: a rounded chest, a rounder head, a limb, a soft slab. */
-const SOFT = { chest: softBox(0.24), head: softBox(0.42), limb: softBox(0.36), slab: softBox(0.14) };
-const BRIM = new THREE.CylinderGeometry(0.5, 0.5, 1, 14);
-const SKIRT = new THREE.CylinderGeometry(0.34, 0.5, 1, 12);
 
 /** How far a cowering citizen sinks onto their heels, in metres. */
 const COWER_DROP = 0.46;
@@ -51,31 +47,33 @@ export function buildCharacterModel(look) {
   const legColor = look.shorts ? look.skin : look.pants;
   // Everything that never bends (torso, hips, head, hair, jacket, hat) is one mesh; only the limbs swing on their own.
   const trunkParts = new MeshBatcher();
-  // A part is a rounded shape stretched to its size, centred on (x, z) with its middle at height y.
-  const block = (color, sx, sy, sz, x, y, z, shape = SOFT.chest) => trunkParts.addBox(x, y - sy / 2, z, sx, sy, sz, color, { shape });
-  block(look.shirt, 0.52, 0.64, 0.3, 0, 1.16, 0);
-  block(look.pants, 0.5, 0.28, 0.3, 0, 0.84, 0);
-  block(look.skin, 0.28, 0.3, 0.29, 0, 1.63, 0, SOFT.head);
-  block(look.hair, 0.31, 0.16, 0.32, 0, 1.75, -0.012, SOFT.head);
-  // Hair comes down the back of the head (to the shoulders on some), so nobody is bare from behind.
-  block(look.hair, 0.3, look.longHair ? 0.38 : 0.22, 0.1, 0, 1.66, -0.125);
-  if (look.jacket) block(look.jacket, 0.55, 0.52, 0.22, 0, 1.2, -0.06);
-  if (look.afro) block(look.hair, 0.42, 0.32, 0.42, 0, 1.86, -0.02, SOFT.head);
+  const block = (color, sx, sy, sz, x, y, z) => trunkParts.addBox(x, y - sy / 2, z, sx, sy, sz, color);
+  block(look.shirt, 0.5, 0.62, 0.28, 0, 1.16, 0);
+  block(look.pants, 0.5, 0.24, 0.29, 0, 0.84, 0);
+  block(look.skin, 0.26, 0.28, 0.27, 0, 1.63, 0);
+  block(look.hair, 0.29, 0.12, 0.3, 0, 1.76, -0.01);
+  // Hair comes down the back of the head (to the shoulders on some), so nobody is a bare block from behind.
+  block(look.hair, 0.29, look.longHair ? 0.36 : 0.2, 0.08, 0, 1.66, -0.125);
+  if (look.jacket) block(look.jacket, 0.53, 0.5, 0.2, 0, 1.2, -0.06);
+  if (look.afro) block(look.hair, 0.4, 0.3, 0.4, 0, 1.86, -0.02);
   if (look.sunHat) {
-    block(look.sunHat, 0.33, 0.12, 0.34, 0, 1.85, 0, SOFT.head);
-    trunkParts.addGeometry(BRIM, placement(0, 1.78, 0, 0, 0.7, 0.03, 0.7), look.sunHat);
+    block(look.sunHat, 0.33, 0.1, 0.34, 0, 1.85, 0);
+    block(look.sunHat, 0.66, 0.03, 0.66, 0, 1.78, 0);
   } else if (look.hat) {
-    block(look.hat, 0.32, 0.12, 0.33, 0, 1.84, 0, SOFT.head);
-    block(look.hat, 0.3, 0.035, 0.2, 0, 1.8, 0.2, SOFT.slab);
+    block(look.hat, 0.31, 0.1, 0.32, 0, 1.84, 0);
+    block(look.hat, 0.3, 0.03, 0.2, 0, 1.8, 0.2);
   }
   // A sundress flares from the waist to the knee; a tourist carries a day pack.
-  if (look.dress) trunkParts.addGeometry(SKIRT, placement(0, 0.71, 0, 0, 0.64, 0.42, 0.46), look.shirt);
-  if (look.backpack) block(look.backpack, 0.36, 0.42, 0.18, 0, 1.4, -0.22);
-  if (look.shades) block('#15161a', 0.24, 0.06, 0.03, 0, 1.565, 0.135, SOFT.slab);
+  if (look.dress) {
+    trunkParts.addBox(0, 0.5, 0, 0.62, 0.42, 0.44, look.shirt);
+    trunkParts.taperLastBox(0.8, 0.68);
+  }
+  if (look.backpack) block(look.backpack, 0.36, 0.42, 0.16, 0, 1.4, -0.21);
+  if (look.shades) block('#15161a', 0.24, 0.06, 0.02, 0, 1.565, 0.14);
   // A face: two eyes and a mouth on the front of the head, and a neck under it.
-  for (const side of [-1, 1]) block('#1b1b1b', 0.05, 0.055, 0.03, side * 0.062, 1.56, 0.132, SOFT.head);
-  block('#7a3b2e', 0.1, 0.024, 0.03, 0, 1.43, 0.13, SOFT.slab);
-  block(look.skin, 0.14, 0.1, 0.14, 0, 1.36, 0, SOFT.limb);
+  for (const side of [-1, 1]) block('#1b1b1b', 0.05, 0.055, 0.02, side * 0.065, 1.56, 0.137);
+  block('#7a3b2e', 0.1, 0.022, 0.02, 0, 1.43, 0.137);
+  block(look.skin, 0.14, 0.08, 0.14, 0, 1.36, 0);
   const trunk = trunkParts.build(trunkMaterial, { receiveShadow: false });
   trunk.matrixAutoUpdate = true;
   // Short sleeves over bare forearms unless a jacket covers them; shorts end above the knee; everyone wears shoes.
@@ -133,12 +131,11 @@ function limb(upper, lower, upperShare, end, sx, sy, sz, x, y) {
   const parts = new MeshBatcher();
   const endHeight = sx < 0.18 ? 0.11 : 0.1;
   const upperHeight = sy * upperShare;
-  // The limb is round all its length; a sleeve or a short's leg is a wider round over the top of it.
-  parts.addBox(0, -sy + endHeight * 0.7, 0, sx, sy - endHeight * 0.7, sz, lower, { shape: SOFT.limb });
-  if (upperHeight > 0) parts.addBox(0, -upperHeight, 0, sx * 1.16, upperHeight + 0.02, sz * 1.16, upper, { shape: SOFT.limb });
+  if (upperHeight > 0) parts.addBox(0, -upperHeight, 0, sx * 1.12, upperHeight, sz * 1.12, upper);
+  parts.addBox(0, -sy + endHeight, 0, sx, sy - endHeight - upperHeight, sz, lower);
   // A hand is a little wider than the wrist; a shoe reaches forward of the ankle.
-  if (sx < 0.18) parts.addBox(0, -sy, 0, sx * 1.12, endHeight * 1.15, sz * 1.12, end, { shape: SOFT.head });
-  else parts.addBox(0, -sy, 0.05, sx * 1.1, endHeight * 1.1, sz * 1.5, end, { shape: SOFT.chest });
+  if (sx < 0.18) parts.addBox(0, -sy, 0, sx * 1.1, endHeight, sz * 1.1, end);
+  else parts.addBox(0, -sy, 0.05, sx * 1.08, endHeight, sz * 1.5, end);
   const mesh = parts.build(trunkMaterial, { receiveShadow: false });
   mesh.matrixAutoUpdate = true;
   mesh.position.set(x, y, 0);

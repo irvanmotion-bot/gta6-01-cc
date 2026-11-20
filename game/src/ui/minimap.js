@@ -119,7 +119,6 @@ export class Minimap {
 
     const target = this.routeTarget();
     if (target) this.drawRoute(c, routeAlongStreets(player.position, target), toMap, halfX, halfY, unit, target.color);
-    this.drawSearchZone(c, toMap, halfX, halfY, scale, unit);
 
     const edgeX = halfX - 11 * unit;
     const edgeTop = halfY - 11 * unit;
@@ -154,27 +153,6 @@ export class Minimap {
       c.strokeStyle = '#ff6a4d';
       c.strokeRect(0, 0, width, height);
     }
-  }
-
-  /**
-   * While the police have lost her: the zone they are searching, a pulsing ring round the place she was last seen
-   * that widens the longer she stays out of sight. Leaving it unseen is how the stars fall.
-   */
-  drawSearchZone(c, toMap, halfX, halfY, scale, unit) {
-    const wanted = this.game.wanted;
-    if (wanted.stars === 0 || wanted.seen) return;
-    const centre = toMap(wanted.lastKnown.x, wanted.lastKnown.z);
-    const radius = wanted.searchRadius() * scale;
-    c.save();
-    c.beginPath();
-    c.arc(halfX + centre.x, halfY + centre.y, radius, 0, Math.PI * 2);
-    c.fillStyle = `rgba(58, 123, 255, ${0.2 + Math.sin(this.game.time * 4) * 0.06})`;
-    c.fill();
-    c.setLineDash([7 * unit, 5 * unit]);
-    c.lineWidth = 2.6 * unit;
-    c.strokeStyle = '#cfe0ff';
-    c.stroke();
-    c.restore();
   }
 
   /** The route as a bright line with a dark edge, from the player's arrow to the objective. */
@@ -281,22 +259,19 @@ export class Minimap {
       c.strokeStyle = '#17122b';
       c.stroke();
     }
-    // Each district's name in two short lines of bold capitals over its blocks, the Strand's up its coast.
-    const size = Math.max(11, 58 * scale);
-    c.font = `700 ${size}px Verdana, "DejaVu Sans", sans-serif`;
+    c.font = `900 ${Math.max(11, 46 * scale)}px Impact, "Arial Black", sans-serif`;
     c.textAlign = 'center';
-    c.lineWidth = Math.max(3, size * 0.3);
+    c.lineWidth = 4;
     c.lineJoin = 'round';
-    c.strokeStyle = 'rgba(18,14,36,0.85)';
+    c.strokeStyle = 'rgba(23,18,43,0.7)';
     c.fillStyle = '#ffffff';
-    for (const [id, x, z] of [['orrery', 480, 322], ['hill', 520, 62], ['azimuth', 800, 200], ['yards', 440, 622]]) {
-      DISTRICTS[id].name.toUpperCase().split(' ').forEach((word, line) => {
-        c.strokeText(word, toX(x), toY(z) + line * size * 1.05);
-        c.fillText(word, toX(x), toY(z) + line * size * 1.05);
-      });
+    for (const [id, x, z] of [['orrery', 480, 340], ['hill', 520, 96], ['azimuth', 770, 236], ['yards', 440, 652]]) {
+      const text = DISTRICTS[id].name.toUpperCase();
+      c.strokeText(text, toX(x), toY(z));
+      c.fillText(text, toX(x), toY(z));
     }
     c.save();
-    c.translate(toX(96), toY(360));
+    c.translate(toX(86), toY(360));
     c.rotate(-Math.PI / 2);
     c.strokeText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
     c.fillText(DISTRICTS.strand.name.toUpperCase(), 0, 0);

@@ -14,8 +14,7 @@ export function buildStreetsAndGround(scene) {
   surface.repeat.set((CITY.width + CITY.road) / ASPHALT_TILE, (CITY.depth + CITY.road) / ASPHALT_TILE);
   const asphalt = new THREE.Mesh(
     new THREE.PlaneGeometry(CITY.width + CITY.road, CITY.depth + CITY.road),
-    // Worn smooth by traffic: the low sun lays a long sheen down the road toward itself.
-    new THREE.MeshStandardMaterial({ map: surface, color: 0xf2f2f4, roughness: 0.38, metalness: 0.12 }),
+    new THREE.MeshStandardMaterial({ map: surface, color: 0xf2f2f4, roughness: 0.9 }),
   );
   asphalt.rotation.x = -Math.PI / 2;
   asphalt.position.set(CITY.width / 2, 0, CITY.depth / 2);

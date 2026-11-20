@@ -27,8 +27,6 @@ export class VaneBounties {
     const tag = `bounty:${capo.id}`;
     const boss = game.gunmen.spawn('capo', capo.x, capo.z, tag);
     boss.bountyId = capo.id;
-    // His name floats over his health bar while Nova fights him.
-    boss.nameTag = capo.name;
     for (let k = 0; k < capo.guards; k += 1) {
       const angle = (k / capo.guards) * Math.PI * 2;
       game.gunmen.spawn('enforcer', capo.x + Math.cos(angle) * 3, capo.z + Math.sin(angle) * 3, tag);
@@ -70,10 +68,9 @@ export class VaneBounties {
     const { capo, left, total } = hit;
     const guards = Math.max(0, left - 1);
     return {
-      header: `BOUNTY HUNT ${this.claimed.size + 1}/${VANE_CAPOS.length} · FROM JAZZ`, title: capo.name, stageLine: `${capo.turf} · ${left} OF ${total} GUNS STANDING`,
+      header: `BOUNTY HUNT ${this.claimed.size + 1}/${VANE_CAPOS.length} · JAZZ PAYS $${capo.price.toLocaleString('en-US')}`, title: capo.name, stageLine: `${capo.turf} · ${left} OF ${total} GUNS STANDING`,
       steps: total, stepsDone: total - left, share: (total - left) / total, face: 'VANE CAPO', faceColor: '#ff6a4d',
-      objective: guards > 0 ? `Take down ${capo.name} and his ${guards} ${guards === 1 ? 'guard' : 'guards'}` : `Take down ${capo.name}`,
-      next: `$${capo.price.toLocaleString('en-US')} + ${CRED_AWARDS.bounty} CRED`, nextTag: 'REWARD', limit: 'NONE · HE HOLDS HIS CORNER', fail: 'ARRESTED · WIPED OUT', kind: 'bounty',
+      objective: guards > 0 ? `Take down ${capo.name} and his ${guards} ${guards === 1 ? 'guard' : 'guards'}` : `Take down ${capo.name}`, next: 'Cash and cred on the kill', timer: null, kind: 'bounty',
     };
   }
 

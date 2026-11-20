@@ -17,7 +17,7 @@ export class StreetCred {
   earn(amount, reason) {
     if (amount <= 0) return;
     this.points += Math.round(amount);
-    this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason.toUpperCase()}`);
+    this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason}`);
     const rank = rankForPoints(this.points);
     if (rank > this.rank) {
       this.rank = rank;
@@ -68,7 +68,7 @@ export function rankForPoints(points) {
 /** The ladder: the cred each rank needs and what reaching it unlocks. */
 export const CRED_RANKS = [
   { title: 'Newcomer', cred: 0, unlocks: 'the streets of Saros' },
-  { title: 'Runner', cred: 250, unlocks: 'Bravo\'s GETAWAY CAR favor · workshop tier 1' },
+  { title: 'Runner', cred: 250, unlocks: 'Bravo\'s WHEELS ON CALL favor · workshop tier 1' },
   { title: 'Hustler', cred: 700, unlocks: 'Jazz\'s SIGNAL JAM favor · Hornet SMG · workshop tier 2' },
   { title: 'Getaway Ace', cred: 1500, unlocks: 'Inés\'s PATCH-UP favor · Boomstick 12 · nitro' },
   { title: 'Fixer', cred: 2800, unlocks: 'Longshot AR · workshop tier 3' },

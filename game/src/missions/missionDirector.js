@@ -1,12 +1,11 @@
 // Runs the story: offers jobs at their givers, steps through each one stage by stage, tracks timers and progress,
 // and passes or fails it. The HUD's job panel reads its stage number, progress bar and next step from here.
 import { CHARACTERS, SETUP_JOB_COUNT, STORY_MISSIONS } from './storyMissions.js';
-import { ECLIPSE_SECONDS, ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
+import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { CRED_AWARDS } from '../progression/streetCred.js';
 import { leaveVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { SeededRandom, distance2D } from '../core/random.js';
-import { landmarkNear } from '../world/cityLayout.js';
 
 export class MissionDirector {
   constructor(game) {
@@ -173,44 +172,6 @@ export class MissionDirector {
     };
   }
 
-  /**
-   * Why the eclipse has just cost Nova the job, or '' while its window is open. A step with `deadline: 'totality'`
-   * must be done before the sun goes out; one with `deadline: 'sunrise'` before it comes back.
-   */
-  missedWindow(step) {
-    if (!step.deadline) return '';
-    const phase = this.game.calendar.phase();
-    const sunBack = phase === 'waning' || phase === 'after';
-    if (step.deadline === 'totality' && (phase === 'totality' || sunBack)) return 'The sun went out before you reached the Trust.';
-    if (step.deadline === 'sunrise' && sunBack) return 'The sun came back. The daylight lock is shut again.';
-    return '';
-  }
-
-  /** The clock the step in hand runs against, for the job panel: seconds left and what ends it. Null with none. */
-  timeLimit() {
-    const run = this.active;
-    if (!run || !run.step) return null;
-    if (run.timer !== null) return { seconds: run.timer, until: 'ON THE CLOCK' };
-    const calendar = this.game.calendar;
-    const toDark = calendar.secondsToTotality() || 0;
-    if (run.step.deadline === 'totality') return { seconds: toDark, until: 'TOTALITY' };
-    if (run.step.deadline === 'sunrise') return { seconds: toDark + (calendar.isTotality() ? calendar.secondsOfTotalityLeft() : ECLIPSE_SECONDS.totality), until: 'SUN RETURNS' };
-    return null;
-  }
-
-  /** Everything that fails the job in hand right now, the most pressing first: the job panel prints them. */
-  failConditions() {
-    const run = this.active;
-    if (!run || !run.step) return [];
-    const list = [];
-    if (run.timer !== null) list.push('TIME RUNS OUT');
-    if (run.step.deadline === 'totality') list.push('TOTALITY COMES FIRST');
-    if (run.step.deadline === 'sunrise') list.push('THE SUN RETURNS');
-    if (run.vehicle) list.push(`${run.vehicle.spec.name.toUpperCase()} WRECKED`);
-    list.push('ARRESTED', 'WIPED OUT');
-    return list;
-  }
-
   objectiveText() {
     const run = this.active;
     if (!run || !run.step) return '';
@@ -248,8 +209,6 @@ export class MissionDirector {
       if (run.timer <= 0) { this.fail('You ran out of time.'); return; }
     }
     if (run.vehicle && run.vehicle.dead) { this.fail(`The ${run.vehicle.spec.name} was destroyed.`); return; }
-    const missed = this.missedWindow(step);
-    if (missed) { this.fail(missed); return; }
 
     if (step.kind === 'steal') {
       game.markers.show(run.vehicle.position.x, run.vehicle.position.z, '#4dabf7', 2.6, 10);
@@ -290,10 +249,11 @@ export class MissionDirector {
       if (distance2D(px, pz, step.at[0], step.at[1]) < step.radius) run.progress += dt;
       if (run.progress >= step.seconds) { game.audio.cashRegister(); this.advance(); }
     } else if (step.kind === 'awaitTotality') {
-      // The vault's daylight lock lets go only when the sun does. (A sun that has already come back is a missed
-      // window: the step's deadline has failed the job above.)
+      // The vault's daylight lock lets go only when the sun does. A sun that has already come back means a missed window.
       game.markers.show(step.at[0], step.at[1], '#f4ecd8', step.radius);
-      if (game.calendar.phase() === 'totality') this.advance();
+      const phase = game.calendar.phase();
+      if (phase === 'totality') this.advance();
+      else if (phase === 'waning' || phase === 'after') this.fail('The sun came back. The daylight lock is shut again.');
     } else if (step.kind === 'loseCops') {
       if (game.wanted.stars === 0) this.advance();
     }
@@ -317,20 +277,6 @@ export class MissionDirector {
     vehicle.stolen = false;
     vehicle.parked = true;
     run.vehicle = null;
-  }
-
-  /**
-   * The one place the step in hand sends her to, with a name for it (the landmark that stands there, the car to
-   * take, or the step's own name), or null when the step has no single place: the HUD hangs its waypoint on it.
-   */
-  waypoint() {
-    const run = this.active;
-    if (!run || !run.step) return null;
-    const step = run.step;
-    if (step.kind === 'steal' && run.vehicle) return { x: run.vehicle.position.x, z: run.vehicle.position.z, name: run.vehicle.spec.name.toUpperCase() };
-    if (!step.at) return null;
-    const place = landmarkNear(step.at[0], step.at[1]);
-    return { x: step.at[0], z: step.at[1], name: place ? place.name : (step.stage || 'OBJECTIVE').toUpperCase() };
   }
 
   /** What the minimap should show for the story: objectives while on a job, givers otherwise. */

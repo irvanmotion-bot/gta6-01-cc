@@ -65,7 +65,7 @@ export class TuningWorkshop {
     }
     for (const line of UPGRADE_LINES) {
       const level = this.levels[line.id];
-      if (level >= 3) { rows.push({ id: line.id, label: `${line.name} · tier 3`, detail: line.detail, price: null, tier: 3 }); continue; }
+      if (level >= 3) { rows.push({ id: line.id, label: `${line.name} · MAX`, detail: line.detail, price: null, tier: 3 }); continue; }
       const rank = line.ranks[level];
       rows.push({ id: line.id, label: `${line.name} · tier ${level + 1}`, detail: line.detail, price: cred.priceOf(line.prices[level]), locked: cred.hasRank(rank) ? '' : `Needs rank ${rank}`, tier: level });
     }
@@ -127,7 +127,7 @@ export class TuningWorkshop {
 /** The upgrade lines: the price and the rank each of the three tiers asks for. */
 export const UPGRADE_LINES = [
   { id: 'engine', name: 'Engine tune', detail: '+10% acceleration, +5% top speed per tier', prices: [1500, 4000, 9000], ranks: [2, 3, 5] },
-  { id: 'plating', name: 'Armor plate', detail: '+30% vehicle health per tier', prices: [1200, 3500, 8000], ranks: [2, 3, 5] },
+  { id: 'plating', name: 'Armor plating', detail: '+30% vehicle health per tier', prices: [1200, 3500, 8000], ranks: [2, 3, 5] },
   { id: 'tires', name: 'Grip tyres', detail: '+8% cornering grip per tier', prices: [1000, 3000, 7000], ranks: [2, 3, 5] },
   { id: 'nitro', name: 'Nitro tank', detail: 'Hold Shift to burn · longer burn per tier', prices: [3000, 6500, 12000], ranks: [4, 4, 5] },
 ];

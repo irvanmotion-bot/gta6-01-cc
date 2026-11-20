@@ -1,16 +1,15 @@
 // Totality: boots the city of Saros, owns every system and runs the game loop and its states (title, play, pause,
-// atlas, shop). Its imports open with what an open-world crime game turns on: the wanted level and the story's
-// missions, with the eclipse calendar, the city's layout, carjacking and traffic that they bring in behind them.
+// atlas, shop). The eclipse calendar is the first system it loads: every other one asks it what day and hour it is.
 import * as THREE from 'three';
-import { WantedLevel } from './police/wantedLevel.js';
-import { MissionDirector } from './missions/missionDirector.js';
-import { PoliceDispatch } from './police/policeDispatch.js';
-import { StreetCred } from './progression/streetCred.js';
-import { CrewFavors } from './progression/crewFavors.js';
 import { ECLIPSE_DAY, EclipseCalendar } from './eclipse/eclipseCalendar.js';
 import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
 import { DarknessCover } from './eclipse/darknessCover.js';
 import { LANDMARKS } from './world/cityLayout.js';
+import { PoliceDispatch } from './police/policeDispatch.js';
+import { WantedLevel } from './police/wantedLevel.js';
+import { MissionDirector } from './missions/missionDirector.js';
+import { StreetCred } from './progression/streetCred.js';
+import { CrewFavors } from './progression/crewFavors.js';
 import { TuningWorkshop } from './garage/tuningWorkshop.js';
 import { WorkshopShowroom } from './garage/workshopShowroom.js';
 import { StreetRaces } from './activities/streetRaces.js';
@@ -42,8 +41,7 @@ import { PlayerHeadlamp, setVehicleLightsNight } from './vehicles/vehicleLights.
 import { CollisionWorld } from './world/collision.js';
 import { Pickups } from './world/pickups.js';
 import { WorldMarkers } from './world/worldMarkers.js';
-import { SCREEN_EXPOSURE, SkyAndSun } from './render/skyAndSun.js';
-import { BloomAndGrade } from './render/bloomAndGrade.js';
+import { SkyAndSun } from './render/skyAndSun.js';
 import { ChaseCamera } from './render/chaseCamera.js';
 import { createSkyReflection, reflectSkyOn } from './render/skyReflection.js';
 import { bodyMaterial as vehicleBodyMaterial } from './vehicles/vehicleModel.js';
@@ -63,7 +61,7 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = SCREEN_EXPOSURE;
+    this.renderer.toneMappingExposure = 1.02;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
@@ -84,7 +82,6 @@ class Game {
     this.camera = new ChaseCamera(window.innerWidth / window.innerHeight);
     this.calendar = new EclipseCalendar(this);
     this.sky = new SkyAndSun(this.scene);
-    this.film = new BloomAndGrade(this.renderer, this.sky);
     this.collision = new CollisionWorld();
     buildStreetsAndGround(this.scene);
     this.buildings = new CityBuildings(this.scene, this.collision);
@@ -144,19 +141,9 @@ class Game {
   }
 
   applySettings() {
-    const settings = this.settings;
-    this.audio.setVolume(settings.volume);
-    this.camera.sensitivity = settings.sensitivity;
-    this.sky.setShadows(settings.shadows);
-    this.film.bloomOn = Boolean(settings.bloom);
-    this.film.shafts.enabled = Boolean(settings.sunShafts);
-    this.hud.setSize(settings.hudSize);
-    // RENDER SCALE: the city is drawn at this many times the window's pixels and scaled down to it.
-    const ratio = Math.min(Math.min(window.devicePixelRatio || 1, 1.5) * (settings.renderScale || 1), 3);
-    if (ratio !== this.renderer.getPixelRatio()) {
-      this.renderer.setPixelRatio(ratio);
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
+    this.audio.setVolume(this.settings.volume);
+    this.camera.sensitivity = this.settings.sensitivity;
+    this.sky.setShadows(this.settings.shadows);
   }
 
   /** Everyone a bullet, a bumper or a blast can reach: Nova, the citizens and the gunmen. */
@@ -426,7 +413,7 @@ class Game {
       // The week's clock runs while Nova is in the streets; the title screen holds its eclipse afternoon still.
       if (this.state === 'play' && !this.down) this.calendar.update(dt, this.missions.clockRush());
       this.sky.update(dt, this.camera.target, this.calendar);
-      this.ocean.update(dt, this.sky.haze);
+      this.ocean.update(dt, this.scene.fog.color);
       this.props.update(this.time, this.sky.night);
       this.buildings.setNight(this.sky.night);
       this.cityLights.setNight(this.sky.night);
@@ -444,15 +431,9 @@ class Game {
     this.input.endFrame();
   }
 
-  /**
-   * Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open, with
-   * the frame's bloom, the low sun's shafts and its grade; at the wheel, speed smears the edges of the frame.
-   */
+  /** Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open. */
   render() {
-    const view = this.showroom.active ? this.showroom.view : this.camera.view;
-    const car = this.state === 'play' && !this.showroom.active ? this.player.vehicle : null;
-    const rush = car ? Math.min(1, Math.max(0, (Math.abs(car.speed) - 24) / 26) + (car.boosting ? 0.3 : 0)) : 0;
-    this.film.render(this.scene, view, rush, car ? car.position : null);
+    this.renderer.render(this.scene, this.showroom.active ? this.showroom.view : this.camera.view);
   }
 
   run() {

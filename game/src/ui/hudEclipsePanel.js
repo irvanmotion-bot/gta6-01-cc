@@ -56,16 +56,14 @@ export class HudEclipsePanel {
     const cache = this.cache;
     const calendar = game.calendar;
     const readout = calendar.readout();
-    // The huge HUD has room for two words over the figure: TOTALITY IN, then 1 DAY or 01:59.
-    cache.text(this.caption, game.hud.essentials ? readout.short : readout.caption);
+    cache.text(this.caption, readout.caption);
     cache.text(this.big, readout.big);
     // The panel has room for the first words of the line; the atlas prints it whole.
     cache.text(this.line, readout.line.split(/ · |: /)[0]);
     cache.width(this.fill, readout.share);
     cache.toggle(this.root, 'ticking', readout.ticking);
     cache.toggle(this.root, 'totality', calendar.isTotality());
-    // The huge HUD says who can see her in the dark only while it matters: wanted, or inside the moon's shadow.
-    const cover = game.hud.essentials && game.wanted.stars === 0 && !calendar.isTotality() ? null : game.darkness.readout();
+    const cover = game.darkness.readout();
     cache.toggle(this.cover, 'visible', cover !== null);
     if (cover) {
       cache.text(this.cover, cover.hidden ? `◐ ${cover.text}` : `☀ ${cover.text}`);

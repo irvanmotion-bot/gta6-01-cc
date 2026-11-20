@@ -60,12 +60,7 @@ export function deleteSaveSlot(slot) {
   try { window.localStorage.removeItem(slotKey(slot)); } catch (error) { /* nothing to delete */ }
 }
 
-/**
- * The player's settings: sound, mouse and shadows; `bloom` spreads the brightest light of the frame into a glow and
- * `sunShafts` lays rays of the low sun over it; `hudSize` is the HUD SIZE (standard, large, or huge with only the
- * essentials); `renderScale` draws the city at more pixels than the window has and scales it down, for smoother edges.
- */
-export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, bloom: true, sunShafts: true, radio: true, hudSize: 'standard', renderScale: 1 };
+export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true };
 
 export function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(readStored(SETTINGS_KEY) || {}) };

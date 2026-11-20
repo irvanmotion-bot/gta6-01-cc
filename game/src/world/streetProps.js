@@ -7,20 +7,8 @@ import { blockRect, districtOfBlock } from './cityLayout.js';
 import { lightState } from './roadNetwork.js';
 
 const P = CITY.pitch;
-const trunkShape = new THREE.CylinderGeometry(0.16, 0.26, 1, 7);
+const trunkShape = new THREE.CylinderGeometry(0.16, 0.26, 1, 6);
 const canopyShape = new THREE.IcosahedronGeometry(1, 0);
-/** One length of a palm frond, running along z: a flat blade, and the pointed one a frond ends in. */
-const frondShape = new THREE.BoxGeometry(1, 1, 1);
-const frondTipShape = taperedBlade(0.28);
-
-/** A unit blade whose far end (toward +z) is narrowed to `share` of its width. */
-function taperedBlade(share) {
-  const blade = new THREE.BoxGeometry(1, 1, 1);
-  const corners = blade.attributes.position;
-  for (let k = 0; k < corners.count; k += 1) if (corners.getZ(k) > 0) corners.setX(k, corners.getX(k) * share);
-  blade.computeVertexNormals();
-  return blade;
-}
 const LAMP_COLORS = { red: [0xff3b30, 0x3a0d0b], amber: [0xffc400, 0x3a2e05], green: [0x30e070, 0x0a3018] };
 
 export class StreetProps {
@@ -55,40 +43,36 @@ export class StreetProps {
     }
   }
 
-  /**
-   * A palm: a trunk that bends as it climbs, a crown of fronds that rise from it, arch over and hang at their tips,
-   * and a cluster of coconuts under them.
-   */
   addPalm(x, z, base) {
     const rng = this.rng;
     const height = rng.range(7.5, 11.5);
     const lean = rng.range(-0.08, 0.08);
-    // The trunk in four lengths, each leaning a little more than the one under it and a little thinner.
-    let topX = x;
-    let topZ = z;
-    let topY = base;
-    for (let k = 0; k < 4; k += 1) {
-      const tilt = lean * (0.5 + k * 0.5);
-      const part = height / 4;
-      const girth = 1.15 - k * 0.14;
-      this.props.addGeometry(trunkShape, placement(topX + Math.sin(tilt) * part / 2, topY + part / 2, topZ + Math.sin(tilt) * part / 2, 0, girth, part * 1.04, girth, tilt, -tilt), k % 2 ? '#a5835c' : '#94724e');
-      topX += Math.sin(tilt) * part;
-      topZ += Math.sin(tilt) * part;
-      topY += Math.cos(tilt) * part;
-    }
+    this.props.addGeometry(trunkShape, placement(x, base + height / 2, z, 0, 1, height, 1, lean, lean), '#9c7a54');
     const turn = rng.range(0, Math.PI);
-    const fronds = 9;
-    for (let k = 0; k < fronds; k += 1) {
-      const angle = turn + (k / fronds) * Math.PI * 2 + rng.range(-0.12, 0.12);
-      const reach = rng.range(0.85, 1.1);
-      const green = k % 3 === 0 ? '#3c9648' : k % 3 === 1 ? '#52b85c' : '#2f8440';
-      // [how far out its middle is, how far above the crown, its droop, its length, its width]
-      for (const [out, lift, droop, length, width, shape] of [[0.6, 0.3, -0.52, 1.4, 0.82, frondShape], [1.75, 0.5, 0.16, 1.3, 0.7, frondShape], [2.8, 0.06, 0.78, 1.35, 0.6, frondTipShape]]) {
-        this.props.addGeometry(shape, placement(topX + Math.sin(angle) * out * reach, topY - 0.3 + lift, topZ + Math.cos(angle) * out * reach, angle, width, 0.07, length * reach, droop), green);
-      }
+    for (let k = 0; k < 7; k += 1) {
+      const angle = turn + (k / 7) * Math.PI * 2;
+      const reach = rng.range(2.6, 3.6);
+      const matrix = placement(x + Math.sin(angle) * reach * 0.5 + lean * height, base + height - 0.35, z + Math.cos(angle) * reach * 0.5 + lean * height, angle, 0.7, 0.08, reach, 0.42);
+      this.props.addBox(0, -0.5, 0, 1, 1, 1, k % 2 ? '#3f9b4b' : '#4fb35a');
+      // Re-place the unit box just added with the frond's own matrix.
+      this.retransformLastBox(matrix);
     }
-    this.props.addGeometry(canopyShape, placement(topX, topY - 0.25, topZ, 0, 0.5, 0.42, 0.5), '#6b4f2e');
-    for (const [dx, dz] of [[0.3, 0.1], [-0.2, 0.28], [-0.08, -0.32]]) this.props.addGeometry(canopyShape, placement(topX + dx, topY - 0.62, topZ + dz, 0, 0.17, 0.17, 0.17), '#4a3320');
+    this.props.addGeometry(canopyShape, placement(x + lean * height, base + height - 0.2, z + lean * height, 0, 0.5, 0.4, 0.5), '#6b4f2e');
+  }
+
+  /** Move the last 24 vertices (one unit box at the origin) by a full matrix: fronds need a tilt addBox cannot give. */
+  retransformLastBox(matrix) {
+    const positions = this.props.positions;
+    const normals = this.props.normals;
+    const start = positions.length - 72;
+    const point = new THREE.Vector3();
+    const normalMatrix = new THREE.Matrix3().getNormalMatrix(matrix);
+    for (let k = start; k < positions.length; k += 3) {
+      point.set(positions[k], positions[k + 1], positions[k + 2]).applyMatrix4(matrix);
+      positions[k] = point.x; positions[k + 1] = point.y; positions[k + 2] = point.z;
+      point.set(normals[k], normals[k + 1], normals[k + 2]).applyMatrix3(normalMatrix).normalize();
+      normals[k] = point.x; normals[k + 1] = point.y; normals[k + 2] = point.z;
+    }
   }
 
   addShadeTree(x, z, base, scale = 1) {

@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { angleDelta, clamp } from '../core/random.js';
 
 /** The driving view: metres behind the car (plus a share of its length), lift of the aim point, pitch and lens. */
-const CHASE = { distance: 5.8, perLength: 0.5, speedPull: 0.7, lift: 2.1, pitch: 0.13, fov: 54, speedFov: 6, boostFov: 2, follow: 36 };
+const CHASE = { distance: 4.6, perLength: 0.5, speedPull: 0.7, lift: 2.1, pitch: 0.13, fov: 54, speedFov: 6, boostFov: 2, follow: 36 };
 
 export class ChaseCamera {
   constructor(aspect) {

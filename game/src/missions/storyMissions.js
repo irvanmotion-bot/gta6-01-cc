@@ -5,23 +5,14 @@ import { CITY } from '../core/config.js';
 import { CONTACTS } from '../eclipse/eclipseCalendar.js';
 import { blockRect, kerbSpot, LANDMARKS } from '../world/cityLayout.js';
 
-/**
- * The cast: the colour of each speaker's name and portrait, what they are to the crew in a word or two (`job`, shown
- * beside their name whenever they speak) and the line under their name in the list of contacts.
- */
+/** The cast: the colour of each speaker's name and portrait, and the line under their name in the atlas. */
 export const CHARACTERS = {
-  nova: { name: 'NOVA', color: '#ff9e7a', job: 'GETAWAY DRIVER', role: 'Nova Reyes · back in town' },
-  bravo: { name: 'TÍO BRAVO', color: '#ffb547', job: 'MECHANIC', role: 'Bravo Motors · workshop' },
-  jazz: { name: 'JAZZ', color: '#f4ecd8', job: 'RADIO HACKER', role: 'Penumbra FM · the city\'s ear' },
-  ines: { name: 'DOC INÉS', color: '#cfe8d8', job: 'CREW MEDIC', role: 'Avocet Medical · night clinic' },
-  vane: { name: 'CASSIUS VANE', color: '#e3c06a', job: 'THE BANKER', role: 'Orrery Trust · owns the debt' },
+  nova: { name: 'NOVA', color: '#ff9e7a', role: 'Nova Reyes · back in town' },
+  bravo: { name: 'TÍO BRAVO', color: '#ffb547', role: 'Bravo Motors · workshop' },
+  jazz: { name: 'JAZZ', color: '#f4ecd8', role: 'Penumbra FM · the city\'s ear' },
+  ines: { name: 'DOC INÉS', color: '#cfe8d8', role: 'Avocet Medical · night clinic' },
+  vane: { name: 'CASSIUS VANE', color: '#e3c06a', role: 'Orrery Trust · owns the debt' },
 };
-
-/** What a speaker is to the crew, by the name hud.say is given: 'JAZZ' is the RADIO HACKER. '' for anyone else. */
-export function speakerJob(name) {
-  const entry = Object.values(CHARACTERS).find((character) => character.name === name);
-  return entry ? entry.job : '';
-}
 
 /** A spot on one sidewalk of block (i, j): side 'n', 's', 'e' or 'w', `t` of the way along it. */
 function sidewalk(i, j, side, t) {
@@ -158,19 +149,17 @@ export const STORY_MISSIONS = [
       { kind: 'say', lines: [['bravo', 'First contact. The moon has started on the sun, and Vane has every guard he owns on the square.'], ['nova', 'Then I clear the door before the dark, and take the vault in it.'], ['bravo', 'The Rayo you stole him is at Strand Parking, in a new coat. His lookouts are on the boardwalk beside it.']] },
       { kind: 'give', weapon: 'rifle', ammo: 150 },
       { kind: 'give', armor: 100 },
-      // The eclipse is the job's clock. Everything up to the door of the Trust has to be done before the sun goes
-      // out (deadline 'totality'); the guards, the wait and the drill before it comes back (deadline 'sunrise').
-      { kind: 'goto', stage: 'Reach the Strand', deadline: 'totality', at: [3, 334], radius: 30, text: 'Go to the boardwalk by STRAND PARKING' },
+      { kind: 'goto', stage: 'Reach the Strand', at: [3, 334], radius: 30, text: 'Go to the boardwalk by STRAND PARKING' },
       { kind: 'say', lines: [['nova', 'Half of Saros is on the boardwalk looking up. Five of them are looking for me.']] },
-      { kind: 'eliminate', stage: 'Clear the lookouts', deadline: 'totality', enemy: 'enforcer', text: 'Take out Vane\'s lookouts among the eclipse watchers', spots: [[-9.4, 322], [4.6, 326], [-2.5, 315], [6.9, 309], [-9.6, 304]] },
-      { kind: 'steal', stage: 'Take the getaway Rayo', deadline: 'totality', model: 'rayo', paint: GETAWAY_PAINT, at: kerb(0, 3), heading: -Math.PI / 2, text: 'Get in the RAYO at Strand Parking', textIn: 'Every badge on Vane\'s payroll knows this car', stars: 3 },
-      { kind: 'say', lines: [['jazz', 'They made the car, baby! Reach the square before the sun goes: the dark does the rest.']] },
-      { kind: 'goto', stage: 'Break through', deadline: 'totality', onFoot: true, at: [L.bank.x, L.bank.z], radius: 34, text: 'Reach the ORRERY TRUST before the sun goes' },
+      { kind: 'eliminate', stage: 'Clear the lookouts', enemy: 'enforcer', text: 'Take out Vane\'s lookouts among the eclipse watchers', spots: [[-9.4, 322], [4.6, 326], [-2.5, 315], [6.9, 309], [-9.6, 304]] },
+      { kind: 'steal', stage: 'Take the getaway Rayo', model: 'rayo', paint: GETAWAY_PAINT, at: kerb(0, 3), heading: -Math.PI / 2, text: 'Get in the RAYO at Strand Parking', textIn: 'Every badge on Vane\'s payroll knows this car', stars: 3 },
+      { kind: 'say', lines: [['jazz', 'They made the car, baby. Get to the square before the sun goes, the dark will do the rest!']] },
+      { kind: 'goto', stage: 'Break through', onFoot: true, at: [L.bank.x, L.bank.z], radius: 34, text: 'Reach the ORRERY TRUST before the sun goes' },
       { kind: 'say', lines: [['nova', 'Guards on every corner, and a crowd looking at the sky. Nobody is looking at me.']] },
-      { kind: 'eliminate', stage: 'Clear the guards', deadline: 'sunrise', enemy: 'guard', text: 'Clear the Trust\'s guards before the dark', spots: [sidewalk(5, 4, 's', 0.25), sidewalk(5, 4, 's', 0.75), sidewalk(5, 4, 'e', 0.8), sidewalk(5, 4, 'w', 0.8), sidewalk(5, 5, 'n', 0.5), sidewalk(4, 4, 'e', 0.6), sidewalk(6, 4, 'w', 0.6)] },
-      { kind: 'awaitTotality', stage: 'Wait for the dark', deadline: 'sunrise', at: [L.bank.x, L.bank.z], radius: 9, text: 'Hold the door of the Trust until TOTALITY' },
+      { kind: 'eliminate', stage: 'Clear the guards', enemy: 'guard', text: 'Clear the Trust\'s guards before the dark', spots: [sidewalk(5, 4, 's', 0.25), sidewalk(5, 4, 's', 0.75), sidewalk(5, 4, 'e', 0.8), sidewalk(5, 4, 'w', 0.8), sidewalk(5, 5, 'n', 0.5), sidewalk(4, 4, 'e', 0.6), sidewalk(6, 4, 'w', 0.6)] },
+      { kind: 'awaitTotality', stage: 'Wait for the dark', at: [L.bank.x, L.bank.z], radius: 9, text: 'Hold the door of the Trust until TOTALITY' },
       { kind: 'say', lines: [['jazz', 'There it goes. Saros is dark, and the daylight lock just let go!']] },
-      { kind: 'wait', stage: 'Crack the vault', deadline: 'sunrise', at: [L.bank.x, L.bank.z], radius: 7, seconds: 28, stars: 4, text: 'Hold the door while the drill cuts the vault' },
+      { kind: 'wait', stage: 'Crack the vault', at: [L.bank.x, L.bank.z], radius: 7, seconds: 28, stars: 4, text: 'Hold the door while the drill cuts the vault' },
       { kind: 'say', lines: [['jazz', 'Vault is open! Kill your lights and keep off the lamps: they cannot chase what they cannot see.']] },
       { kind: 'goto', stage: 'Escape to Casa Reyes', at: [L.safehouse.x, L.safehouse.z], radius: 6, text: 'Escape to CASA REYES with the ledger' },
       { kind: 'loseCops', stage: 'Vanish in the dark', text: 'Lose the police: stay out of the light' },

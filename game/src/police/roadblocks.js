@@ -4,7 +4,6 @@ import * as THREE from 'three';
 import { CITY } from '../core/config.js';
 import { distance2D } from '../core/random.js';
 import { isNode, nearestNode } from '../world/roadNetwork.js';
-import { streetNameAt } from '../world/cityLayout.js';
 import { MeshBatcher } from '../render/meshBatcher.js';
 
 /** A cruiser parked in a blockade: lights on, brakes on, going nowhere. */
@@ -15,7 +14,7 @@ export class BlockadePost {
   }
 
   tacticLabel() {
-    return 'ROADBLOCK';
+    return 'BLOCKADE';
   }
 
   drive(vehicle) {
@@ -84,7 +83,7 @@ export class Roadblocks {
       block.stripAlongX = spot.alongX;
     }
     this.list.push(block);
-    game.hud.notify(`POLICE RADIO · ${block.unit.callsign}: ${withSpikes ? 'SPIKE STRIP' : 'ROADBLOCK'} SET ON ${streetNameAt(spot.x, spot.z).toUpperCase()}`);
+    game.hud.notify(`${block.unit.callsign}: ${withSpikes ? 'spike strip' : 'roadblock'} ahead on ${spot.alongX ? 'the street' : 'the avenue'}!`);
     return block;
   }
 

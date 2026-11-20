@@ -20,20 +20,17 @@ export class PursuitDriver {
     this.reverseSteer = 0;
     this.swerving = false;
     this.windowClock = 0.4 + Math.random() * 0.8;
-    // Which corner of a search zone this car takes when the suspect is lost: every unit a different one.
-    this.searchSlot = nextSearchSlot;
-    nextSearchSlot = (nextSearchSlot + 1) % 12;
     this.burstLeft = 0;
     this.shotsFired = 0;
     this.muzzle = new THREE.Vector3();
     this.impact = new THREE.Vector3();
   }
 
-  /** What the dispatch panel prints for this unit right now: the verb of what it is doing. */
+  /** What the dispatch panel prints for this unit right now. */
   tacticLabel() {
-    if (this.deployed) return 'CREW ON FOOT';
-    if (this.game.wanted.evading) return 'SEARCHING';
-    if (this.swerving) return 'SIDE-SWIPING';
+    if (this.deployed) return 'ON FOOT';
+    if (this.game.wanted.evading) return 'SEARCH';
+    if (this.swerving) return 'SIDE-SWIPE';
     return TACTIC_LABELS[this.tactic];
   }
 
@@ -58,14 +55,13 @@ export class PursuitDriver {
       vehicle.setControls(-1, this.reverseSteer, false);
       return;
     }
-    // A crew sees her at seventy metres by day; in the dark, with no light on her, at a quarter of that.
-    const direct = distance < game.darkness.sightRange(70) && game.collision.hasLineOfSight(position.x, position.z, player.position.x, player.position.z, 1);
-    // Close to a player on foot or stopped, and with eyes on her: brake, then put the officers on the street.
-    if (distance < 17 && playerSpeed < 5 && this.redeploy <= 0 && (direct || game.wanted.seen)) {
+    // Close to a player on foot or stopped: brake, then put the officers on the street.
+    if (distance < 17 && playerSpeed < 5 && this.redeploy <= 0) {
       vehicle.setControls(vehicle.speed > 1 ? -1 : 0, 0, true);
       if (Math.abs(vehicle.speed) < 2) this.deploy(vehicle);
       return;
     }
+    const direct = distance < 70 && game.collision.hasLineOfSight(position.x, position.z, player.position.x, player.position.z, 1);
     if (direct) this.fireFromWindow(vehicle, player, distance, dt);
     const aim = direct ? this.aimInSight(vehicle, player, distance) : this.aimByRoad(vehicle, player);
     const turn = angleDelta(vehicle.heading, Math.atan2(aim.x - position.x, aim.z - position.z));
@@ -176,21 +172,12 @@ export class PursuitDriver {
     return { x: leadX, z: leadZ };
   }
 
-  /**
-   * No line of sight. While any unit still has eyes on her the radio says where she is: follow the street grid to
-   * her, or to the junction ahead of her when cutting off. Once every unit has lost her, each car drives to its own
-   * corner of the search zone round the place she was last seen.
-   */
+  /** No line of sight: follow the street grid to the player, or to the junction ahead of them when cutting off. */
   aimByRoad(vehicle, player) {
     let goalX = player.position.x;
     let goalZ = player.position.z;
     const car = player.vehicle;
-    const wanted = this.game.wanted;
-    if (!wanted.seen && wanted.stars > 0) {
-      const corner = wanted.searchPoint(this.searchSlot);
-      goalX = corner.x;
-      goalZ = corner.z;
-    } else if (this.tactic === 'cutOff' && car && Math.abs(car.speed) > 8) {
+    if (this.tactic === 'cutOff' && car && Math.abs(car.speed) > 8) {
       goalX += car.forwardX() * 120;
       goalZ += car.forwardZ() * 120;
     }
@@ -254,5 +241,4 @@ const windowGunnerMaterial = new THREE.MeshStandardMaterial({ vertexColors: true
 /** Shooting from a moving cruiser: the wanted level it starts at, reach in metres, shots a burst and their odds. */
 const WINDOW_FIRE = { fromStars: 3, range: 40, burst: 3, rate: 0.12, pause: 1.5, accuracy: 0.22, damage: 5 };
 const PACK_PATTERN =['ram', 'flankLeft', 'flankRight', 'cutOff', 'ram', 'cutOff'];
-const TACTIC_LABELS = { respond: 'RESPONDING', tail: 'TAILING', ram: 'RAMMING', flankLeft: 'FLANKING LEFT', flankRight: 'FLANKING RIGHT', cutOff: 'CUTTING OFF' };
-let nextSearchSlot = 0;
+const TACTIC_LABELS = { respond: 'RESPOND', tail: 'TAIL', ram: 'RAM', flankLeft: 'FLANK LEFT', flankRight: 'FLANK RIGHT', cutOff: 'CUT OFF' };
