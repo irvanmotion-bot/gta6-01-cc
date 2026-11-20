@@ -149,9 +149,15 @@ function chaseScene(game) {
     ['duna', 3.0, blockadeZ + 9, Math.PI, '#1abc9c', false], ['toro', 3.0, blockadeZ + 20, Math.PI, '#ff7eb6', false],
   ];
   for (const [model, x, z, heading, paint, panics] of traffic) spawnCivilianCar(game, model, x, z, heading, paint, panics);
+  // A cruiser that tried to cut her off a block back went into the kerb on the city side: it has burned since, and
+  // its tank goes up a moment before the frame is taken, clear of the cars and the people on the pavement.
+  const wreck = game.vehicles.spawn('centinela', lane + 6, zEnd + 16, 0.45);
+  wreck.parked = true;
+  wreck.damage(wreck.maxHealth + 1, true);
+  wreck.burning = 3.6 - (seconds - 0.3);
   // The pavement and the boardwalk are full on eclipse afternoon; the people nearest the chase are already running.
-  for (const [x, z] of [[7.3, 6], [8.1, 10], [7.6, 14], [8.4, 18], [7.2, 23], [8.0, 29], [7.5, 36], [8.3, 44], [7.4, 53]]) {
-    if (z < 20) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
+  for (const [x, z] of [[7.3, 1], [8.1, 4], [8.6, 27], [8.4, 30], [7.2, 33], [8.0, 37], [7.5, 42], [8.3, 47], [7.4, 53]]) {
+    if (z < 34) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane + 6, z: zEnd + 16 }); else spawnStroller(game, x, zEnd + z);
   }
   for (const z of [5, 9, 14, 20, 27, 35, 44]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);
   const helicopter = game.police.helicopter;
