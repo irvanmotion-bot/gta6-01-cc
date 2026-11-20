@@ -11,6 +11,8 @@ export function playWholeGame() {
   for (let slot = 1; slot <= 3; slot += 1) window.localStorage.removeItem(saveKey(slot));
   game.newGame(2);
   const started = performance.now();
+  /** Every check that did not hold; an empty list is a pass. */
+  const failures = [];
   let steps = 0;
   const run = (count) => { for (let k = 0; k < count; k += 1) { game.update(1 / 60); steps += 1; } };
   const teleport = (x, z) => {
@@ -171,6 +173,38 @@ export function playWholeGame() {
   const tactics = new Set();
   const kinds = new Set();
   let roadblocks = 0;
+  // The dispatch panel's big number must be the units really after Nova: counted three ways at every sample (the
+  // world itself, the roster's rows, and what the panel wrote on screen), with the listed rows plus "+N MORE"
+  // adding up to it.
+  const panel = { samples: 0, recounts: 0, mismatches: [], most: 0, mostRows: 0, sawOverflow: false, sawBlockade: false, sawFootSquad: false };
+  const checkPanel = (when) => {
+    run(1);
+    const visible = document.querySelector('.dispatch-panel').classList.contains('visible');
+    if (game.wanted.stars === 0) {
+      // Escaped: the panel must be gone, and must count afresh the moment Nova is wanted again.
+      if (visible) panel.mismatches.push(`${when}: panel still showing with no stars`);
+      game.wanted.setStars(1, 60);
+      run(1);
+      panel.recounts += 1;
+    } else {
+      game.hud.dispatchPanel.clock = 0;
+      run(1);
+    }
+    const roster = game.police.roster();
+    const world = game.police.unitsOnPlayer();
+    const rosterUnits = roster.reduce((sum, row) => sum + row.units, 0);
+    const shown = Number(document.querySelector('.dispatch-count').textContent);
+    const rows = [...document.querySelectorAll('.dispatch-panel .unit')];
+    const more = rows.filter((row) => row.classList.contains('unit-more')).reduce((sum, row) => sum + parseInt(row.querySelector('b').textContent, 10), 0);
+    const listed = roster.slice(0, rows.length - (more > 0 ? 1 : 0)).reduce((sum, row) => sum + row.units, 0);
+    panel.samples += 1;
+    panel.most = Math.max(panel.most, shown);
+    panel.mostRows = Math.max(panel.mostRows, rows.length);
+    if (more > 0) panel.sawOverflow = true;
+    if (roster.some((row) => row.role === 'roadblock' && row.units > 1)) panel.sawBlockade = true;
+    if (roster.some((row) => row.role === 'foot' && row.units > 1)) panel.sawFootSquad = true;
+    if (shown !== world || rosterUnits !== world || listed + more !== world) panel.mismatches.push(`${when}: panel ${shown}, world ${world}, roster ${rosterUnits}, listed ${listed} + more ${more}`);
+  };
   for (let k = 0; k < 150; k += 1) {
     game.input.held.add('KeyW');
     player.health = 100;
@@ -178,9 +212,26 @@ export function playWholeGame() {
     run(8);
     for (const unit of game.police.roster()) { tactics.add(unit.tactic); kinds.add(unit.kind); }
     roadblocks = Math.max(roadblocks, game.police.roadblocks.list.length);
+    if (k % 5 === 0) checkPanel(`5 stars, sample ${k}`);
   }
   game.input.held.clear();
   const chase = { stars: game.wanted.stars, tier: game.wanted.responseTier(), units: game.police.pursuitUnits().length, chopper: game.police.helicopter.active, roster: game.police.roster().length, tactics: [...tactics], kinds: [...kinds], roadblocks };
+  // The same count at every lower wanted level, as units stand down or are lost behind.
+  for (const stars of [4, 3, 2, 1]) {
+    game.wanted.setStars(stars, 60);
+    for (let k = 0; k < 6; k += 1) { player.health = 100; cab.health = cab.maxHealth; run(40); checkPanel(`${stars} stars, sample ${k}`); }
+  }
+  // Lose the stars with a full panel on screen, then be wanted again one frame later: no stale count may show.
+  game.wanted.setStars(5, 60);
+  run(240);
+  checkPanel('5 stars again');
+  game.wanted.reset();
+  checkPanel('wanted again straight after an escape');
+  game.wanted.setStars(5, 60);
+  run(30);
+  chase.panel = panel;
+  if (panel.mismatches.length) failures.push(`dispatch panel count is wrong: ${panel.mismatches.slice(0, 3).join(' | ')}`);
+  if (!panel.sawOverflow) failures.push('dispatch panel never showed more units than it lists, so the overflow line went untested');
   const block = game.police.roadblocks.deploy({ x: 0, z: 440, alongX: false, direction: 1 }, true);
   teleport(block.strip.position.x, block.strip.position.z);
   run(2);
@@ -216,8 +267,11 @@ export function playWholeGame() {
     slots: document.querySelectorAll('.weapon-slot.owned').length, favors: document.querySelectorAll('.favor').length, atlasJobs,
   };
   const slotCards = JSON.parse(window.localStorage.getItem(saveKey(2))).summary;
+  // The script stands in the open through every firefight, so a job may take it more than one try; the story must
+  // still end with every job passed.
+  if (!eclipse.storyComplete) failures.push(`the story did not complete: ${missions.filter((result) => !result.endsWith(':passed')).join(', ')}`);
   return {
-    missions, eclipse, afterStory, workshop, race, bounty, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
+    failures, missions, eclipse, afterStory, workshop, race, bounty, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
     hud, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
   };
 }

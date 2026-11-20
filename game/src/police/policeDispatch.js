@@ -77,21 +77,25 @@ export class PoliceDispatch {
     const game = this.game;
     const player = game.player.position;
     const rows = [];
-    const blocks = new Set();
+    const blocks = new Map();
     for (const vehicle of game.vehicles.list) {
       if (vehicle.dead || vehicle.driver !== 'cop' || !vehicle.unit || !vehicle.controller) continue;
+      const distance = distance2D(vehicle.position.x, vehicle.position.z, player.x, player.z);
       if (vehicle.controller.isBlockade) {
-        if (blocks.has(vehicle.unit)) continue;
-        blocks.add(vehicle.unit);
+        // The cars of one blockade share a callsign and a row; the row counts each of them.
+        const row = blocks.get(vehicle.unit);
+        if (row) { row.units += 1; row.distance = Math.min(row.distance, distance); continue; }
       } else if (!vehicle.controller.isPursuit) continue;
-      rows.push({ ...vehicle.unit, tactic: vehicle.controller.tacticLabel(), distance: distance2D(vehicle.position.x, vehicle.position.z, player.x, player.z) });
+      const row = { ...vehicle.unit, units: 1, tactic: vehicle.controller.tacticLabel(), distance };
+      if (vehicle.controller.isBlockade) blocks.set(vehicle.unit, row);
+      rows.push(row);
     }
     for (const block of this.roadblocks.active()) {
       const row = rows.find((entry) => entry.callsign === block.unit.callsign);
       if (row && block.spikes) row.tactic = 'SPIKE STRIP';
     }
     if (this.helicopter.active) {
-      rows.push({ ...this.helicopter.unit, tactic: game.wanted.stars >= 4 ? 'GUNSHIP' : 'SPOTLIGHT', distance: this.helicopter.distanceToPlayer() });
+      rows.push({ ...this.helicopter.unit, units: 1, tactic: game.wanted.stars >= 4 ? 'GUNSHIP' : 'SPOTLIGHT', distance: this.helicopter.distanceToPlayer() });
     }
     let officers = 0;
     let nearest = Infinity;
@@ -100,8 +104,23 @@ export class PoliceDispatch {
       officers += 1;
       nearest = Math.min(nearest, distance2D(gunman.position.x, gunman.position.z, player.x, player.z));
     }
-    if (officers > 0) rows.push({ role: 'foot', kind: 'OFFICERS', icon: UNIT_ROLES.foot.icon, callsign: `FOOT ×${officers}`, tactic: game.wanted.stars <= 1 ? 'ARREST' : 'OPEN FIRE', distance: nearest });
+    if (officers > 0) rows.push({ role: 'foot', kind: 'OFFICERS', icon: UNIT_ROLES.foot.icon, callsign: `FOOT ×${officers}`, units: officers, tactic: game.wanted.stars <= 1 ? 'ARREST' : 'OPEN FIRE', distance: nearest });
     return rows.sort((a, b) => a.distance - b.distance);
+  }
+
+  /**
+   * How many units are after the player right now, counted from the world itself and not from the roster's rows:
+   * every live police car in pursuit or holding a blockade, the helicopter while it flies, every officer on foot.
+   */
+  unitsOnPlayer() {
+    const game = this.game;
+    let count = this.helicopter.active ? 1 : 0;
+    for (const vehicle of game.vehicles.list) {
+      if (vehicle.dead || vehicle.driver !== 'cop' || !vehicle.unit || !vehicle.controller) continue;
+      if (vehicle.controller.isPursuit || vehicle.controller.isBlockade) count += 1;
+    }
+    for (const gunman of game.gunmen.list) if (gunman.faction === 'police' && gunman.alive) count += 1;
+    return count;
   }
 
   clear() {

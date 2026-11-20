@@ -100,13 +100,16 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 /* Dispatch panel and race board, under the status panel */
 .dispatch-panel, .race-board { display: none; border-top-color: var(--coral); }
 .dispatch-panel.visible, .race-board.visible { display: block; }
-.dispatch-panel .panel-caption { color: var(--coral); }
+.dispatch-head { display: flex; align-items: center; gap: 1vh; margin-bottom: 0.3vh; }
+.dispatch-count { font-family: var(--display); font-weight: 400; font-size: 4.4vh; line-height: 1; min-width: 4.6vh; padding: 0.2vh 0.6vh; box-sizing: border-box; text-align: center; color: var(--ink); background: var(--coral); border-radius: 0.5vh; }
+.dispatch-label { font-family: var(--display); font-size: 2.5vh; letter-spacing: 0.14vh; color: var(--coral); white-space: nowrap; }
 .unit { display: grid; grid-template-columns: 2.2vh 11.5vh 1fr 5.6vh; align-items: baseline; gap: 0.4vh; font-size: 1.8vh; line-height: 2.55vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); white-space: nowrap; }
 .unit i { font-style: normal; color: var(--coral); }
 .unit b { font-family: var(--display); font-weight: 400; font-size: 2vh; letter-spacing: 0.08vh; color: #fff; }
-.unit span { display: none; }
 .unit em { font-family: var(--display); font-style: normal; font-size: 1.85vh; color: var(--amber); letter-spacing: 0.06vh; }
 .unit u { text-decoration: none; text-align: right; font-weight: 800; }
+.unit-more b, .unit-more em { color: var(--dim); }
+.dispatch-panel.en-route .dispatch-count { display: none; }
 .race-board { border-top-color: var(--amber); }
 .racer { display: flex; gap: 1.2vh; font-family: var(--display); font-size: 2.1vh; line-height: 2.7vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); }
 .racer i { font-style: normal; color: var(--amber); width: 2vh; }

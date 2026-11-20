@@ -74,7 +74,9 @@ page.on('request', (request) => { if (!request.url().startsWith(base) && !reques
 if (smoke) {
   await page.goto(base);
   await page.waitForFunction(() => window.totality && window.totality.state === 'title', null, { timeout: 60000 });
-  console.log(JSON.stringify(await page.evaluate(playWholeGame), null, 1));
+  const report = await page.evaluate(playWholeGame);
+  console.log(JSON.stringify(report, null, 1));
+  for (const failure of report.failures) problems.push(`smoke check failed: ${failure}`);
 } else if (sheetDir) {
   await previewContactSheet(page, base);
 } else {
