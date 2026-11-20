@@ -37,6 +37,8 @@ import { Pickups } from './world/pickups.js';
 import { WorldMarkers } from './world/worldMarkers.js';
 import { SkyAndSun } from './render/skyAndSun.js';
 import { ChaseCamera } from './render/chaseCamera.js';
+import { createSkyReflection, reflectSkyOn } from './render/skyReflection.js';
+import { bodyMaterial as vehicleBodyMaterial } from './vehicles/vehicleModel.js';
 import { Particles } from './effects/particles.js';
 import { SkidMarks } from './effects/skidMarks.js';
 import { SoundEffects } from './audio/soundEffects.js';
@@ -79,6 +81,10 @@ class Game {
     this.cityLights = new CityLights(this.scene, this.props.lampSpots, this.buildings.fronts.neonSpots);
     this.boats = new BoatsAtSea(this.scene);
     this.headlamp = new PlayerHeadlamp(this.scene);
+    // Car lacquer and tower glass mirror the sky; the mirror dims with the daylight.
+    this.glossy = [vehicleBodyMaterial, this.buildings.materials.office];
+    this.skyReflection = createSkyReflection(this.renderer);
+    reflectSkyOn(this.glossy, this.skyReflection, 1);
     this.particles = new Particles(this.scene);
     this.skidMarks = new SkidMarks(this.scene);
     this.markers = new WorldMarkers(this.scene);
@@ -377,6 +383,7 @@ class Game {
       this.buildings.setNight(this.sky.night);
       this.cityLights.setNight(this.sky.night);
       setVehicleLightsNight(this.sky.night);
+      for (const material of this.glossy) material.envMapIntensity = 1 - this.sky.night * 0.82;
       this.headlamp.update(this.state === 'play' ? this.player.vehicle : null, this.sky.night);
       this.boats.update(dt, this.time);
       this.particles.update(dt);

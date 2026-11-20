@@ -108,13 +108,15 @@ export class Particles {
 
   /** A fireball, a pillar of black smoke, flying sparks and a flash of light. */
   explosion(x, y, z) {
-    for (let k = 0; k < 34; k += 1) {
-      const a = Math.random() * Math.PI * 2;
-      const s = Math.random() * 9;
-      this.emit(x, y + Math.random() * 1.5, z, Math.cos(a) * s, 2 + Math.random() * 8, Math.sin(a) * s, 0.7 + Math.random() * 0.5, 2.6, 2.5, 1, 0.45 + Math.random() * 0.4, 0.08, 0.95);
-    }
+    // Smoke goes in first so the fire, drawn after it, burns in front of the column instead of behind it.
     for (let k = 0; k < 22; k += 1) {
-      this.emit(x + (Math.random() - 0.5) * 3, y + 1 + Math.random() * 2, z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, 3 + Math.random() * 4, (Math.random() - 0.5) * 3, 2.6 + Math.random(), 2.8, 2.2, 0.1, 0.1, 0.1, 0.7);
+      this.emit(x + (Math.random() - 0.5) * 3, y + 2.5 + Math.random() * 2.5, z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, 4 + Math.random() * 5, (Math.random() - 0.5) * 3, 2.6 + Math.random(), 2.4, 2.6, 0.1, 0.09, 0.09, 0.75);
+    }
+    for (let k = 0; k < 40; k += 1) {
+      const a = Math.random() * Math.PI * 2;
+      const s = Math.random() * 7;
+      const heat = Math.random();
+      this.emit(x, y + Math.random() * 2, z, Math.cos(a) * s, 2 + Math.random() * 8, Math.sin(a) * s, 0.75 + Math.random() * 0.5, 2.4, 2.4, 1, 0.42 + heat * 0.48, 0.04 + heat * 0.2, 1);
     }
     this.sparks(x, y + 1, z, 26);
     // Burning debris thrown high, a white-hot core and a shockwave ring racing out along the ground.
@@ -123,7 +125,12 @@ export class Particles {
       const s = 6 + Math.random() * 10;
       this.emit(x, y + 1, z, Math.cos(a) * s, 7 + Math.random() * 9, Math.sin(a) * s, 1.1 + Math.random() * 0.6, 0.5, -0.2, 1, 0.55, 0.12, 1, 16);
     }
-    for (let k = 0; k < 8; k += 1) this.emit(x + (Math.random() - 0.5) * 2, y + 0.6 + Math.random(), z + (Math.random() - 0.5) * 2, 0, 1.5, 0, 0.32, 4.6, 3, 1, 0.96, 0.8, 1);
+    // The heart of the fireball: a tight knot of deep orange with a small white-hot core in front of it.
+    for (let k = 0; k < 16; k += 1) {
+      const a = Math.random() * Math.PI * 2;
+      this.emit(x + Math.cos(a) * 1.4, y + 0.4 + Math.random() * 2.6, z + Math.sin(a) * 1.4, Math.cos(a) * 2, 2.5 + Math.random() * 3, Math.sin(a) * 2, 0.9 + Math.random() * 0.4, 1.7, 1.6, 1, 0.3 + Math.random() * 0.2, 0.02, 1);
+    }
+    for (let k = 0; k < 6; k += 1) this.emit(x + (Math.random() - 0.5) * 1.6, y + 0.8 + Math.random() * 1.4, z + (Math.random() - 0.5) * 1.6, 0, 2.5, 0, 0.4, 2.4, 1.6, 1, 0.9, 0.55, 1);
     this.shockwave(x, z);
     this.lightFlash(x, y + 2, z, 60, 0.45);
   }

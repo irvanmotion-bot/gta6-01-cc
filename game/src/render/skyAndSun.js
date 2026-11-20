@@ -36,7 +36,9 @@ float cloudCover(vec2 p) {
 void main() {
   vec3 dir = normalize(vDir);
   float h = clamp(dir.y, 0.0, 1.0);
-  vec3 color = mix(horizonColor, topColor, pow(h, 0.55));
+  // Deep colour overhead, a paler tone of it lower down, and the horizon's own colour only in a low band of haze.
+  vec3 color = mix(mix(topColor, vec3(1.0), 0.42), topColor, pow(h, 0.6));
+  color = mix(horizonColor, color, smoothstep(0.0, 0.2, h));
   float sunAmount = max(dot(dir, sunDir), 0.0);
   color += sunColor * pow(sunAmount, 420.0) * 3.0;
   color += sunColor * pow(sunAmount, 9.0) * 0.32;
@@ -44,11 +46,12 @@ void main() {
   color += vec3(star) * starAmount * h;
   // Drifting cumulus on a flat layer overhead: lit by the sun on top, tinted by the horizon underneath.
   vec2 plane = dir.xz / (dir.y + 0.16) * 1.7 + vec2(cloudTime * 0.012, cloudTime * 0.005);
-  float cover = smoothstep(0.5, 0.78, cloudCover(plane)) * smoothstep(0.02, 0.22, dir.y);
-  vec3 cloudLit = mix(horizonColor, vec3(1.0), 0.72) + sunColor * (0.18 + pow(sunAmount, 5.0) * 0.5);
+  float cover = smoothstep(0.58, 0.8, cloudCover(plane)) * smoothstep(0.02, 0.22, dir.y);
+  vec3 cloudLit = mix(horizonColor, vec3(1.0), 0.86) + sunColor * (0.14 + pow(sunAmount, 5.0) * 0.5);
   vec3 cloudColor = mix(cloudLit, topColor * 0.55 + horizonColor * 0.3, starAmount * 0.85);
   color = mix(color, cloudColor, cover * 0.88);
   gl_FragColor = vec4(color, 1.0);
+  #include <colorspace_fragment>
 }`;
 
 /** Colour keys through the day: [hour, sky top, horizon, sun light, sun strength, ambient strength]. */
@@ -56,9 +59,9 @@ const KEYS = [
   [0, '#0c1438', '#24346a', '#9fb3e8', 0.75, 0.66],
   [5, '#0e1638', '#2f2d55', '#9fb3e8', 0.75, 0.66],
   [6.5, '#3f6fb4', '#ffb27a', '#ffc089', 1.3, 0.55],
-  [9, '#2f8fe0', '#bfe6f5', '#fff2d6', 2.5, 0.85],
-  [13, '#1f86e6', '#c9ecf7', '#fff8e8', 2.9, 0.95],
-  [16.5, '#2a80d8', '#ffe0b0', '#ffe2ae', 2.7, 0.9],
+  [9, '#2a8ae6', '#bfe6f5', '#fff0d0', 3.0, 0.7],
+  [13, '#1578ee', '#c4ebf8', '#fff3da', 3.5, 0.72],
+  [16.5, '#1c74e6', '#ffe4bd', '#ffd9a0', 3.4, 0.66],
   [18.6, '#35529e', '#ff9460', '#ff9a52', 1.9, 0.62],
   [19.8, '#1a2152', '#d4577a', '#c86a8c', 0.6, 0.5],
   [21, '#0c1438', '#2a3a72', '#9fb3e8', 0.75, 0.66],
@@ -135,9 +138,12 @@ export class SkyAndSun {
     mix(3, this.sun.color);
     this.uniforms.sunColor.value.copy(this.sun.color);
     this.sun.intensity = a[4] + (b[4] - a[4]) * t;
+    // Shade is lit by the blue of the sky from above and by warm light bounced off sand and stucco from below,
+    // so sunlit walls glow against cool shadows.
     this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.35;
-    this.ambient.color.copy(this.uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.6);
-    this.fill.intensity = this.sun.intensity * 0.3;
+    this.ambient.color.copy(this.uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.42);
+    this.ambient.groundColor.copy(this.sun.color).lerp(this.scratchA.set('#b98f66'), 0.55);
+    this.fill.intensity = this.sun.intensity * 0.17;
     this.fill.color.copy(this.uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
     this.scene.fog.color.copy(this.uniforms.horizonColor.value);
 

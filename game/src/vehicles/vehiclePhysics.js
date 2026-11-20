@@ -4,7 +4,7 @@ import { WORLD_BOUNDS } from '../core/config.js';
 import { clamp } from '../core/random.js';
 import { groundHeight } from '../world/cityLayout.js';
 import { VEHICLE_CATALOG } from './vehicleCatalog.js';
-import { buildVehicleModel } from './vehicleModel.js';
+import { buildVehicleModel, TAIL_LAMP } from './vehicleModel.js';
 import { attachVehicleLights, flashSirenFlares } from './vehicleLights.js';
 
 const WHEELBASE = 2.7;
@@ -142,7 +142,7 @@ export class Vehicle {
       wheel.children[1].rotation.x = wheel.children[0].rotation.x;
       if (wheel.userData.front) wheel.rotation.y = steerAngle;
     }
-    this.model.tailMaterial.color.setHex(braking ? 0xff2a1a : 0x7a1010);
+    this.model.tailMaterial.color.setHex(braking ? TAIL_LAMP.braking : TAIL_LAMP.idle);
     if (this.model.lightBar) {
       const phase = this.siren ? Math.floor(this.game.time * 7) % 2 : -1;
       this.model.lightBar[0].color.setHex(phase === 0 ? 0xff2a2a : 0x551010);

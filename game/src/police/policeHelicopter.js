@@ -34,6 +34,7 @@ export class PoliceHelicopter {
     beamGeometry.translate(0, -HOVER_HEIGHT / 2, 0);
     this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
     this.mesh.add(body, this.rotor, this.tailRotor);
+    this.mesh.scale.setScalar(1.35);
     this.mesh.visible = false;
     this.beam.visible = false;
     this.mesh.traverse((part) => { if (part.isMesh) part.castShadow = true; });
@@ -141,7 +142,7 @@ export class PoliceHelicopter {
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
-    this.beam.material.opacity = 0.13 + night * 0.16;
+    this.beam.material.opacity = 0.2 + night * 0.1;
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(player.position.x, player.position.y, player.position.z);
     this.lamp.intensity = 900 + night * 5200;

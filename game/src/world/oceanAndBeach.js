@@ -34,6 +34,7 @@ void main() {
   float dist = length(vWorld.xz - cameraPosition.xz);
   color = mix(color, skyColor, smoothstep(280.0, 1300.0, dist));
   gl_FragColor = vec4(color, 1.0);
+  #include <colorspace_fragment>
 }`;
 
 const SHORE_X = -78;

@@ -55,10 +55,12 @@ function missionById(id) {
 }
 
 /** Put a police unit of a role on the road at speed; the dispatcher names it and gives it its tactic. */
-function spawnPursuit(game, role, model, x, z, heading, speed) {
+function spawnPursuit(game, role, model, x, z, heading, speed, tactic = null) {
   const cruiser = game.police.enlist(game.vehicles.spawn(model, x, z, heading), role);
   cruiser.velX = Math.sin(heading) * speed;
   cruiser.velZ = Math.cos(heading) * speed;
+  // The tactic the dispatcher's pack pattern gives a unit in this place, until its next round of orders.
+  if (tactic) cruiser.controller.tactic = tactic;
   return cruiser;
 }
 
@@ -70,53 +72,59 @@ function clearLane(game, keep, x, zFrom, zTo) {
 
 /** The cover: Nova in Marlin's stolen Rayo on Ocean Drive at five stars, the whole response around her. */
 function chaseScene(game) {
-  loadCity(game, stagedSave(4), 15.3, 0, 232, 0);
+  const z0 = 254;
+  const seconds = 0.9;
+  const zEnd = z0 + 43;
+  loadCity(game, stagedSave(4), 15.6, -0.6, z0 - 4, 0);
   game.missions.start(missionById('paintItGone'));
   const rayo = game.missions.active.vehicle;
-  rayo.position.set(0, 0, 236);
+  rayo.position.set(-0.6, 0, z0);
   rayo.heading = 0;
   tryEnterVehicle(game);
   play(game, 0.05);
   game.hud.clearSpeech();
-  rayo.velZ = 33;
+  rayo.velZ = 44;
   rayo.health = rayo.maxHealth * 0.78;
-  clearLane(game, rayo, 0, 150, 318);
+  clearLane(game, rayo, 0, z0 - 90, z0 + 130);
   game.wanted.setStars(5, 99);
-  // The pack: an interceptor and a cruiser boxing her in from ahead, a tactical van coming head-on, one more behind.
-  spawnPursuit(game, 'interceptor', 'lince', 4.8, 244, 0, 39);
-  spawnPursuit(game, 'patrol', 'centinela', -4.8, 241, 0, 38);
-  spawnPursuit(game, 'tactical', 'bastion', 3.4, 366, Math.PI, 6);
-  spawnPursuit(game, 'patrol', 'centinela', 3, 205, 0, 35);
-  game.police.roadblocks.deploy({ x: 0, z: 392, alongX: false, direction: 1 }, true);
-  // Everyone else on Ocean Drive: a cab and a pickup caught in the lanes, people scattering off the kerb and the boardwalk.
-  for (const [model, x, z, heading, paint] of [['solCab', 2.7, 349, Math.PI, null], ['toro', -2.7, 339, 0, '#d35400']]) {
+  // The pack around her: an interceptor door to door, a cruiser on the rear quarter, another cutting across her nose.
+  spawnPursuit(game, 'interceptor', 'lince', -5.0, z0 - 1.2, 0, 50, 'flankRight');
+  spawnPursuit(game, 'interceptor', 'lince', 4.0, z0 - 1.6, 0, 50, 'flankLeft');
+  spawnPursuit(game, 'patrol', 'centinela', 5.4, z0 + 19, 0, 47, 'cutOff');
+  // At the junction ahead: a blockade with a spike strip, and a tactical van swinging in from Marlin Street.
+  game.police.roadblocks.deploy({ x: 0, z: 337, alongX: false, direction: 1 }, true);
+  spawnPursuit(game, 'tactical', 'bastion', 22, 322.6, -Math.PI / 2, 9, 'ram');
+  // Everyone else on Ocean Drive: a cab diving for the kerb, traffic held up behind the blockade, people
+  // scattering off the pavement and the boardwalk.
+  const traffic = [['solCab', -4.9, zEnd + 12, 0, null, true], ['toro', 2.8, 349, Math.PI, '#ff7eb6', false], ['brisa', 2.8, 358, Math.PI, '#1abc9c', false], ['duna', -2.8, 352, 0, '#e67e22', false]];
+  for (const [model, x, z, heading, paint, panics] of traffic) {
     const bystander = game.vehicles.spawn(model, x, z, heading, paint);
     bystander.driver = 'ai';
     bystander.ambient = true;
     bystander.controller = createTrafficDriverFor(game, bystander, game.traffic.rng);
-    bystander.controller.panic(6);
+    if (panics) bystander.controller.panic(6);
   }
-  for (const z of [321, 328, 336, 345]) game.pedestrians.spawnFleeing(7.8, z, { x: 0, z: 300 });
-  for (const z of [324, 333, 343, 356]) game.pedestrians.spawnAt({ x: -9.5, z, boardwalk: true }).scare(0, 300, 9);
-  const wreck = game.vehicles.spawn('centinela', 8.8, 336, 0.5);
+  for (const z of [5, 9, 14, 18, 27, 31]) game.pedestrians.spawnFleeing(7.4 + (z % 3) * 0.5, zEnd + z, { x: 0, z: zEnd });
+  for (const z of [6, 10, 13, 19, 24, 30, 36]) game.pedestrians.spawnAt({ x: -9.5 + (z % 2), z: zEnd + z, boardwalk: true }).scare(0, zEnd, 9);
+  // A cruiser that lost the corner burns against the kerb and goes up as she passes.
+  const wreck = game.vehicles.spawn('centinela', 6.1, zEnd + 14, 0.6);
   wreck.health = 0;
   wreck.hitByPlayer = true;
-  wreck.burning = 2.2;
+  wreck.burning = 3.6 - (seconds - 0.13);
   game.police.helicopter.scramble();
-  game.police.helicopter.orbit = Math.PI / 2 + 0.1;
-  game.police.helicopter.mesh.position.set(-2, 25, 345);
+  game.police.helicopter.orbit = Math.PI / 2 + 0.12;
+  game.police.helicopter.mesh.position.set(1, 25, zEnd + 50);
   game.crew.cooldowns.jam = 96;
   game.hud.say('JAZZ', 'That is every badge on Marlin\'s payroll behind you. Fresh Coat, now!', '#f062b0');
-  play(game, 1.75, (t) => {
+  play(game, seconds, (t) => {
     game.input.held.add('KeyW');
-    if (t > 1.45) game.input.held.add('ShiftLeft');
+    if (t > seconds - 0.4) game.input.held.add('ShiftLeft');
     // The gunship's next burst is due as the frame is taken, so its tracer is in the air.
-    if (t > 1.7 && game.police.helicopter.cooldown > 0.05) game.police.helicopter.cooldown = 0;
+    if (t > seconds - 0.05 && game.police.helicopter.cooldown > 0.05) game.police.helicopter.cooldown = 0;
     // No hit in the last moments, so the red damage vignette does not tint the frame.
-    if (t > 1.2) game.player.invulnerable = 1;
-    game.camera.yaw = 0.05;
-    game.camera.pitch = 0.13;
-    game.camera.idleLook = 0;
+    if (t > seconds - 0.6) game.player.invulnerable = 1;
+    // The mouse is left alone: the chase camera settles behind the car by itself.
+    game.camera.idleLook = 2;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
   });
 }

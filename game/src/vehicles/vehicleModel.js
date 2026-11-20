@@ -8,8 +8,11 @@ const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x15171a, roughnes
 const hubGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.3, 8);
 hubGeometry.rotateZ(Math.PI / 2);
 const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.4, metalness: 0.6 });
-const bodyMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.08 });
-const GLASS = '#1b2a38';
+/** Every car body shares this lacquer; main.js hands it the sky to reflect. */
+export const bodyMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.26, metalness: 0.3 });
+const GLASS = '#16242f';
+/** Tail lamp colours: running and under braking. */
+export const TAIL_LAMP = { idle: 0xb81414, braking: 0xff4a30 };
 
 /** Cabin proportions per body shape: [start, end] along the length (0 = rear, 1 = nose), and the shell's height share. */
 const SHAPES = {
@@ -26,6 +29,25 @@ function shade(hex, amount) {
   const color = new THREE.Color(hex);
   color.multiplyScalar(amount);
   return `#${color.getHexString()}`;
+}
+
+/** The small parts every body carries: wheel arches, a crease and sills, door seams, mirrors, grille and plates. */
+function addBodyTrim(batch, spec, shape, paint, frame) {
+  const { length, width } = spec;
+  const { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter } = frame;
+  for (const side of [-1, 1]) {
+    const flank = side * (width / 2 - 0.01);
+    for (const t of [0.82, 0.18]) batch.addBox(flank, clearance - 0.08, at(t), 0.09, 0.52, 0.98, '#121416');
+    batch.addBox(flank, clearance + shellHeight * 0.78, 0, 0.05, 0.05, length * 0.9, shade(paint, 1.18));
+    batch.addBox(flank, clearance + 0.02, 0, 0.06, 0.12, length * 0.5, shade(paint, 0.6));
+    batch.addBox(flank, clearance + shellHeight * 0.2, cabinCenter, 0.045, shellHeight * 0.72, 0.03, shade(paint, 0.5));
+    if (!shape.bed) batch.addBox(flank, clearance + shellHeight * 0.2, cabinStart + 0.15, 0.045, shellHeight * 0.72, 0.03, shade(paint, 0.5));
+    batch.addBox(side * (width / 2 + 0.1), clearance + shellHeight + 0.04, cabinEnd - 0.25, 0.2, 0.12, 0.14, shade(paint, 0.85));
+  }
+  batch.addBox(0, clearance + shellHeight * 0.36, at(1) - 0.02, width * 0.4, shellHeight * 0.3, 0.07, '#101214');
+  batch.addBox(0, clearance + shellHeight * 0.06, at(1) + 0.07, 0.52, 0.13, 0.03, '#f4f1e4');
+  batch.addBox(0, clearance + shellHeight * 0.3, at(0) - 0.07, 0.52, 0.13, 0.03, '#f4f1e4');
+  batch.addBox(0, clearance + shellHeight * 0.62, at(0) - 0.015, width * 0.86, shellHeight * 0.08, 0.05, '#2a0b0b');
 }
 
 /**
@@ -63,13 +85,24 @@ export function buildVehicleModel(spec, paint) {
     batch.addBox(0, clearance + shellHeight, at(0.2), width, 0.28, length * 0.38, shade(paint, 0.8));
     batch.addBox(0, clearance + shellHeight - 0.02, at(0.2), width * 0.86, 0.04, length * 0.34, '#22262a');
   }
+  addBodyTrim(batch, spec, shape, paint, { at, clearance, shellHeight, cabinEnd, cabinStart, cabinCenter });
   if (spec.shape === 'sports' || spec.shape === 'coupe') {
-    batch.addBox(0, clearance + shellHeight + 0.18, at(0.04), width * 0.92, 0.07, 0.42, shade(paint, 0.7));
+    // A wing on two posts over the tail, a dark bonnet vent, intakes ahead of the rear wheels and twin exhausts.
+    const wingLift = spec.shape === 'sports' ? 0.34 : 0.2;
+    batch.addBox(0, clearance + shellHeight + wingLift, at(0.04), width * 0.96, 0.07, 0.46, shade(paint, 0.62));
+    for (const side of [-1, 1]) {
+      batch.addBox(side * width * 0.33, clearance + shellHeight, at(0.05), 0.07, wingLift, 0.2, '#1d2024');
+      batch.addBox(side * (width / 2 + 0.005), clearance + shellHeight * 0.42, at(0.36), 0.05, shellHeight * 0.36, 0.5, '#15171a');
+      batch.addBox(side * width * 0.2, clearance + 0.02, at(0) - 0.08, 0.2, 0.13, 0.16, '#9aa0a6');
+    }
     batch.addBox(0, clearance + shellHeight + 0.005, at(0.82), width * 0.5, 0.03, length * 0.2, shade(paint, 0.72));
   }
   if (spec.police) {
     batch.addBox(0, clearance + shellHeight * 0.28, 0, width + 0.03, shellHeight * 0.3, length * 0.62, '#2e6fd8');
     batch.addBox(0, clearance + shellHeight * 0.38, 0, width + 0.05, shellHeight * 0.1, length * 0.5, '#ffd60a');
+    // A push bar on the nose and the bar the roof lamps sit on.
+    batch.addBox(0, clearance - 0.02, at(1) + 0.14, width * 0.62, shellHeight * 0.8, 0.09, '#15171a');
+    batch.addBox(0, height, cabinCenter + roofShift, width * 0.8, 0.07, 0.36, '#15171a');
   }
   if (spec.taxi) {
     batch.addBox(0, clearance + shellHeight * 0.3, 0, width + 0.03, shellHeight * 0.22, length * 0.5, '#1a1a1a');
@@ -81,8 +114,8 @@ export function buildVehicleModel(spec, paint) {
 
   // Lights are their own meshes so they can glow: head lamps, tail lamps that brighten on braking.
   const headMaterial = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
-  const tailMaterial = new THREE.MeshBasicMaterial({ color: 0x7a1010 });
-  const lampGeometry = new THREE.BoxGeometry(width * 0.24, shellHeight * 0.24, 0.08);
+  const tailMaterial = new THREE.MeshBasicMaterial({ color: TAIL_LAMP.idle });
+  const lampGeometry = new THREE.BoxGeometry(width * 0.27, shellHeight * 0.24, 0.08);
   for (const side of [-1, 1]) {
     const head = new THREE.Mesh(lampGeometry, headMaterial);
     head.position.set(side * width * 0.33, clearance + shellHeight * 0.68, at(1) + 0.01);

@@ -18,7 +18,7 @@ export function attachVehicleLights(model, spec) {
     flares = [new THREE.Sprite(redFlareMaterial), new THREE.Sprite(blueFlareMaterial)];
     flares.forEach((flare, index) => {
       flare.position.set((index ? 1 : -1) * spec.width * 0.2, spec.height + 0.25, 0);
-      flare.scale.set(3.4, 3.4, 1);
+      flare.scale.set(3.7, 3.7, 1);
       flare.visible = false;
       rig.add(flare);
     });
@@ -38,8 +38,8 @@ export function flashSirenFlares(lights, phase) {
 export function setVehicleLightsNight(night) {
   beamMaterial.opacity = night * 0.4;
   tailFlareMaterial.opacity = night * 0.45;
-  redFlareMaterial.opacity = 0.55 + night * 0.4;
-  blueFlareMaterial.opacity = 0.55 + night * 0.4;
+  redFlareMaterial.opacity = 0.72 + night * 0.28;
+  blueFlareMaterial.opacity = 0.72 + night * 0.28;
 }
 
 /** The single real light that travels with the player's car after dark and lights the street ahead. */
@@ -67,5 +67,5 @@ const beamShape = new THREE.PlaneGeometry(5.4, 13);
 beamShape.rotateX(-Math.PI / 2);
 const beamMaterial = new THREE.MeshBasicMaterial({ map: glowTexture, color: 0xfff1cf, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
 const tailFlareMaterial = new THREE.SpriteMaterial({ map: glowTexture, color: 0xff2a1a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
-const redFlareMaterial = new THREE.SpriteMaterial({ map: glowTexture, color: 0xff2020, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
-const blueFlareMaterial = new THREE.SpriteMaterial({ map: glowTexture, color: 0x2a6bff, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending });
+const redFlareMaterial = new THREE.SpriteMaterial({ map: glowTexture, color: 0xff3030, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
+const blueFlareMaterial = new THREE.SpriteMaterial({ map: glowTexture, color: 0x3a78ff, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });

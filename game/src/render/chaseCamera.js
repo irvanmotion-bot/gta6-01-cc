@@ -2,6 +2,9 @@
 import * as THREE from 'three';
 import { angleDelta, clamp } from '../core/random.js';
 
+/** The driving view: metres behind the car (plus a share of its length), lift of the aim point, pitch and lens. */
+const CHASE = { distance: 3.0, perLength: 0.58, speedPull: 0.5, lift: 0.95, pitch: 0.1, fov: 54, speedFov: 7, boostFov: 3, follow: 36 };
+
 export class ChaseCamera {
   constructor(aspect) {
     this.view = new THREE.PerspectiveCamera(62, aspect, 0.3, 2600);
@@ -38,13 +41,16 @@ export class ChaseCamera {
     let wanted;
     let height;
     if (vehicle) {
-      wanted = 6.2 + vehicle.spec.length * 0.75;
-      height = vehicle.spec.height + 0.7;
+      // Close and low behind the boot, aimed over the roof: the car fills the lower third and the street ahead
+      // the rest. Speed eases the camera back a little, and the lens widens further down.
+      const pace = clamp(Math.abs(vehicle.speed) / 50, 0, 1);
+      wanted = CHASE.distance + vehicle.spec.length * CHASE.perLength + pace * CHASE.speedPull;
+      height = vehicle.spec.height + CHASE.lift;
       // With the mouse still, swing round behind the car; look back while reversing.
       if (this.idleLook > 1.1 && Math.abs(vehicle.speed) > 2.5) {
         const behind = vehicle.speed < -2.5 ? vehicle.heading + Math.PI : vehicle.heading;
         this.yaw += angleDelta(this.yaw, behind) * Math.min(1, dt * 3.2);
-        this.pitch += (0.17 - this.pitch) * Math.min(1, dt * 2);
+        this.pitch += (CHASE.pitch - this.pitch) * Math.min(1, dt * 2);
       }
     } else {
       wanted = player.aiming ? 3.3 : 5;
@@ -59,7 +65,8 @@ export class ChaseCamera {
     const focusY = player.position.y + height;
     const focusZ = player.position.z + Math.sin(this.yaw) * shoulder;
     if (this.snap) { this.target.set(focusX, focusY, focusZ); this.snap = false; }
-    const follow = Math.min(1, dt * (vehicle ? 14 : 18));
+    // A fast car must not run away from its own camera: the chase view follows tighter than the walking one.
+    const follow = Math.min(1, dt * (vehicle ? CHASE.follow : 18));
     this.target.x += (focusX - this.target.x) * follow;
     this.target.y += (focusY - this.target.y) * follow;
     this.target.z += (focusZ - this.target.z) * follow;
@@ -80,7 +87,7 @@ export class ChaseCamera {
     }
     view.lookAt(view.position.x + this.direction.x * 10, view.position.y + this.direction.y * 10, view.position.z + this.direction.z * 10);
     const speedShare = vehicle ? clamp(Math.abs(vehicle.speed) / 50, 0, 1) : 0;
-    const fov = (player.aiming && !vehicle ? 50 : 62) + speedShare * 16;
+    const fov = vehicle ? CHASE.fov + speedShare * CHASE.speedFov + (vehicle.boosting ? CHASE.boostFov : 0) : player.aiming ? 50 : 62;
     if (Math.abs(view.fov - fov) > 0.05) {
       view.fov += (fov - view.fov) * Math.min(1, dt * 5);
       view.updateProjectionMatrix();
