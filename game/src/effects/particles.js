@@ -22,7 +22,12 @@ varying vec4 vTint;
 void main() {
   float a = texture2D(dotTexture, gl_PointCoord).a * vTint.a;
   if (a < 0.01) discard;
-  gl_FragColor = vec4(vTint.rgb, a);
+  // A tint is a colour as the screen shows it; the frame is built of light, so the tint is unwound to it. Flame,
+  // sparks and muzzle flashes (full-bright, strongly coloured tints) burn brighter than white and bloom.
+  vec3 light = vTint.rgb * vTint.rgb;
+  float peak = max(vTint.r, max(vTint.g, vTint.b));
+  float hot = step(0.97, peak) * smoothstep(0.1, 0.25, peak - min(vTint.r, min(vTint.g, vTint.b)));
+  gl_FragColor = vec4(light * (1.0 + 2.5 * hot), a);
 }`;
 
 export class Particles {

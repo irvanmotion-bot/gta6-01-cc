@@ -59,7 +59,7 @@ export class PoliceHelicopter {
     // A narrow shaft: the walking camera stays outside it, so it reads as a beam on Nova and never as a haze round the lens.
     const beamGeometry = new THREE.ConeGeometry(2.3, HOVER_HEIGHT, 20, 1, true);
     beamGeometry.translate(0, -HOVER_HEIGHT / 2, 0);
-    this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide }));
+    this.beam = new THREE.Mesh(beamGeometry, new THREE.MeshBasicMaterial({ color: 0xfff6cf, transparent: true, opacity: 0.05, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending }));
     this.beam.renderOrder = 3;
     this.mesh.add(body, this.rotor, this.tailRotor);
     this.mesh.scale.setScalar(1.6);
@@ -228,13 +228,15 @@ export class PoliceHelicopter {
     this.beam.scale.set(1, reach.length() / HOVER_HEIGHT, 1);
     this.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), reach.normalize());
     const night = game.sky.night;
-    this.beam.material.opacity = 0.19 + night * 0.11;
+    // The shaft is added to the frame as light, which shows far more than paint would, and most of all in the dark,
+    // where the camera often looks out through it: a few hundredths are plenty.
+    this.beam.material.opacity = 0.05 - night * 0.022;
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(aim.x, aim.y, aim.z);
     // By day the lamp only warms what it touches; in the dark it is the brightest thing in the street.
     this.lamp.intensity = 90 + night * 890;
     this.pool.position.set(aim.x, aim.y + 0.12, aim.z);
-    this.pool.material.opacity = 0.09 + night * 0.31;
+    this.pool.material.opacity = 0.06 + night * 0.2;
 
     this.cooldown -= dt;
     if (stars >= 4 && this.cooldown <= 0 && player.alive && !lost && !cover.isHidden()) {

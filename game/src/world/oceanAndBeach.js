@@ -33,7 +33,8 @@ void main() {
   color = mix(color, vec3(1.0), foam * 0.75);
   float dist = length(vWorld.xz - cameraPosition.xz);
   color = mix(color, skyColor, smoothstep(280.0, 1300.0, dist));
-  gl_FragColor = vec4(color, 1.0);
+  // Like the sky, the water is painted in screen colours: alpha 0 tells the finished frame not to tone it again.
+  gl_FragColor = vec4(color, 0.0);
   #include <colorspace_fragment>
 }`;
 

@@ -42,8 +42,8 @@ import { PlayerHeadlamp, setVehicleLightsNight } from './vehicles/vehicleLights.
 import { CollisionWorld } from './world/collision.js';
 import { Pickups } from './world/pickups.js';
 import { WorldMarkers } from './world/worldMarkers.js';
-import { SkyAndSun } from './render/skyAndSun.js';
-import { SunShafts } from './render/sunShafts.js';
+import { SCREEN_EXPOSURE, SkyAndSun } from './render/skyAndSun.js';
+import { BloomAndGrade } from './render/bloomAndGrade.js';
 import { ChaseCamera } from './render/chaseCamera.js';
 import { createSkyReflection, reflectSkyOn } from './render/skyReflection.js';
 import { bodyMaterial as vehicleBodyMaterial } from './vehicles/vehicleModel.js';
@@ -63,7 +63,7 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.02;
+    this.renderer.toneMappingExposure = SCREEN_EXPOSURE;
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
@@ -84,7 +84,7 @@ class Game {
     this.camera = new ChaseCamera(window.innerWidth / window.innerHeight);
     this.calendar = new EclipseCalendar(this);
     this.sky = new SkyAndSun(this.scene);
-    this.shafts = new SunShafts(this.renderer, this.sky);
+    this.film = new BloomAndGrade(this.renderer, this.sky);
     this.collision = new CollisionWorld();
     buildStreetsAndGround(this.scene);
     this.buildings = new CityBuildings(this.scene, this.collision);
@@ -148,7 +148,8 @@ class Game {
     this.audio.setVolume(settings.volume);
     this.camera.sensitivity = settings.sensitivity;
     this.sky.setShadows(settings.shadows);
-    this.shafts.enabled = Boolean(settings.sunShafts);
+    this.film.bloomOn = Boolean(settings.bloom);
+    this.film.shafts.enabled = Boolean(settings.sunShafts);
     this.hud.setSize(settings.hudSize);
     // RENDER SCALE: the city is drawn at this many times the window's pixels and scaled down to it.
     const ratio = Math.min(Math.min(window.devicePixelRatio || 1, 1.5) * (settings.renderScale || 1), 3);
@@ -425,7 +426,7 @@ class Game {
       // The week's clock runs while Nova is in the streets; the title screen holds its eclipse afternoon still.
       if (this.state === 'play' && !this.down) this.calendar.update(dt, this.missions.clockRush());
       this.sky.update(dt, this.camera.target, this.calendar);
-      this.ocean.update(dt, this.scene.fog.color);
+      this.ocean.update(dt, this.sky.haze);
       this.props.update(this.time, this.sky.night);
       this.buildings.setNight(this.sky.night);
       this.cityLights.setNight(this.sky.night);
@@ -444,13 +445,14 @@ class Game {
   }
 
   /**
-   * Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open, then
-   * lay the low sun's shafts of light over the frame.
+   * Draw the city through the chase camera, or Bravo's yard through the showroom's while the workshop is open, with
+   * the frame's bloom, the low sun's shafts and its grade; at the wheel, speed smears the edges of the frame.
    */
   render() {
     const view = this.showroom.active ? this.showroom.view : this.camera.view;
-    this.renderer.render(this.scene, view);
-    this.shafts.render(this.scene, view);
+    const car = this.state === 'play' && !this.showroom.active ? this.player.vehicle : null;
+    const rush = car ? Math.min(1, Math.max(0, (Math.abs(car.speed) - 24) / 26) + (car.boosting ? 0.3 : 0)) : 0;
+    this.film.render(this.scene, view, rush, car ? car.position : null);
   }
 
   run() {

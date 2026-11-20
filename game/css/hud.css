@@ -30,7 +30,7 @@
   --t22: 4.5833vh;
 }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; color: var(--cream); font-family: var(--body); user-select: none; }
-#game-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; filter: saturate(1.3) contrast(1.07); }
+#game-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #hud { position: fixed; inset: 0; pointer-events: none; transition: opacity 0.3s; font-family: var(--hud); font-weight: 700; }
 #hud.hidden { opacity: 0; }
 
