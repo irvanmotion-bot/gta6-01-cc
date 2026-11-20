@@ -67,6 +67,8 @@ export class ChaseCamera {
     // Pull in when a building stands between the camera and its target.
     const clear = game.collision.raycast(this.target.x, this.target.y, this.target.z, -this.direction.x, -this.direction.y, -this.direction.z, this.distance, 0.4);
     const distance = Math.max(0.8, clear - 0.3);
+    // Squeezed against a wall, the camera would sit inside Nova: hide her until there is room again.
+    if (!vehicle) player.mesh.visible = distance > 1.3;
     const view = this.view;
     view.position.set(this.target.x - this.direction.x * distance, Math.max(this.target.y - this.direction.y * distance, 0.35), this.target.z - this.direction.z * distance);
     if (this.shakeAmount > 0.001) {

@@ -145,9 +145,9 @@ class Game {
   }
 
   /** Put Nova at Casa Reyes with traffic and citizens already around her. */
-  enterCity(heading = Math.PI) {
+  enterCity(heading = Math.PI / 2) {
     const home = LANDMARKS.safehouse;
-    this.player.revive(home.x + 3, home.z, heading);
+    this.player.revive(home.x - 7, home.z, heading);
     this.player.invulnerable = 0;
     this.camera.snapBehind(heading);
     this.traffic.populate();
@@ -160,7 +160,7 @@ class Game {
     this.activities.reset();
     this.sky.hour = 9.5;
     this.enterCity();
-    const ride = this.vehicles.spawn('brisa', LANDMARKS.safehouse.kerb.x - 6, LANDMARKS.safehouse.kerb.z, -Math.PI / 2, '#1abc9c');
+    const ride = this.vehicles.spawn('brisa', LANDMARKS.safehouse.kerb.x - 3, LANDMARKS.safehouse.kerb.z, -Math.PI / 2, '#1abc9c');
     ride.parked = true;
     ride.stolen = true;
     ride.ambient = true;
@@ -251,8 +251,8 @@ class Game {
     for (const vehicle of [...this.vehicles.list]) if (vehicle.spec.police) this.vehicles.remove(vehicle);
     this.sky.hour = (this.sky.hour + 5) % 24;
     this.player.frozen = false;
-    this.player.revive(place.x, place.z, Math.PI);
-    this.camera.snapBehind(Math.PI);
+    this.player.revive(place.x, place.z, Math.PI / 2);
+    this.camera.snapBehind(Math.PI / 2);
     this.down = null;
     this.hud.hideDown();
     this.hud.notify(fee > 0 ? `You paid $${fee.toLocaleString('en-US')}.` : 'Back on your feet.');

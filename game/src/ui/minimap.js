@@ -190,8 +190,12 @@ export class Minimap {
     });
     STREETS.forEach((name, j) => c.fillText(name, toX(CITY.width / 2 + (j % 2 ? 200 : -200)), toY(j * CITY.pitch) + 3));
     c.font = `900 ${Math.max(12, 20 * scale)}px Impact, "Arial Black", sans-serif`;
-    c.fillStyle = 'rgba(10,14,22,0.55)';
+    c.fillStyle = '#ffffff';
+    c.strokeStyle = 'rgba(10,14,22,0.85)';
+    c.lineWidth = 4;
+    c.lineJoin = 'round';
     for (const [text, x, z] of [['PLAYA DORADA', 80, 250], ['CENTRO ALTO', 480, 370], ['LAS COLINAS', 520, 80], ['EL MERCADO', 760, 440], ['PUERTO VIEJO', 440, 640], ['BAHÍA DEL SOL', -100, 520]]) {
+      c.strokeText(text, toX(x), toY(z));
       c.fillText(text, toX(x), toY(z));
     }
     const unit = Math.max(1.2, scale * 2.4);
@@ -204,6 +208,8 @@ export class Minimap {
     Object.values(LANDMARKS).forEach((place, index) => {
       const y = offsetY + 18 + index * 20;
       this.drawBlip(c, 22, y, { color: place.color, label: place.icon }, 1.2);
+      c.textAlign = 'left';
+      c.font = '700 13px Arial, sans-serif';
       c.fillStyle = '#ffffff';
       c.fillText(place.name, 40, y + 4);
     });
