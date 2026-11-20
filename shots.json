@@ -1,0 +1,6 @@
+[
+  { "name": "1-police-chase.jpg", "query": "?shot=chase" },
+  { "name": "2-bank-shootout.jpg", "query": "?shot=shootout" },
+  { "name": "3-beach-carjack.jpg", "query": "?shot=carjack" },
+  { "name": "4-start-menu.jpg", "query": "?shot=title" }
+]

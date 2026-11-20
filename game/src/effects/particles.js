@@ -1,0 +1,162 @@
+// One pooled point cloud for every puff in the game: smoke, fire, sparks, tire smoke, blood, plus bullet tracers and flashes.
+import * as THREE from 'three';
+import { createGlowTexture } from '../render/proceduralTextures.js';
+
+const MAX = 900;
+const VERTEX = `
+attribute float size;
+attribute vec4 tint;
+varying vec4 vTint;
+void main() {
+  vTint = tint;
+  vec4 mv = modelViewMatrix * vec4(position, 1.0);
+  gl_PointSize = size * (520.0 / -mv.z);
+  gl_Position = projectionMatrix * mv;
+}`;
+const FRAGMENT = `
+uniform sampler2D dotTexture;
+varying vec4 vTint;
+void main() {
+  float a = texture2D(dotTexture, gl_PointCoord).a * vTint.a;
+  if (a < 0.01) discard;
+  gl_FragColor = vec4(vTint.rgb, a);
+}`;
+
+export class Particles {
+  constructor(scene) {
+    this.scene = scene;
+    this.items = [];
+    this.positions = new Float32Array(MAX * 3);
+    this.sizes = new Float32Array(MAX);
+    this.tints = new Float32Array(MAX * 4);
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(this.sizes, 1));
+    geometry.setAttribute('tint', new THREE.BufferAttribute(this.tints, 4));
+    this.geometry = geometry;
+    this.points = new THREE.Points(geometry, new THREE.ShaderMaterial({
+      uniforms: { dotTexture: { value: createGlowTexture() } },
+      vertexShader: VERTEX, fragmentShader: FRAGMENT, transparent: true, depthWrite: false,
+    }));
+    this.points.frustumCulled = false;
+    this.points.renderOrder = 5;
+    scene.add(this.points);
+
+    this.tracers = [];
+    const tracerGeometry = new THREE.BoxGeometry(0.06, 0.06, 1);
+    for (let k = 0; k < 24; k += 1) {
+      const mesh = new THREE.Mesh(tracerGeometry, new THREE.MeshBasicMaterial({ color: 0xfff1a8, transparent: true }));
+      mesh.visible = false;
+      scene.add(mesh);
+      this.tracers.push({ mesh, life: 0 });
+    }
+    this.flash = new THREE.PointLight(0xffc266, 0, 26);
+    scene.add(this.flash);
+    this.flashLife = 0;
+  }
+
+  emit(x, y, z, vx, vy, vz, life, size, grow, r, g, b, alpha, gravity = 0) {
+    if (this.items.length >= MAX) this.items.shift();
+    this.items.push({ x, y, z, vx, vy, vz, life, age: 0, size, grow, r, g, b, alpha, gravity });
+  }
+
+  smoke(x, y, z, dark = false) {
+    const c = dark ? 0.12 : 0.55;
+    this.emit(x + (Math.random() - 0.5) * 0.6, y, z + (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 0.8, 1.6 + Math.random(), (Math.random() - 0.5) * 0.8, 1.8, 0.9, 1.6, c, c, c, 0.5);
+  }
+
+  tireSmoke(x, y, z) {
+    if (Math.random() < 0.5) return;
+    this.emit(x + (Math.random() - 0.5), y, z + (Math.random() - 0.5), (Math.random() - 0.5), 0.5, (Math.random() - 0.5), 0.9, 0.7, 1.8, 0.92, 0.92, 0.92, 0.32);
+  }
+
+  fire(x, y, z) {
+    this.emit(x + (Math.random() - 0.5) * 1.2, y, z + (Math.random() - 0.5) * 1.2, (Math.random() - 0.5), 2 + Math.random() * 2, (Math.random() - 0.5), 0.5, 1.1, -0.8, 1, 0.5 + Math.random() * 0.3, 0.1, 0.9);
+  }
+
+  sparks(x, y, z, count) {
+    for (let k = 0; k < count; k += 1) {
+      this.emit(x, y, z, (Math.random() - 0.5) * 9, Math.random() * 5, (Math.random() - 0.5) * 9, 0.35 + Math.random() * 0.3, 0.14, 0, 1, 0.85, 0.4, 1, 14);
+    }
+  }
+
+  dust(x, y, z, r = 0.75, g = 0.72, b = 0.66) {
+    for (let k = 0; k < 4; k += 1) this.emit(x, y, z, (Math.random() - 0.5) * 2, Math.random() * 1.5, (Math.random() - 0.5) * 2, 0.5, 0.3, 0.9, r, g, b, 0.6);
+  }
+
+  blood(x, y, z) {
+    for (let k = 0; k < 6; k += 1) this.emit(x, y, z, (Math.random() - 0.5) * 3, Math.random() * 2.5, (Math.random() - 0.5) * 3, 0.45, 0.2, 0.2, 0.7, 0.05, 0.05, 0.9, 9);
+  }
+
+  /** A fireball, a pillar of black smoke, flying sparks and a flash of light. */
+  explosion(x, y, z) {
+    for (let k = 0; k < 34; k += 1) {
+      const a = Math.random() * Math.PI * 2;
+      const s = Math.random() * 9;
+      this.emit(x, y + Math.random() * 1.5, z, Math.cos(a) * s, 2 + Math.random() * 8, Math.sin(a) * s, 0.7 + Math.random() * 0.5, 2.6, 2.5, 1, 0.45 + Math.random() * 0.4, 0.08, 0.95);
+    }
+    for (let k = 0; k < 22; k += 1) {
+      this.emit(x + (Math.random() - 0.5) * 3, y + 1 + Math.random() * 2, z + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, 3 + Math.random() * 4, (Math.random() - 0.5) * 3, 2.6 + Math.random(), 2.8, 2.2, 0.1, 0.1, 0.1, 0.7);
+    }
+    this.sparks(x, y + 1, z, 26);
+    this.lightFlash(x, y + 2, z, 60, 0.45);
+  }
+
+  lightFlash(x, y, z, intensity, life) {
+    this.flash.position.set(x, y, z);
+    this.flash.intensity = intensity;
+    this.flashStart = intensity;
+    this.flashLife = life;
+    this.flashTotal = life;
+  }
+
+  /** A bullet's streak from muzzle to impact. */
+  tracer(from, to, color = 0xfff1a8) {
+    const slot = this.tracers.find((t) => t.life <= 0) || this.tracers[0];
+    const length = from.distanceTo(to);
+    slot.mesh.position.copy(from).lerp(to, 0.5);
+    slot.mesh.scale.set(1, 1, length);
+    slot.mesh.lookAt(to);
+    slot.mesh.material.color.setHex(color);
+    slot.mesh.material.opacity = 0.9;
+    slot.mesh.visible = true;
+    slot.life = 0.11;
+  }
+
+  clear() {
+    this.items.length = 0;
+  }
+
+  update(dt) {
+    let count = 0;
+    for (let index = this.items.length - 1; index >= 0; index -= 1) {
+      const p = this.items[index];
+      p.age += dt;
+      if (p.age >= p.life) { this.items.splice(index, 1); continue; }
+      p.vy -= p.gravity * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt;
+      if (p.y < 0.05) { p.y = 0.05; p.vy = Math.abs(p.vy) * 0.3; }
+    }
+    for (const p of this.items) {
+      const t = p.age / p.life;
+      this.positions[count * 3] = p.x; this.positions[count * 3 + 1] = p.y; this.positions[count * 3 + 2] = p.z;
+      this.sizes[count] = Math.max(0.05, p.size + p.grow * t);
+      this.tints[count * 4] = p.r; this.tints[count * 4 + 1] = p.g; this.tints[count * 4 + 2] = p.b; this.tints[count * 4 + 3] = p.alpha * (1 - t);
+      count += 1;
+    }
+    this.geometry.setDrawRange(0, count);
+    this.geometry.attributes.position.needsUpdate = true;
+    this.geometry.attributes.size.needsUpdate = true;
+    this.geometry.attributes.tint.needsUpdate = true;
+    for (const tracer of this.tracers) {
+      if (tracer.life <= 0) continue;
+      tracer.life -= dt;
+      tracer.mesh.material.opacity = Math.max(0, tracer.life / 0.11);
+      if (tracer.life <= 0) tracer.mesh.visible = false;
+    }
+    if (this.flashLife > 0) {
+      this.flashLife -= dt;
+      this.flash.intensity = Math.max(0, this.flashStart * (this.flashLife / this.flashTotal));
+    }
+  }
+}

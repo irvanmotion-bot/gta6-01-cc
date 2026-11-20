@@ -1,0 +1,119 @@
+// Builds each car's low-poly body from its catalog entry: shell, cabin glass, lights, wheels, taxi sign or police light bar.
+import * as THREE from 'three';
+import { MeshBatcher } from '../render/meshBatcher.js';
+
+const wheelGeometry = new THREE.CylinderGeometry(0.36, 0.36, 0.28, 12);
+wheelGeometry.rotateZ(Math.PI / 2);
+const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.9 });
+const hubGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.3, 8);
+hubGeometry.rotateZ(Math.PI / 2);
+const hubMaterial = new THREE.MeshStandardMaterial({ color: 0xc8ccd0, roughness: 0.4, metalness: 0.6 });
+const bodyMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.42, metalness: 0.08 });
+const GLASS = '#1b2a38';
+
+/** Cabin proportions per body shape: [start, end] along the length (0 = rear, 1 = nose), and the shell's height share. */
+const SHAPES = {
+  hatch: { cabin: [0.06, 0.72], shell: 0.52, bed: false, rake: [0.84, 0.74, -0.04] },
+  sedan: { cabin: [0.16, 0.72], shell: 0.5, bed: false, rake: [0.84, 0.64, -0.03] },
+  coupe: { cabin: [0.16, 0.66], shell: 0.52, bed: false, rake: [0.82, 0.58, -0.06] },
+  sports: { cabin: [0.2, 0.68], shell: 0.55, bed: false, rake: [0.8, 0.5, -0.07] },
+  suv: { cabin: [0.04, 0.74], shell: 0.5, bed: false, rake: [0.88, 0.8, -0.03] },
+  pickup: { cabin: [0.4, 0.76], shell: 0.48, bed: true, rake: [0.88, 0.7, -0.02] },
+  van: { cabin: [0.03, 0.9], shell: 0.45, bed: false, rake: [0.92, 0.9, -0.03] },
+};
+
+function shade(hex, amount) {
+  const color = new THREE.Color(hex);
+  color.multiplyScalar(amount);
+  return `#${color.getHexString()}`;
+}
+
+/**
+ * The model of one car, its nose toward +z. Returns the group with `wheels` (front pair first), `lightBar`
+ * materials for a police car, and `brakeLights`.
+ */
+export function buildVehicleModel(spec, paint) {
+  const group = new THREE.Group();
+  const shape = SHAPES[spec.shape];
+  const { length, width, height } = spec;
+  const clearance = 0.3;
+  const shellHeight = (height - clearance) * shape.shell;
+  const cabinHeight = height - clearance - shellHeight;
+  const batch = new MeshBatcher();
+  const at = (t) => (t - 0.5) * length;
+
+  batch.addBox(0, clearance, 0, width, shellHeight, length, paint);
+  batch.taperLastBox(0.94, 0.97);
+  batch.addBox(0, clearance - 0.06, 0, width * 1.02, 0.2, length * 0.9, '#1d2024');
+  batch.addBox(0, clearance + shellHeight * 0.1, at(1) - 0.05, width * 0.96, shellHeight * 0.35, 0.22, '#2b2f34');
+  batch.addBox(0, clearance + shellHeight * 0.1, at(0) + 0.05, width * 0.96, shellHeight * 0.35, 0.22, '#2b2f34');
+  const cabinStart = at(shape.cabin[0]);
+  const cabinEnd = at(shape.cabin[1]);
+  const cabinLength = cabinEnd - cabinStart;
+  const cabinCenter = (cabinStart + cabinEnd) / 2;
+  // The glasshouse leans in toward the roof; the roof panel sits on its narrowed top.
+  const [rakeX, rakeZ, rakeShift] = shape.rake;
+  const roofShift = rakeShift * cabinLength;
+  batch.addBox(0, clearance + shellHeight, cabinCenter, width * 0.92, cabinHeight * 0.9, cabinLength, GLASS);
+  batch.taperLastBox(rakeX, rakeZ, roofShift);
+  batch.addBox(0, clearance + shellHeight + cabinHeight * 0.88, cabinCenter + roofShift, width * 0.92 * rakeX + 0.04, cabinHeight * 0.12, cabinLength * rakeZ + 0.04, spec.police ? '#2e6fd8' : paint);
+  batch.addBox(0, clearance + shellHeight, cabinCenter + roofShift * 0.5, width * 0.93, cabinHeight * 0.9, 0.09, shade(paint, 0.85));
+  batch.taperLastBox(rakeX, 1, roofShift * 0.5);
+  if (shape.bed) {
+    batch.addBox(0, clearance + shellHeight, at(0.2), width, 0.28, length * 0.38, shade(paint, 0.8));
+    batch.addBox(0, clearance + shellHeight - 0.02, at(0.2), width * 0.86, 0.04, length * 0.34, '#22262a');
+  }
+  if (spec.shape === 'sports' || spec.shape === 'coupe') {
+    batch.addBox(0, clearance + shellHeight + 0.18, at(0.04), width * 0.92, 0.07, 0.42, shade(paint, 0.7));
+    batch.addBox(0, clearance + shellHeight + 0.005, at(0.82), width * 0.5, 0.03, length * 0.2, shade(paint, 0.72));
+  }
+  if (spec.police) {
+    batch.addBox(0, clearance + shellHeight * 0.28, 0, width + 0.03, shellHeight * 0.3, length * 0.62, '#2e6fd8');
+    batch.addBox(0, clearance + shellHeight * 0.38, 0, width + 0.05, shellHeight * 0.1, length * 0.5, '#ffd60a');
+  }
+  if (spec.taxi) {
+    batch.addBox(0, clearance + shellHeight * 0.3, 0, width + 0.03, shellHeight * 0.22, length * 0.5, '#1a1a1a');
+    batch.addBox(0, height, cabinCenter, 0.9, 0.3, 0.38, '#fff6c2');
+  }
+  const body = batch.build(bodyMaterial);
+  body.matrixAutoUpdate = true;
+  group.add(body);
+
+  // Lights are their own meshes so they can glow: head lamps, tail lamps that brighten on braking.
+  const headMaterial = new THREE.MeshBasicMaterial({ color: 0xfff6d8 });
+  const tailMaterial = new THREE.MeshBasicMaterial({ color: 0x7a1010 });
+  const lampGeometry = new THREE.BoxGeometry(width * 0.24, shellHeight * 0.24, 0.08);
+  for (const side of [-1, 1]) {
+    const head = new THREE.Mesh(lampGeometry, headMaterial);
+    head.position.set(side * width * 0.33, clearance + shellHeight * 0.68, at(1) + 0.01);
+    const tail = new THREE.Mesh(lampGeometry, tailMaterial);
+    tail.position.set(side * width * 0.33, clearance + shellHeight * 0.7, at(0) - 0.01);
+    group.add(head, tail);
+  }
+
+  const wheels = [];
+  for (const [t, isFront] of [[0.82, true], [0.18, false]]) {
+    for (const side of [-1, 1]) {
+      const wheel = new THREE.Group();
+      const tire = new THREE.Mesh(wheelGeometry, wheelMaterial);
+      tire.castShadow = true;
+      wheel.add(tire, new THREE.Mesh(hubGeometry, hubMaterial));
+      wheel.position.set(side * (width / 2 - 0.1), 0.36, at(t));
+      wheel.userData.front = isFront;
+      group.add(wheel);
+      wheels.push(wheel);
+    }
+  }
+
+  let lightBar = null;
+  if (spec.police) {
+    lightBar = [new THREE.MeshBasicMaterial({ color: 0xff2020 }), new THREE.MeshBasicMaterial({ color: 0x2060ff })];
+    const barGeometry = new THREE.BoxGeometry(width * 0.34, 0.16, 0.3);
+    lightBar.forEach((material, index) => {
+      const lamp = new THREE.Mesh(barGeometry, material);
+      lamp.position.set((index ? 1 : -1) * width * 0.2, height + 0.09, cabinCenter);
+      group.add(lamp);
+    });
+  }
+  return { group, wheels, lightBar, tailMaterial, headMaterial };
+}

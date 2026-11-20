@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solmara Heat — an open-world crime game</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./css/hud.css">
+<link rel="stylesheet" href="./css/menus.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="game-canvas" aria-label="Solmara Heat: an open-world crime game. Explore the city on foot and by car."></canvas>
+
+<div id="hud" class="hidden">
+  <div id="status-cluster"><div id="wanted-stars" aria-label="Wanted level"></div><div id="cash">$0</div>
+    <div id="weapon-panel"><span id="weapon-name"></span><span id="weapon-ammo"></span></div>
+    <div id="health-bar" class="bar"><i></i></div><div id="armor-bar" class="bar"><i></i></div><div id="clock"></div><div id="notifications"></div>
+  </div>
+  <div id="mission-panel"><div id="mission-title"></div><div id="mission-objective"></div><div id="mission-timer"></div></div>
+  <div id="radar"><canvas id="minimap"></canvas><div id="district-name"></div><div id="street-name"></div></div>
+  <div id="speedometer"><div id="vehicle-name"></div><div id="radio-station"></div><div id="speed-readout"><span id="speed-value">0</span><small>km/h</small></div></div>
+  <div id="crosshair"></div><div id="hint"></div><div id="subtitles"></div><div id="damage-flash"></div>
+  <div id="banner"><div id="banner-title"></div><div id="banner-sub"></div></div>
+</div>
+<div id="down-screen"><div id="down-title"></div><div id="down-sub"></div></div>
+
+<section id="start-menu" class="menu">
+  <header id="title-logo"><h1>SOLMARA<em>HEAT</em></h1><p>An open-world crime story · Solmara, the sun coast</p></header>
+  <nav class="menu-list"></nav>
+  <div class="menu-panel"></div>
+  <footer id="title-footer">WASD move · Mouse look · F steal a car · Click to shoot · Esc pause · progress saves in this browser</footer>
+</section>
+<section id="pause-menu" class="menu">
+  <header><h2>PAUSED</h2><p>Solmara waits for nobody.</p></header>
+  <nav class="menu-list"></nav>
+  <div class="menu-panel"></div>
+</section>
+<div id="map-screen"><canvas id="city-map"></canvas><p>CITY MAP · press M or Esc to close</p></div>
+<div id="shop-menu"></div>
+<div id="loading">SOLMARA HEAT<small>building the city…</small></div>
+
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
