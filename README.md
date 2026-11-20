@@ -110,7 +110,8 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # the hand-in: copies game
 ```
 
 The screenshots in `screenshots/` are unedited browser renders of the scenes in `game/src/debug/screenshotScenes.js`
-(`?shot=chase`, `bounty`, `workshop`, `title`; `atlas` and `pause` stage the other two full screens), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`.
+(`?shot=chase`, `bounty`, `workshop`, `pause`; `race`, `atlas` and `title` stage three more, and `&hud=standard`
+takes any of them at another HUD SIZE), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`.
 Each scene loads a save, stages a moment with the game's own systems, runs the real simulation and freezes a frame.
 `tools/captureScreenshots.mjs --smoke` plays the whole game by script (`tools/smokeTest.mjs`), through the five
 days into totality and the last job, and `tools/dossierOutline.mjs` prints the order the dossier lists the sources in.
