@@ -88,9 +88,12 @@ export class CrewFavors {
   }
 }
 
-/** The favors: the key that calls each, the crew member who grants it, the rank it unlocks at and its cooldown. */
+/**
+ * The crew and their favors: the key that calls each, the crew member who grants it and their role in the crew,
+ * what the favor does in a few words, the rank it unlocks at and its cooldown in seconds.
+ */
 export const CREW_FAVORS = [
-  { id: 'wheels', key: 'Z', code: 'KeyZ', name: 'WHEELS', who: 'BRAVO', portrait: 'TÍO BRAVO', rank: 2, cooldown: 120, color: '#ffb547' },
-  { id: 'jam', key: 'X', code: 'KeyX', name: 'SIGNAL JAM', who: 'JAZZ', portrait: 'JAZZ', rank: 3, cooldown: 150, color: '#ff7eb6' },
-  { id: 'patch', key: 'C', code: 'KeyC', name: 'PATCH-UP', who: 'DOC INÉS', portrait: 'DOC INÉS', rank: 4, cooldown: 180, color: '#7be0c3' },
+  { id: 'wheels', key: 'Z', code: 'KeyZ', name: 'GETAWAY CAR', who: 'BRAVO', role: 'MECHANIC', does: 'sends a tuned car to the kerb', portrait: 'TÍO BRAVO', rank: 2, cooldown: 120, color: '#ffb547' },
+  { id: 'jam', key: 'X', code: 'KeyX', name: 'SIGNAL JAM', who: 'JAZZ', role: 'HACKER', does: 'jams police radio, drops a star', portrait: 'JAZZ', rank: 3, cooldown: 150, color: '#ff7eb6' },
+  { id: 'patch', key: 'C', code: 'KeyC', name: 'PATCH-UP', who: 'DOC INÉS', role: 'MEDIC', does: 'full health and half a vest', portrait: 'DOC INÉS', rank: 4, cooldown: 180, color: '#7be0c3' },
 ];

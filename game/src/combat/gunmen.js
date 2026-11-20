@@ -41,10 +41,20 @@ class Gunman extends CharacterBody {
       const sees = distance < this.spec.range && game.collision.hasLineOfSight(this.position.x, this.position.z, player.position.x, player.position.z);
       const arresting = this.faction === 'police' && stars <= 1;
       const keep = arresting ? 1.2 : 11;
-      this.turnToward(Math.atan2(dx, dz), dt, 9);
+      // An officer who cannot see her, with no unit on the radio that can, walks to where she was last seen.
+      const lost = this.faction === 'police' && !sees && !game.wanted.seen;
+      const goalX = lost ? game.wanted.lastKnown.x - this.position.x : dx;
+      const goalZ = lost ? game.wanted.lastKnown.z - this.position.z : dz;
+      const goalDistance = Math.hypot(goalX, goalZ) || 0.01;
+      this.turnToward(Math.atan2(goalX, goalZ), dt, 9);
       this.strafeClock -= dt;
       if (this.strafeClock <= 0) { this.strafe = -this.strafe; this.strafeClock = 1 + Math.random() * 2.5; }
-      if (!sees || distance > keep + 6) {
+      if (lost) {
+        if (goalDistance > 3) {
+          speed = this.spec.speed;
+          this.step((goalX / goalDistance) * speed * dt, (goalZ / goalDistance) * speed * dt);
+        }
+      } else if (!sees || distance > keep + 6) {
         speed = this.spec.speed;
         this.step((dx / distance) * speed * dt, (dz / distance) * speed * dt);
       } else if (!arresting) {

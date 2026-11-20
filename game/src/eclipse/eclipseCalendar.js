@@ -240,7 +240,7 @@ export class EclipseCalendar {
       return { caption: `ECLIPSE WEEK · DAY ${this.day}/${ECLIPSE_DAY}`, big: `${days} ${days === 1 ? 'DAY' : 'DAYS'}`, line: 'TO TOTALITY · FRI 17:12', share: weekShare, ticking: false };
     }
     if (phase === 'eclipseDay' || phase === 'partial') {
-      return { caption: phase === 'partial' ? `SUN ${covered}% COVERED` : 'FIRST CONTACT 16:12', big: formatCountdown(this.secondsToTotality()), line: 'TO TOTALITY', share: phase === 'partial' ? this.coverage() : weekShare, ticking: true };
+      return { caption: phase === 'partial' ? `ECLIPSE · SUN ${covered}% COVERED` : 'ECLIPSE DAY · FIRST CONTACT 16:12', big: formatCountdown(this.secondsToTotality()), line: 'TO TOTALITY', share: phase === 'partial' ? this.coverage() : weekShare, ticking: true };
     }
     if (phase === 'totality') return { caption: 'TOTALITY · CITY IS DARK', big: formatCountdown(this.secondsOfTotalityLeft()), line: 'OF DARKNESS LEFT', share: 1 - this.secondsOfTotalityLeft() / ECLIPSE_SECONDS.totality, ticking: true };
     if (phase === 'waning') return { caption: `SUN ${covered}% COVERED`, big: `${100 - covered}%`, line: 'OF THE SUN IS BACK', share: 1 - this.coverage(), ticking: false };

@@ -14,7 +14,7 @@ export class BlockadePost {
   }
 
   tacticLabel() {
-    return 'BLOCKADE';
+    return 'ROADBLOCK';
   }
 
   drive(vehicle) {

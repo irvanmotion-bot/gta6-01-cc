@@ -135,9 +135,11 @@ export class StreetRaces {
     const race = this.active;
     if (!race) return null;
     const count = race.points.length;
+    const left = Math.max(0, race.event.limit - race.clock);
     return {
-      header: 'STREET RACE', title: race.event.name, stageLine: `POSITION ${race.place}/${race.rivals.length + 1}`, share: race.index / count,
-      objective: race.countdown > 0 ? 'Hold the line… engines hot' : `Checkpoint ${Math.min(race.index + 1, count)} of ${count}`, next: `Purse $${race.event.purse.toLocaleString('en-US')} for first`, timer: race.clock, counting: 'up',
+      header: `STREET RACE · PURSE $${race.event.purse.toLocaleString('en-US')}`, title: race.event.name, stageLine: `POSITION ${race.place} OF ${race.rivals.length + 1} · CHECKPOINT ${Math.min(race.index + 1, count)}/${count}`, share: race.index / count,
+      objective: race.countdown > 0 ? 'Hold the line… engines hot' : `Hit checkpoint ${Math.min(race.index + 1, count)} of ${count}`, next: race.index + 1 < count ? `Checkpoint ${race.index + 2} of ${count}` : 'The finish line',
+      limit: `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')} · RACE CLOCK ${race.clock.toFixed(1)}s`, urgent: left < 20, fail: 'YOU LEAVE YOUR CAR · CLOCK RUNS OUT', kind: 'race',
     };
   }
 

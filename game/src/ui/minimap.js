@@ -119,6 +119,7 @@ export class Minimap {
 
     const target = this.routeTarget();
     if (target) this.drawRoute(c, routeAlongStreets(player.position, target), toMap, halfX, halfY, unit, target.color);
+    this.drawSearchZone(c, toMap, halfX, halfY, scale, unit);
 
     const edgeX = halfX - 11 * unit;
     const edgeTop = halfY - 11 * unit;
@@ -153,6 +154,27 @@ export class Minimap {
       c.strokeStyle = '#ff6a4d';
       c.strokeRect(0, 0, width, height);
     }
+  }
+
+  /**
+   * While the police have lost her: the zone they are searching, a pulsing ring round the place she was last seen
+   * that widens the longer she stays out of sight. Leaving it unseen is how the stars fall.
+   */
+  drawSearchZone(c, toMap, halfX, halfY, scale, unit) {
+    const wanted = this.game.wanted;
+    if (wanted.stars === 0 || wanted.seen) return;
+    const centre = toMap(wanted.lastKnown.x, wanted.lastKnown.z);
+    const radius = wanted.searchRadius() * scale;
+    c.save();
+    c.beginPath();
+    c.arc(halfX + centre.x, halfY + centre.y, radius, 0, Math.PI * 2);
+    c.fillStyle = `rgba(58, 123, 255, ${0.2 + Math.sin(this.game.time * 4) * 0.06})`;
+    c.fill();
+    c.setLineDash([7 * unit, 5 * unit]);
+    c.lineWidth = 2.6 * unit;
+    c.strokeStyle = '#cfe0ff';
+    c.stroke();
+    c.restore();
   }
 
   /** The route as a bright line with a dark edge, from the player's arrow to the objective. */

@@ -141,9 +141,17 @@ class Game {
   }
 
   applySettings() {
-    this.audio.setVolume(this.settings.volume);
-    this.camera.sensitivity = this.settings.sensitivity;
-    this.sky.setShadows(this.settings.shadows);
+    const settings = this.settings;
+    this.audio.setVolume(settings.volume);
+    this.camera.sensitivity = settings.sensitivity;
+    this.sky.setShadows(settings.shadows);
+    this.hud.setSize(settings.hudSize);
+    // RENDER SCALE: the city is drawn at this many times the window's pixels and scaled down to it.
+    const ratio = Math.min(Math.min(window.devicePixelRatio || 1, 1.5) * (settings.renderScale || 1), 3);
+    if (ratio !== this.renderer.getPixelRatio()) {
+      this.renderer.setPixelRatio(ratio);
+      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
   }
 
   /** Everyone a bullet, a bumper or a blast can reach: Nova, the citizens and the gunmen. */

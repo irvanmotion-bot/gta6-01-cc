@@ -307,8 +307,15 @@ function pauseScene(game) {
 }
 
 const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+/** The HUD SIZE each scene is taken at: the cover at the standard size, the on-foot shot with only the essentials. */
+const SCENE_HUD_SIZE = { bounty: 'huge' };
 
 export function stageScreenshot(game, name) {
+  // Every scene is drawn at twice the window's pixels (the RENDER SCALE setting) and with the HUD SIZE that suits it;
+  // `?hud=` picks another. Neither is written to the player's saved settings.
+  const asked = new URLSearchParams(window.location.search).get('hud');
+  game.settings = { ...game.settings, renderScale: 2, hudSize: asked || SCENE_HUD_SIZE[name] || 'standard' };
+  game.applySettings();
   (SCENES[name] || titleScene)(game);
   game.input.held.clear();
   game.frozen = true;

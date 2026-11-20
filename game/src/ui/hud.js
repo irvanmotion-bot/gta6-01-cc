@@ -10,6 +10,19 @@ import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
+import { speakerJob } from '../missions/storyMissions.js';
+
+/** The HUD SIZE setting: how much each choice enlarges the panels, and whether it keeps only the essentials. */
+export const HUD_SIZES = {
+  standard: { label: 'STANDARD', scale: 1 },
+  large: { label: 'LARGE', scale: 1.2 },
+  huge: { label: 'HUGE · ESSENTIALS', scale: 2.5, essentials: true },
+};
+
+/** The feed's line for what the radio is playing: the station, its frequency, the track and the artist. */
+function radioLine(playing) {
+  return `♪ ${playing.station} ${playing.frequency} · ${playing.title} · ${playing.artist}`;
+}
 
 export class Hud {
   constructor(game) {
@@ -38,15 +51,31 @@ export class Hud {
     this.hintText = '';
     this.hintClock = 0;
     this.hitClock = 0;
+    this.size = 'standard';
+    this.essentials = false;
+    // The radio names its next track in the feed as it comes on.
+    game.audio.radio.onTrackChange = (playing) => { if (playing && game.player.vehicle) this.notify(radioLine(playing)); };
+    this.fitToWindow();
+  }
+
+  /**
+   * The HUD SIZE setting: 'standard', 'large', or 'huge', which keeps only the essentials (the job and its
+   * objective, the stars, the cash, the weapon, the radar and the prompts) and prints them more than twice as big.
+   */
+  setSize(size) {
+    this.size = HUD_SIZES[size] ? size : 'standard';
+    this.essentials = Boolean(HUD_SIZES[this.size].essentials);
+    this.root.classList.toggle('essentials', this.essentials);
     this.fitToWindow();
   }
 
   /**
    * The panels are sized in window heights and laid out for a 16:10 frame. In a narrower window the whole HUD
-   * shrinks in step, so the columns, the radar and the dialogue box never run into each other.
+   * shrinks in step, so the columns, the radar and the dialogue box never run into each other; the HUD SIZE setting
+   * then enlarges all of it by its own factor.
    */
   fitToWindow() {
-    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6);
+    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6) * HUD_SIZES[this.size].scale;
     const style = this.root.style;
     style.zoom = String(scale);
     style.right = 'auto';
@@ -78,7 +107,9 @@ export class Hud {
     this.portrait.width = 96;
     this.portrait.height = 96;
     const text = createElement('div', 'dialogue-text', this.dialogue);
-    this.speaker = createElement('b', 'dialogue-speaker', text);
+    const who = createElement('div', 'dialogue-who', text);
+    this.speaker = createElement('b', 'dialogue-speaker', who);
+    this.speakerJob = createElement('span', 'dialogue-job', who);
     this.line = createElement('div', 'dialogue-line', text);
   }
 
@@ -153,8 +184,10 @@ export class Hud {
     this.notify(`${name} · ${kind}`);
   }
 
-  showRadio(station) {
-    this.notify(station.host ? `♪ ${station.name} · ${station.host}` : `♪ ${station.name}`);
+  /** R in a car: the feed names the station tuned in, its frequency and the track on air. */
+  showRadio() {
+    const playing = this.game.audio.radio.nowPlaying();
+    this.notify(playing ? radioLine(playing) : '♪ Radio off');
   }
 
   /** The full-screen card when Nova is taken down or arrested. */
@@ -177,6 +210,8 @@ export class Hud {
     drawSpeakerPortrait(this.portrait, next.speaker, next.color);
     this.speaker.textContent = next.speaker;
     this.speaker.style.color = next.color;
+    // Who they are to the crew, beside the name: JAZZ · RADIO HACKER.
+    this.speakerJob.textContent = speakerJob(next.speaker);
     this.line.textContent = next.line;
     this.dialogue.style.borderColor = next.color;
     this.dialogue.classList.add('visible');

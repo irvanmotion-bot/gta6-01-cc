@@ -1,190 +1,228 @@
-/* The in-game HUD of Totality: sizes follow the window height so it reads the same at any resolution.
-   One palette for every panel, taken from the eclipse: the indigo of the moon's shadow for the glass, the amber
-   of the low sun for what matters, coral for danger and the cream of the corona for text. */
+/* The in-game HUD of Totality. Sizes follow the window height, so it reads the same at any resolution, and every
+   line of information is set upright, bold and wide in the system's own screen face, light on dark glass: nothing
+   slanted or condensed. One palette for every panel, taken from the eclipse: the indigo of the moon's shadow for
+   the glass, the amber of the low sun for labels, coral for danger and the cream of the corona for text.
+   Type sizes are named for the pixels they come to in a 480-pixel-high window (--t10 is ten pixels there). */
 :root {
   --ink: #120e24;
-  --panel: rgba(23, 18, 43, 0.74);
-  --amber: #ffb547;
+  --panel: rgba(18, 14, 36, 0.86);
+  --amber: #ffc04d;
   --coral: #ff6a4d;
+  --alarm: #ffa590;
   --cream: #f4ecd8;
-  --dim: #b9aecb;
+  --dim: #cfc6e0;
+  --good: #8df0cf;
+  --hud: "Segoe UI", Verdana, Tahoma, "DejaVu Sans", sans-serif;
+  --wide: Verdana, "DejaVu Sans", Tahoma, Geneva, sans-serif;
   --display: Impact, Haettenschweiler, "Arial Narrow Bold", "Arial Black", sans-serif;
   --body: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --outline: 0 0 0.45vh var(--ink), 0 0.25vh 0 var(--ink), 0.2vh 0 0 var(--ink), -0.2vh 0 0 var(--ink);
+  --t8: 1.6667vh;
+  --t9: 1.875vh;
+  --t10: 2.0833vh;
+  --t11: 2.2917vh;
+  --t12: 2.5vh;
+  --t14: 2.9167vh;
+  --t15: 3.125vh;
+  --t16: 3.3333vh;
+  --t18: 3.75vh;
+  --t20: 4.1667vh;
+  --t22: 4.5833vh;
 }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; color: var(--cream); font-family: var(--body); user-select: none; }
 #game-canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; filter: saturate(1.3) contrast(1.07); }
-#hud { position: fixed; inset: 0; pointer-events: none; transition: opacity 0.3s; }
+#hud { position: fixed; inset: 0; pointer-events: none; transition: opacity 0.3s; font-family: var(--hud); font-weight: 700; }
 #hud.hidden { opacity: 0; }
 
 /* Shared panel pieces */
-.hud-column { position: absolute; top: 1.6vh; display: flex; flex-direction: column; gap: 0.8vh; }
-.left-column { left: 1.6vh; width: 39vh; }
-.right-column { right: 1.6vh; width: 30vh; align-items: stretch; }
-.hud-panel { background: var(--panel); border-top: 0.35vh solid var(--amber); border-radius: 0 0 0.7vh 0.7vh; padding: 0.8vh 1.2vh; box-sizing: border-box; }
-.panel-caption { font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.16vh; color: var(--amber); margin-bottom: 0.3vh; white-space: nowrap; }
+.hud-column { position: absolute; top: 1.25vh; display: flex; flex-direction: column; gap: 0.83vh; }
+.left-column { left: 1.25vh; width: 42vh; }
+.right-column { right: 1.25vh; width: 43vh; align-items: stretch; }
+.hud-panel { background: var(--panel); border-top: 0.42vh solid var(--amber); border-radius: 0 0 0.6vh 0.6vh; padding: 0.83vh 1.25vh; box-sizing: border-box; font-size: var(--t10); line-height: 1.2; color: #fff; }
+.panel-caption { font-size: var(--t9); letter-spacing: 0.06vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
 .meter { margin-top: 0.6vh; }
-.meter-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 1.6vh; font-weight: 800; letter-spacing: 0.1vh; }
-.meter-value { font-family: var(--display); font-weight: 400; font-size: 1.9vh; letter-spacing: 0.08vh; }
-.meter-track { height: 0.9vh; background: rgba(244, 236, 216, 0.16); border-radius: 0.5vh; overflow: hidden; }
+.meter-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.8vh; font-size: var(--t9); line-height: 1.2; white-space: nowrap; }
+.meter-label { color: var(--amber); }
+.meter-value { font-weight: 900; color: #fff; }
+.meter-track { height: 1.05vh; margin-top: 0.2vh; background: rgba(244, 236, 216, 0.2); border-radius: 0.5vh; overflow: hidden; }
 .meter-fill { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.2s; }
 
-/* Job panel, top left: the giver's face beside the job's name, then one bar cut into the job's steps */
-.job-top { display: flex; align-items: center; gap: 1vh; }
-.job-face { width: 6.6vh; height: 6.6vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
+/* Job panel, top left: the giver's face beside the job's number and name, one bar cut into the job's steps, then
+   the step in hand and four labelled lines: NOW, NEXT, TIME LIMIT and FAIL IF. */
+.job-top { display: flex; align-items: center; gap: 1.25vh; }
+.job-face { width: 7.5vh; height: 7.5vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
 .job-name { flex: 1; min-width: 0; }
-.job-head { display: flex; justify-content: space-between; align-items: baseline; }
-.job-header { font-family: var(--display); font-size: 1.75vh; letter-spacing: 0.14vh; color: var(--amber); white-space: nowrap; }
-.job-timer { font-family: var(--display); font-weight: 400; font-size: 3vh; line-height: 1; }
-.job-timer.urgent { color: var(--coral); animation: pulse 0.5s infinite alternate; }
-.job-title { font-family: var(--display); font-size: 4.4vh; line-height: 1.02; font-style: italic; letter-spacing: 0.1vh; color: #fff; white-space: nowrap; }
-.job-track { display: flex; gap: 0.45vh; height: 1.3vh; margin: 0.7vh 0 0.35vh; }
-.job-track i { flex: 1; display: block; background: rgba(244, 236, 216, 0.2); border-radius: 0.35vh; overflow: hidden; }
+.job-header { font-size: var(--t9); letter-spacing: 0.04vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
+.job-title { font-weight: 900; font-size: var(--t16); line-height: 1.1; letter-spacing: 0.04vh; color: #fff; white-space: nowrap; overflow: hidden; }
+.job-track { display: flex; gap: 0.42vh; height: 1.25vh; margin: 0.9vh 0 0.5vh; }
+.job-track i { flex: 1; display: block; background: rgba(244, 236, 216, 0.24); border-radius: 0.3vh; overflow: hidden; }
 .job-track i.done { background: var(--amber); }
-.job-track i.now { box-shadow: inset 0 0 0 0.2vh var(--cream); }
+.job-track i.now { box-shadow: inset 0 0 0 0.21vh var(--cream); }
 .job-track u { display: block; height: 100%; background: var(--cream); transition: width 0.3s; }
 .job-track i.whole u { background: var(--amber); }
-.job-stage { font-family: var(--display); font-size: 1.7vh; letter-spacing: 0.1vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
-.job-stage.empty { display: none; }
-.job-objective { font-size: 2.2vh; font-weight: 700; line-height: 1.2; color: #fff; margin-top: 0.2vh; }
-/* What comes after this step is said by the crew when it comes; only free roam keeps its line of pointers. */
-.job-next { display: none; font-size: 1.6vh; font-weight: 700; color: var(--dim); margin-top: 0.25vh; letter-spacing: 0.05vh; }
-.job-panel.roam .job-next { display: block; }
+.job-stage { font-size: var(--t9); font-weight: 900; letter-spacing: 0.04vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
+.job-stage.empty, .job-line.empty { display: none; }
+.job-line { display: flex; align-items: baseline; gap: 0.9vh; margin-top: 0.35vh; font-size: var(--t10); line-height: 1.16; }
+.job-tag { flex: none; font-size: var(--t9); font-weight: 900; letter-spacing: 0.04vh; color: var(--amber); }
+.job-text { min-width: 0; color: #fff; }
+.job-next .job-text { color: var(--cream); text-transform: uppercase; font-size: var(--t9); }
+.job-limit .job-text { font-weight: 900; }
+.job-limit.urgent .job-text { color: var(--alarm); animation: pulse 0.5s infinite alternate; }
+.job-fail .job-tag, .job-fail .job-text { color: var(--alarm); }
+.job-fail .job-text { font-size: var(--t9); }
 
-/* The crew, a row of three under the job panel: each member's face and name, their favor and the key that calls it */
-.crew-panel { display: flex; gap: 0.6vh; padding: 0.6vh; border-top: none; border-radius: 0.7vh; }
-.favor { position: relative; flex: 1 1 auto; display: flex; align-items: center; gap: 0.6vh; min-width: 0; }
+/* The crew, under the job panel: a row for each member with their face, name and role, then the key that calls
+   their favor, its name and whether it is ready */
+.crew-panel { padding: 0.7vh 1.25vh 0.83vh; border-top-width: 0.21vh; }
+.favor { display: flex; align-items: center; gap: 1.05vh; margin-top: 0.55vh; }
 .favor-face { width: 4.8vh; height: 4.8vh; flex: none; image-rendering: pixelated; border-radius: 0.4vh; }
-.favor-key { position: absolute; left: 3.2vh; top: 3.1vh; width: 2.1vh; height: 2.1vh; display: grid; place-items: center; font-family: var(--display); font-weight: 400; font-size: 1.6vh; color: var(--ink); background: var(--amber); border-radius: 0.4vh; box-shadow: 0 0 0 0.2vh var(--ink); }
-.favor-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.08; }
-.favor-who { font-family: var(--display); font-size: 1.7vh; letter-spacing: 0.04vh; color: #fff; white-space: nowrap; }
-.favor-name { font-size: 1.1vh; font-weight: 800; letter-spacing: 0; color: var(--cream); white-space: nowrap; }
-.favor-track { display: none; }
-.favor-state { font-family: var(--display); font-style: normal; font-size: 1.4vh; color: var(--dim); }
-.favor.ready .favor-state { color: var(--amber); }
-.favor.locked { opacity: 0.5; }
+.favor-text { flex: 1; min-width: 0; line-height: 1.16; }
+.favor-who { font-size: var(--t10); white-space: nowrap; }
+.favor-who b { font-weight: 900; color: #fff; }
+.favor-role { margin-left: 1vh; font-size: var(--t9); letter-spacing: 0.04vh; color: var(--amber); }
+.favor-does { display: flex; align-items: center; gap: 0.9vh; font-size: var(--t9); white-space: nowrap; }
+.favor-key { flex: none; width: 2.5vh; height: 2.3vh; display: grid; place-items: center; font-weight: 900; font-size: var(--t9); line-height: 1; color: var(--ink); background: var(--amber); border-radius: 0.4vh; }
+.favor-name { flex: 1; color: var(--cream); }
+.favor-state { font-style: normal; font-weight: 900; color: var(--dim); }
+.favor.ready .favor-state { color: var(--good); }
+.favor.waiting .favor-state { color: var(--alarm); }
+.favor.locked { opacity: 0.55; }
 
-/* The crew's ribbon, under the crew row: who is talking, and what they say */
-.dialogue { display: flex; gap: 1vh; align-items: center; background: rgba(23, 18, 43, 0.86); border-left: 0.45vh solid var(--amber); border-radius: 0 0.7vh 0.7vh 0; padding: 0.6vh 1.2vh 0.6vh 0.6vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; }
+/* The dialogue box, under the crew: who is talking, what they are to the crew, and what they say */
+.dialogue { display: flex; gap: 1.25vh; align-items: flex-start; background: rgba(18, 14, 36, 0.9); border-left: 0.6vh solid var(--amber); border-radius: 0 0.6vh 0.6vh 0; padding: 0.8vh 1.25vh 0.9vh 0.8vh; opacity: 0; transition: opacity 0.2s; box-sizing: border-box; }
 .dialogue.visible { opacity: 1; }
-.dialogue-portrait { width: 7.6vh; height: 7.6vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
-.dialogue-speaker { display: block; font-family: var(--display); font-weight: 400; font-size: 1.9vh; letter-spacing: 0.14vh; }
-.dialogue-line { font-size: 1.85vh; font-weight: 600; line-height: 1.2; color: #fff; }
+.dialogue-portrait { width: 8.3vh; height: 8.3vh; flex: none; image-rendering: pixelated; border-radius: 0.5vh; }
+.dialogue-text { flex: 1; min-width: 0; }
+.dialogue-who { font-size: var(--t10); line-height: 1.2; white-space: nowrap; }
+.dialogue-speaker { font-weight: 900; letter-spacing: 0.04vh; }
+.dialogue-job { margin-left: 1vh; font-size: var(--t9); letter-spacing: 0.04vh; color: var(--amber); }
+.dialogue-line { font-size: var(--t10); line-height: 1.2; color: #fff; }
 
 /* Eclipse panel, top right: the sun as it stands, and the countdown to totality */
-.eclipse-panel { display: flex; align-items: center; gap: 1vh; padding: 0.5vh 1.2vh 0.6vh 0.6vh; }
-.eclipse-disc { width: 7.2vh; height: 7.2vh; flex: none; }
+.eclipse-panel { display: flex; align-items: center; gap: 1.25vh; padding: 0.6vh 1.25vh 0.8vh 0.8vh; }
+.eclipse-disc { width: 7.9vh; height: 7.9vh; flex: none; }
 .eclipse-text { flex: 1; min-width: 0; }
-.eclipse-caption { font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.12vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
-.eclipse-row { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 0.9vh; white-space: nowrap; }
-.eclipse-big { font-family: var(--display); font-weight: 400; font-size: 4.4vh; line-height: 1; letter-spacing: 0.1vh; color: #fff; text-shadow: 0 0 1.4vh rgba(255, 181, 71, 0.55); }
-.eclipse-line { font-size: 1.3vh; font-weight: 800; letter-spacing: 0.04vh; color: var(--cream); }
-.eclipse-track { height: 0.6vh; margin-top: 0.4vh; background: rgba(244, 236, 216, 0.16); border-radius: 0.5vh; overflow: hidden; }
+.eclipse-caption { font-size: var(--t9); letter-spacing: 0.04vh; color: var(--amber); white-space: nowrap; overflow: hidden; }
+.eclipse-row { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 1.25vh; white-space: nowrap; }
+.eclipse-big { font-weight: 900; font-size: var(--t20); line-height: 1.05; letter-spacing: 0.04vh; color: #fff; }
+.eclipse-line { font-size: var(--t9); letter-spacing: 0.04vh; color: var(--cream); }
+.eclipse-track { height: 0.83vh; margin-top: 0.3vh; background: rgba(244, 236, 216, 0.2); border-radius: 0.5vh; overflow: hidden; }
 .eclipse-track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--amber), var(--cream)); }
-.eclipse-panel.totality { border-top-color: var(--cream); background: rgba(10, 8, 24, 0.84); }
+.eclipse-panel.totality { border-top-color: var(--cream); background: rgba(10, 8, 24, 0.9); }
 .eclipse-panel.totality .eclipse-big { color: var(--cream); }
-.eclipse-cover { display: none; margin-top: 0.4vh; font-family: var(--display); font-size: 1.7vh; letter-spacing: 0.1vh; color: var(--cream); }
+.eclipse-cover { display: none; margin-top: 0.4vh; font-size: var(--t9); font-weight: 900; letter-spacing: 0.04vh; color: var(--good); white-space: nowrap; }
 .eclipse-cover.visible { display: block; }
-.eclipse-cover.lit { color: var(--coral); }
+.eclipse-cover.lit { color: var(--alarm); }
 
-/* Status panel, under the eclipse panel: stars and cash, then the rank on one thin line */
-.status-panel { padding: 0.6vh 1.2vh 0.7vh; }
+/* Status panel, under the eclipse panel: stars and cash, what the police know, then street cred in numbers */
+.status-panel { padding: 0.6vh 1.25vh 0.83vh; }
 .status-top { display: flex; justify-content: space-between; align-items: center; }
-.wanted-stars { font-size: 3.6vh; line-height: 1; letter-spacing: 0; }
-.wanted-stars i { font-style: normal; color: rgba(244, 236, 216, 0.2); }
-.wanted-stars i.on { color: var(--amber); text-shadow: 0 0 1.6vh rgba(255, 181, 71, 0.9); }
-.cash-readout { font-family: var(--display); font-size: 3.2vh; line-height: 1; color: #fff; letter-spacing: 0.08vh; }
+.wanted-stars { font-family: "Segoe UI Symbol", "Segoe UI", sans-serif; font-size: 3.6vh; line-height: 1; letter-spacing: 0; }
+.wanted-stars i { font-style: normal; color: rgba(244, 236, 216, 0.25); }
+.wanted-stars i.on { color: var(--amber); text-shadow: 0 0 1.2vh rgba(255, 192, 77, 0.8); }
+.cash-readout { font-weight: 900; font-size: var(--t15); line-height: 1; color: #fff; }
+.wanted-sight { margin-top: 0.3vh; font-size: var(--t9); line-height: 1.22; white-space: nowrap; overflow: hidden; }
+.status-panel:not(.wanted) .wanted-sight { display: none; }
+.sight-label { display: block; font-weight: 900; font-size: var(--t10); letter-spacing: 0.04vh; color: var(--alarm); }
+.sight-detail { display: block; color: #fff; }
+.wanted-sight.searching .sight-label { color: var(--good); }
 /* The response tier is named in the head of the dispatch panel, beside the count of units. */
 .wanted-tier { display: none; }
-.escape-meter { display: none; }
+.escape-meter { display: none; margin-top: 0.3vh; }
 .escape-meter.visible { display: block; }
-.escape-meter .meter-fill { background: var(--cream); }
-.vitals { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1vh; }
-.vitals .meter-track { height: 1.3vh; border-radius: 0.7vh; }
+.escape-meter .meter-head { display: none; }
+.escape-meter .meter-fill { background: var(--good); }
+.vitals { display: grid; grid-template-columns: 1fr 1fr; column-gap: 1.25vh; }
+.vitals .meter-track { height: 1.25vh; border-radius: 0.6vh; }
 .health-meter .meter-fill { background: var(--coral); }
 .health-meter.low .meter-fill { animation: pulse 0.5s infinite alternate; }
 .armor-meter .meter-fill { background: var(--cream); }
-/* The rank is one thin line: its name, then the bar to the next rank. */
-.rank-meter { display: flex; align-items: center; gap: 1vh; margin-top: 0.3vh; }
-.rank-meter .meter-head { flex: none; font-size: 1.45vh; }
-.rank-meter .meter-label { color: var(--amber); }
-.rank-meter .meter-value { display: none; }
-.rank-meter .meter-track { flex: 1; height: 0.7vh; }
+.rank-meter { margin-top: 0.5vh; }
+.rank-meter .meter-head { flex-wrap: wrap; }
+.rank-meter .meter-label { font-weight: 900; }
+.rank-meter .meter-track { height: 0.83vh; }
 
-/* Weapon bar, bottom right: five silhouettes, the one in hand lit, its rounds in big figures */
-.weapon-bar { order: 2; padding: 0.4vh 0.8vh 0.7vh; }
-.weapon-line { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.08vh; white-space: nowrap; }
-.weapon-ammo { font-weight: 400; font-size: 2.9vh; line-height: 1; color: var(--amber); }
-.weapon-slots { display: flex; gap: 0.5vh; margin-top: 0.3vh; }
-.weapon-slot { position: relative; flex: 1; height: 3.9vh; display: grid; place-items: center; background: rgba(244, 236, 216, 0.12); border-radius: 0.5vh; opacity: 0.28; }
+/* Weapon bar, bottom right: the weapon's slot and name, its rounds in big figures, then five silhouettes */
+.weapon-bar { order: 2; padding: 0.6vh 1.25vh 0.83vh; }
+.weapon-line { display: flex; justify-content: space-between; align-items: center; gap: 1vh; white-space: nowrap; }
+.weapon-slot-line { font-size: var(--t9); letter-spacing: 0.04vh; color: var(--amber); }
+.weapon-name { font-weight: 900; font-size: var(--t11); line-height: 1.1; color: #fff; }
+.weapon-ammo { font-weight: 900; font-size: var(--t16); line-height: 1; color: var(--amber); }
+.weapon-slots { display: flex; gap: 0.6vh; margin-top: 0.5vh; }
+.weapon-slot { position: relative; flex: 1; height: 4.2vh; display: grid; place-items: center; background: rgba(244, 236, 216, 0.14); border-radius: 0.5vh; opacity: 0.3; }
 .weapon-slot.owned { opacity: 1; }
-.weapon-slot.current { background: var(--amber); box-shadow: 0 0 1.4vh rgba(255, 181, 71, 0.7); }
-.weapon-key { position: absolute; left: 0.4vh; top: 0; font-size: 1.2vh; color: var(--amber); }
+.weapon-slot.current { background: var(--amber); box-shadow: 0 0 1.2vh rgba(255, 192, 77, 0.7); }
+.weapon-key { position: absolute; left: 0.5vh; top: 0; font-size: var(--t8); line-height: 1.1; color: var(--amber); }
 .weapon-slot.current .weapon-key { color: var(--ink); }
-.weapon-icon { width: 94%; height: auto; display: block; margin-top: 0.4vh; }
+.weapon-icon { width: 92%; height: auto; display: block; margin-top: 0.5vh; }
 
-/* Dispatch panel, joined to the foot of the status panel: the count of units and the response tier, then the
-   nearest two by callsign. The race board takes the same place during a street race. */
+/* Dispatch panel, joined to the foot of the status panel: the force, the count of units and the response tier,
+   then a row for each of the nearest units. The race board takes the same place during a street race. */
 .dispatch-panel, .race-board { display: none; border-top-color: var(--coral); }
 .dispatch-panel.visible, .race-board.visible { display: block; }
 .status-panel:has(+ .dispatch-panel.visible) { border-radius: 0; }
-.dispatch-panel { margin-top: -0.8vh; border-top: 0.14vh solid rgba(244, 236, 216, 0.16); padding: 0.6vh 1.2vh 0.5vh; }
-.dispatch-head { display: flex; align-items: center; gap: 0.8vh; margin-bottom: 0.3vh; }
-.dispatch-count { font-family: var(--display); font-weight: 400; font-size: 3.2vh; line-height: 1; min-width: 3.6vh; padding: 0.15vh 0.5vh; box-sizing: border-box; text-align: center; color: var(--ink); background: var(--coral); border-radius: 0.5vh; }
-.dispatch-label { font-family: var(--display); font-size: 1.85vh; letter-spacing: 0.05vh; color: var(--coral); white-space: nowrap; }
-.unit { display: grid; grid-template-columns: 1.9vh 9.4vh 1fr 5vh; align-items: baseline; gap: 0.4vh; font-size: 1.65vh; line-height: 2.25vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); white-space: nowrap; }
-.unit i { font-style: normal; color: var(--coral); }
-.unit b { font-family: var(--display); font-weight: 400; font-size: 1.85vh; letter-spacing: 0.08vh; color: #fff; }
-.unit em { font-family: var(--display); font-style: normal; font-size: 1.7vh; color: var(--amber); letter-spacing: 0.06vh; }
-.unit u { text-decoration: none; text-align: right; font-weight: 800; }
-.unit-more { line-height: 1.9vh; font-size: 1.4vh; }
-.unit-more b, .unit-more em { color: var(--dim); font-size: 1.5vh; }
+.dispatch-panel { margin-top: -0.83vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.3); padding: 0.7vh 1.25vh 0.6vh; }
+.dispatch-head { display: flex; align-items: center; gap: 1.25vh; margin-bottom: 0.5vh; }
+.dispatch-count { flex: none; min-width: 5vh; padding: 0.2vh 0.7vh; box-sizing: border-box; font-weight: 900; font-size: var(--t18); line-height: 1.1; text-align: center; color: var(--ink); background: var(--coral); border-radius: 0.6vh; }
+.dispatch-names { min-width: 0; line-height: 1.16; white-space: nowrap; }
+.dispatch-label { font-weight: 900; font-size: var(--t10); letter-spacing: 0.04vh; color: #fff; }
+.dispatch-tier { font-size: var(--t9); letter-spacing: 0.04vh; color: var(--alarm); }
+.unit { display: grid; grid-template-columns: 5.2vh 12.3vh 1fr auto; align-items: baseline; column-gap: 0.7vh; font-size: var(--t9); line-height: 2.45vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.16); white-space: nowrap; }
+.unit i { font-style: normal; font-size: var(--t8); letter-spacing: 0.02vh; color: var(--dim); }
+.unit b { font-weight: 900; color: #fff; }
+.unit em { font-style: normal; color: var(--amber); overflow: hidden; }
+.unit u { text-decoration: none; text-align: right; color: #fff; }
+.unit-air em, .unit-roadblock em { color: var(--alarm); }
+.unit-more b, .unit-more em { color: var(--dim); }
 .dispatch-panel.en-route .dispatch-count { display: none; }
 .race-board { border-top-color: var(--amber); }
-.racer { display: flex; gap: 1.2vh; font-family: var(--display); font-size: 2.1vh; line-height: 2.7vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); }
-.racer i { font-style: normal; color: var(--amber); width: 2vh; }
-.racer b { font-weight: 400; letter-spacing: 0.1vh; }
+.racer { display: flex; gap: 1.25vh; font-size: var(--t10); line-height: 2.6vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.16); }
+.racer i { font-style: normal; font-weight: 900; color: var(--amber); width: 2vh; }
+.racer b { font-weight: 900; letter-spacing: 0.06vh; }
 .racer.me b { color: var(--amber); }
 
 /* Radar block, bottom left: the minimap with the district across its foot, the street and the clock, then health and armor */
-.radar { position: absolute; left: 1.6vh; bottom: 1.6vh; width: 28vh; padding: 0.5vh 0.5vh 0.7vh; box-sizing: border-box; background: var(--panel); border-radius: 1vh; box-shadow: 0 0.6vh 2vh rgba(18, 14, 36, 0.45); }
-.radar-frame { position: relative; border-radius: 0.7vh; overflow: hidden; box-shadow: 0 0 0 0.3vh var(--amber); }
-#minimap { width: 100%; height: 22vh; display: block; }
-.place-district { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.2vh 0.9vh 0.3vh; font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.12vh; line-height: 1; color: #fff; white-space: nowrap; background: linear-gradient(rgba(18, 14, 36, 0), rgba(18, 14, 36, 0.88) 55%); }
-.place-line { display: flex; justify-content: space-between; align-items: baseline; padding: 0.6vh 0.4vh 0; }
-.place-clock { font-family: var(--display); font-weight: 400; font-size: 1.8vh; color: var(--amber); letter-spacing: 0.1vh; white-space: nowrap; }
-.place-street { font-size: 1.6vh; font-weight: 700; color: var(--cream); white-space: nowrap; overflow: hidden; }
-.radar .vitals { padding: 0 0.4vh; }
-.radar .meter { margin-top: 0.3vh; }
-.radar .meter-head { font-size: 1.35vh; }
-.radar .meter-value { font-size: 1.6vh; }
+.radar { position: absolute; left: 1.25vh; bottom: 1.25vh; width: 30vh; padding: 0.7vh 0.7vh 0.9vh; box-sizing: border-box; background: var(--panel); border-radius: 0.8vh; box-shadow: 0 0.6vh 2vh rgba(18, 14, 36, 0.45); }
+.radar-frame { position: relative; border-radius: 0.6vh; overflow: hidden; box-shadow: 0 0 0 0.3vh var(--amber); }
+#minimap { width: 100%; height: 20.4vh; display: block; }
+.place-district { position: absolute; left: 0; right: 0; bottom: 0; padding: 1.4vh 0.9vh 0.3vh; font-weight: 900; font-size: var(--t10); letter-spacing: 0.04vh; line-height: 1.1; color: #fff; white-space: nowrap; background: linear-gradient(rgba(18, 14, 36, 0), rgba(18, 14, 36, 0.92) 55%); }
+.place-line { display: flex; justify-content: space-between; align-items: baseline; gap: 0.8vh; padding: 0.7vh 0.3vh 0; font-size: var(--t9); line-height: 1.2; white-space: nowrap; }
+.place-clock { font-weight: 900; color: var(--amber); }
+.place-street { color: var(--cream); overflow: hidden; }
+.radar .vitals { padding: 0 0.3vh; }
+.radar .meter { margin-top: 0.4vh; }
 
 /* Vehicle panel and GPS, bottom right */
-.corner-stack { position: absolute; right: 1.6vh; bottom: 1.6vh; width: 30vh; display: flex; flex-direction: column; gap: 0.8vh; }
+.corner-stack { position: absolute; right: 1.25vh; bottom: 1.25vh; width: 43vh; display: flex; flex-direction: column; gap: 0.83vh; }
 .vehicle-panel, .gps-panel { display: none; }
 .vehicle-panel.visible, .gps-panel.visible { display: block; }
 .gps-panel { order: 1; }
-/* At the wheel the dial hangs from the weapon bar as one panel: the car's name beside the gear, then the speed. */
-.vehicle-panel { order: 3; position: relative; margin-top: -0.8vh; border-top: 0.14vh solid rgba(244, 236, 216, 0.16); padding: 0.5vh 1.2vh 0.7vh; }
+/* At the wheel the dial hangs from the weapon bar as one panel: gear, the car's name, the speed, then the gauges
+   and the radio's two lines. */
+.vehicle-panel { order: 3; margin-top: -0.83vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.3); padding: 0.6vh 1.25vh 0.83vh; }
 .weapon-bar:has(~ .vehicle-panel.visible) { border-radius: 0; }
-.vehicle-name { position: absolute; left: 5.6vh; top: 1.3vh; width: 9vh; font-family: var(--display); font-size: 1.6vh; line-height: 1.15; letter-spacing: 0.1vh; color: var(--amber); }
-.speed-row { display: flex; align-items: baseline; justify-content: flex-end; gap: 0.8vh; }
-.gear-box { font-family: var(--display); font-size: 2.6vh; width: 3.4vh; height: 3.4vh; display: grid; place-items: center; background: var(--amber); color: var(--ink); border-radius: 0.5vh; align-self: center; margin-right: auto; }
-.speed-value { font-family: var(--display); font-weight: 400; font-size: 6.6vh; line-height: 0.95; font-style: italic; color: #fff; }
-.speed-row small { font-family: var(--display); font-size: 2vh; color: var(--amber); }
+.speed-row { display: flex; align-items: center; gap: 1vh; }
+.gear-box { flex: none; width: 3.9vh; height: 3.9vh; display: grid; place-items: center; font-weight: 900; font-size: var(--t12); line-height: 1; background: var(--amber); color: var(--ink); border-radius: 0.5vh; }
+.vehicle-name { flex: 1; min-width: 0; font-size: var(--t9); line-height: 1.16; letter-spacing: 0.04vh; color: var(--amber); }
+.speed-value { font-weight: 900; font-size: var(--t22); line-height: 1; color: #fff; }
+.speed-row small { align-self: flex-end; padding-bottom: 0.5vh; font-size: var(--t9); font-weight: 900; color: var(--amber); }
 .vehicle-panel .meter { margin-top: 0.3vh; }
 .condition-meter .meter-fill { background: var(--cream); }
 .condition-meter.low .meter-fill { background: var(--coral); }
-.condition-meter.low .meter-value { color: var(--coral); }
+.condition-meter.low .meter-value { color: var(--alarm); }
 .nitro-meter.empty { opacity: 0.5; }
-.gps-rows div { display: flex; align-items: center; gap: 0.9vh; font-size: 1.75vh; line-height: 2.6vh; border-top: 0.12vh solid rgba(244, 236, 216, 0.12); }
-.gps-rows i { font-style: normal; font-weight: 900; font-size: 1.4vh; width: 2.1vh; height: 2.1vh; display: grid; place-items: center; border-radius: 50%; flex: none; color: var(--ink); }
-.gps-rows b { flex: 1; font-family: var(--display); font-weight: 400; letter-spacing: 0.08vh; white-space: nowrap; overflow: hidden; }
-.gps-rows u { text-decoration: none; font-weight: 800; }
+.radio-line { margin-top: 0.6vh; padding-top: 0.4vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.16); font-size: var(--t9); line-height: 1.22; white-space: nowrap; overflow: hidden; }
+.radio-station { letter-spacing: 0.04vh; color: var(--amber); }
+.radio-track { color: #fff; }
+.radio-line.off .radio-station { color: var(--dim); }
+.gps-rows div { display: flex; align-items: center; gap: 0.9vh; font-size: var(--t9); line-height: 2.6vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.16); white-space: nowrap; }
+.gps-rows i { font-style: normal; font-weight: 900; font-size: var(--t8); width: 2.2vh; height: 2.2vh; display: grid; place-items: center; border-radius: 50%; flex: none; color: var(--ink); }
+.gps-rows b { flex: 1; font-weight: 900; overflow: hidden; }
+.gps-rows u { text-decoration: none; }
 
 /* Feed and prompts in the middle */
-.notifications { position: absolute; left: 50%; top: 1.6vh; transform: translateX(-50%); width: 52vh; display: flex; flex-direction: column; gap: 0.5vh; align-items: center; }
-.note { font-size: 1.8vh; font-weight: 700; background: var(--panel); padding: 0.4vh 1.4vh; border-radius: 0.5vh; animation: slide-in 0.25s; transition: opacity 0.6s; max-width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notifications { position: absolute; left: 50%; top: 1.25vh; transform: translateX(-50%); width: 70vh; display: flex; flex-direction: column; gap: 0.5vh; align-items: center; }
+.note { font-size: var(--t10); background: var(--panel); padding: 0.5vh 1.4vh; border-radius: 0.5vh; animation: slide-in 0.25s; transition: opacity 0.6s; max-width: 100%; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .note.gone { opacity: 0; }
 .crosshair { position: absolute; left: 50%; top: 50%; width: 2.6vh; height: 2.6vh; margin: -1.3vh 0 0 -1.3vh; opacity: 0; background:
   linear-gradient(#fff, #fff) center top / 0.3vh 0.8vh no-repeat, linear-gradient(#fff, #fff) center bottom / 0.3vh 0.8vh no-repeat,
@@ -192,26 +230,69 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
   filter: drop-shadow(0 0 0.2vh #000); }
 .crosshair.visible { opacity: 0.95; }
 .crosshair.hit { filter: drop-shadow(0 0 0.3vh #ff3b30) hue-rotate(0deg) saturate(8); transform: scale(1.35); }
-.hint { position: absolute; left: 50%; bottom: 10vh; transform: translateX(-50%); display: flex; align-items: center; gap: 1.2vh; font-size: 2vh; font-weight: 700; background: var(--panel); padding: 0.6vh 1.8vh; border-radius: 0.5vh; border-bottom: 0.35vh solid var(--amber); opacity: 0; white-space: nowrap; }
+.hint { position: absolute; left: 50%; bottom: 9vh; transform: translateX(-50%); display: flex; align-items: center; gap: 1.2vh; font-size: var(--t10); background: var(--panel); padding: 0.6vh 1.8vh; border-radius: 0.5vh; border-bottom: 0.42vh solid var(--amber); opacity: 0; white-space: nowrap; }
 .hint.visible { opacity: 1; }
-/* A prompt with a key: the key as a big amber cap, what it does in the display face beside it. */
+/* A prompt with a key: the key as a big amber cap, what it does in heavy capitals beside it. */
 .hint-key { display: none; }
-.hint.keyed { padding: 0.8vh 2.2vh 0.8vh 0.9vh; background: rgba(23, 18, 43, 0.86); }
-.hint.keyed .hint-key { display: grid; place-items: center; width: 5.2vh; height: 5.2vh; font-family: var(--display); font-weight: 400; font-size: 4vh; color: var(--ink); background: var(--amber); border-radius: 0.8vh; box-shadow: 0 0.5vh 0 #b9772a; }
-.hint.keyed .hint-line { font-family: var(--display); font-weight: 400; font-size: 3.5vh; letter-spacing: 0.14vh; color: #fff; }
+.hint.keyed { padding: 0.8vh 2vh 0.8vh 0.9vh; background: rgba(18, 14, 36, 0.9); }
+.hint.keyed .hint-key { display: grid; place-items: center; width: 5vh; height: 5vh; font-weight: 900; font-size: var(--t16); line-height: 1; color: var(--ink); background: var(--amber); border-radius: 0.8vh; box-shadow: 0 0.5vh 0 #b9772a; }
+.hint.keyed .hint-line { font-weight: 900; font-size: var(--t14); letter-spacing: 0.06vh; color: #fff; }
 
 .banner { position: absolute; left: 0; right: 0; top: 21vh; text-align: center; opacity: 0; transform: scale(0.9); transition: 0.35s; }
 .banner.visible { opacity: 1; transform: none; }
-.banner-title { font-family: var(--display); font-size: 10vh; line-height: 1; letter-spacing: 0.4vh; font-style: italic; text-shadow: 0 0.6vh 0 var(--ink), 0 0 3vh rgba(18, 14, 36, 0.6); }
-.banner-sub { font-size: 2.8vh; font-weight: 700; margin-top: 1vh; text-shadow: var(--outline); }
+.banner-title { font-family: var(--display); font-weight: 400; font-size: 10vh; line-height: 1; letter-spacing: 0.4vh; text-shadow: 0 0.6vh 0 var(--ink), 0 0 3vh rgba(18, 14, 36, 0.6); }
+.banner-sub { font-size: 2.8vh; margin-top: 1vh; text-shadow: var(--outline); }
 
 .damage-flash { position: absolute; inset: 0; box-shadow: inset 0 0 14vh rgba(255, 70, 40, 0.5); opacity: 0; transition: opacity 0.25s; }
 .damage-flash.visible { opacity: 1; }
 
 .down-screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(18, 8, 20, 0.6); opacity: 0; pointer-events: none; transition: opacity 0.8s; }
 .down-screen.visible { opacity: 1; }
-.down-title { font-family: var(--display); font-size: 17vh; font-style: italic; letter-spacing: 0.6vh; color: var(--coral); text-shadow: 0 0.8vh 0 var(--ink); }
+.down-title { font-family: var(--display); font-size: 17vh; letter-spacing: 0.6vh; color: var(--coral); text-shadow: 0 0.8vh 0 var(--ink); }
 .down-sub { font-size: 3vh; font-weight: 700; }
+
+/* HUD SIZE: HUGE. Only the essentials, more than twice as big, in the widest face: the job's name and what to do
+   now, the stars and the cash, the eclipse clock, the weapon and its rounds, the radar, health and armor, and the
+   prompts. (hud.js enlarges the whole HUD; these rules drop the rest and narrow the columns to fit.) */
+#hud.essentials { font-family: var(--wide); }
+#hud.essentials .hud-column, #hud.essentials .radar, #hud.essentials .corner-stack { margin: 0; }
+#hud.essentials .hud-column { top: 0.8vh; gap: 0.5vh; }
+#hud.essentials .left-column { left: 0.8vh; width: 28vh; }
+#hud.essentials .right-column { right: 0.8vh; width: 18.5vh; }
+#hud.essentials .corner-stack { right: 0.8vh; bottom: 0.8vh; width: 17.5vh; }
+#hud.essentials .hud-panel { padding: 0.4vh 0.8vh 0.5vh; border-top-width: 0.3vh; }
+#hud.essentials .job-face, #hud.essentials .job-track, #hud.essentials .job-stage, #hud.essentials .job-limit, #hud.essentials .job-fail, #hud.essentials .job-tag,
+#hud.essentials .crew-panel, #hud.essentials .dialogue, #hud.essentials .rank-meter, #hud.essentials .wanted-sight, #hud.essentials .escape-meter,
+#hud.essentials .eclipse-disc, #hud.essentials .eclipse-track, #hud.essentials .eclipse-line, #hud.essentials .dispatch-panel, #hud.essentials .race-board,
+#hud.essentials .weapon-slots, #hud.essentials .weapon-slot-line, #hud.essentials .place-line, #hud.essentials .place-district, #hud.essentials .radio-line,
+#hud.essentials .gps-panel, #hud.essentials .vehicle-name, #hud.essentials .notifications, #hud.essentials .meter-label { display: none; }
+#hud.essentials .job-header { font-size: var(--t9); letter-spacing: 0; }
+#hud.essentials .job-title { font-weight: 700; font-size: var(--t14); line-height: 1.12; }
+#hud.essentials .job-line { margin-top: 0.1vh; font-size: var(--t9); line-height: 1.12; }
+#hud.essentials .job-next .job-text { color: var(--amber); }
+#hud.essentials .eclipse-panel { display: block; }
+#hud.essentials .eclipse-caption { font-size: var(--t8); letter-spacing: 0; }
+#hud.essentials .eclipse-big { font-weight: 700; font-size: var(--t12); }
+#hud.essentials .eclipse-cover { margin: 0; font-size: var(--t8); letter-spacing: 0; }
+#hud.essentials .status-panel { border-radius: 0 0 0.6vh 0.6vh; }
+#hud.essentials .status-top { display: block; }
+#hud.essentials .wanted-stars { font-size: 3.5vh; }
+#hud.essentials .cash-readout { margin-top: 0.3vh; font-weight: 700; font-size: var(--t11); }
+#hud.essentials .weapon-line { display: block; }
+#hud.essentials .weapon-name { font-weight: 700; font-size: var(--t9); }
+#hud.essentials .weapon-ammo { display: block; font-weight: 700; font-size: var(--t14); }
+#hud.essentials .speed-value { font-weight: 700; font-size: var(--t16); }
+#hud.essentials .radar { left: 0.8vh; bottom: 0.8vh; width: 15vh; padding: 0.4vh; }
+#hud.essentials #minimap { height: 8.6vh; }
+/* Health and armor: a bar each with its figure at the end; coral is health, cream is armor. */
+#hud.essentials .radar .vitals { display: block; padding: 0; }
+#hud.essentials .radar .meter { display: flex; align-items: center; gap: 0.6vh; margin-top: 0.4vh; }
+#hud.essentials .radar .meter-head { order: 2; flex: none; font-size: var(--t8); }
+#hud.essentials .radar .meter-track { flex: 1; height: 1.3vh; margin: 0; }
+#hud.essentials .hint { left: 50.5%; bottom: 0.8vh; }
+#hud.essentials .hint.keyed { padding: 0.4vh 0.9vh 0.4vh 0.4vh; gap: 0.7vh; }
+#hud.essentials .hint.keyed .hint-key { width: 3.6vh; height: 3.6vh; font-weight: 700; font-size: var(--t11); box-shadow: none; }
+#hud.essentials .hint.keyed .hint-line { font-weight: 700; font-size: var(--t10); letter-spacing: 0; }
 
 @keyframes pulse { from { opacity: 1; } to { opacity: 0.45; } }
 @keyframes slide-in { from { transform: translateY(-2vh); opacity: 0; } to { transform: none; opacity: 1; } }

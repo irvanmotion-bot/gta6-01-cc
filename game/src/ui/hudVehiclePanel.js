@@ -1,6 +1,6 @@
-// The HUD's bottom-right panel. In a car: its name and class, the speedometer and gear, and the body and nitro
-// gauges (the radio names its station in the feed when it changes). On foot and not wanted: the GPS list of the
-// nearest places with their distance.
+// The HUD's bottom-right panel. In a car: its name and class, the speedometer and gear, the body and nitro gauges,
+// and the radio: the station and its frequency, then the track on air and who plays it. On foot and not wanted: the
+// GPS list of the nearest places with their distance.
 import { distance2D } from '../core/random.js';
 import { LANDMARKS } from '../world/cityLayout.js';
 import { createElement, createMeter } from './domBuilder.js';
@@ -11,14 +11,17 @@ export class HudVehiclePanel {
     this.cache = cache;
     this.gpsClock = 0;
     this.root = createElement('div', 'hud-panel vehicle-panel', parent);
-    this.name = createElement('div', 'vehicle-name', this.root);
     const dial = createElement('div', 'speed-row', this.root);
     this.gear = createElement('span', 'gear-box', dial);
+    this.name = createElement('div', 'vehicle-name', dial);
     this.speed = createElement('b', 'speed-value', dial);
-    createElement('small', '', dial, 'km/h');
+    createElement('small', '', dial, 'KM/H');
     const gauges = createElement('div', 'vitals', this.root);
     this.condition = createMeter(gauges, 'condition-meter', 'BODY');
     this.nitro = createMeter(gauges, 'nitro-meter', 'NITRO');
+    this.radio = createElement('div', 'radio-line', this.root);
+    this.station = createElement('div', 'radio-station', this.radio);
+    this.track = createElement('div', 'radio-track', this.radio);
     this.gps = createElement('div', 'hud-panel gps-panel', parent);
     createElement('div', 'panel-caption', this.gps, 'GPS · NEAREST');
     this.gpsRows = createElement('div', 'gps-rows', this.gps);
@@ -35,7 +38,16 @@ export class HudVehiclePanel {
   gpsMarkup() {
     const p = this.game.player.position;
     const places = Object.values(LANDMARKS).map((place) => ({ place, distance: distance2D(p.x, p.z, place.x, place.z) })).sort((a, b) => a.distance - b.distance).slice(0, 3);
-    return places.map(({ place, distance }) => `<div><i style="background:${place.color}">${place.icon}</i><b>${place.name}</b><u>${Math.round(distance)} m</u></div>`).join('');
+    return places.map(({ place, distance }) => `<div><i style="background:${place.color}">${place.icon}</i><b>${place.name}</b><u>${Math.round(distance)} M</u></div>`).join('');
+  }
+
+  /** The radio's two lines: RADIO, the station and its frequency; then the note, the track and its artist. */
+  writeRadio() {
+    const cache = this.cache;
+    const playing = this.game.audio.radio.nowPlaying();
+    cache.toggle(this.radio, 'off', !playing);
+    cache.text(this.station, playing ? `RADIO · ${playing.station.toUpperCase()} ${playing.frequency}` : 'RADIO OFF · R TO TUNE');
+    cache.text(this.track, playing ? `♪ ${playing.title.toUpperCase()} · ${playing.artist.toUpperCase()}` : '');
   }
 
   update(dt) {
@@ -60,6 +72,7 @@ export class HudVehiclePanel {
     const workshop = game.workshop;
     cache.toggle(this.nitro.root, 'empty', !workshop.hasNitro());
     cache.width(this.nitro.fill, workshop.hasNitro() ? workshop.nitroCharge : 0);
-    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURN' : workshop.nitroCharge >= 1 ? 'SHIFT' : '···');
+    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURNING' : workshop.nitroCharge >= 1 ? 'READY' : `${Math.round(workshop.nitroCharge * 100)}%`);
+    this.writeRadio();
   }
 }
