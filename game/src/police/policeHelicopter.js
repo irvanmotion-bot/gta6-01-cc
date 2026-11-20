@@ -174,7 +174,7 @@ export class PoliceHelicopter {
     this.lamp.position.copy(this.beam.position);
     this.lamp.target.position.set(aim.x, aim.y, aim.z);
     // By day the lamp only warms what it touches; in the dark it is the brightest thing in the street.
-    this.lamp.intensity = 220 + night * 5900;
+    this.lamp.intensity = 220 + night * 760;
     this.pool.position.set(aim.x, aim.y + 0.12, aim.z);
     this.pool.material.opacity = 0.1 + night * 0.3;
 

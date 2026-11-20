@@ -64,7 +64,7 @@ void main() {
   // The glow round the sun warms a wide patch of sky; it shrinks with the crescent.
   color += sunColor * pow(sunAmount, 6.0) * 0.3 * sunGlow;
   // Close to the sun the haze burns orange rather than white, so the pale disc and its crescent stand out of it.
-  color = mix(color, vec3(1.0, 0.66, 0.3), pow(sunAmount, 26.0) * 0.55 * sunGlow * (1.0 - starAmount));
+  color = mix(color, vec3(1.0, 0.66, 0.3), pow(sunAmount, 26.0) * 0.55 * sunGlow * (1.0 - starAmount) * (1.0 - corona));
   float star = step(0.9985, hash(floor(dir * 190.0)));
   color += vec3(star) * starAmount * h;
   // Drifting cumulus on a flat layer overhead, kept clear of the sun so the eclipse is never hidden.
@@ -104,7 +104,7 @@ const DAY_COLOURS = [
   [24, '#0a1030', '#24346a', '#9fb3e8', 0.9, 0.7],
 ];
 /** The sky inside the moon's shadow: indigo overhead and a ring of sunset on every horizon. */
-const TOTALITY_SKY = { top: '#0b1136', horizon: '#e9814a', light: '#c9d4ff' };
+const TOTALITY_SKY = { top: '#0b1136', horizon: '#b0562f', light: '#c9d4ff' };
 /** The sun and moon are drawn many times their true size, so the crescent reads from any street. */
 const SUN_RADIUS = 0.104;
 const MOON_RADIUS = 0.11;
@@ -203,13 +203,13 @@ export class SkyAndSun {
     const uniforms = this.uniforms;
     const mix = (i, target) => target.copy(this.scratchA.set(a[i])).lerp(this.scratchB.set(b[i]), t);
     mix(1, uniforms.topColor.value).lerp(this.scratchA.set(TOTALITY_SKY.top), dark * 0.94);
-    mix(2, uniforms.horizonColor.value).lerp(this.scratchA.set(TOTALITY_SKY.horizon), dark * 0.6);
+    mix(2, uniforms.horizonColor.value).lerp(this.scratchA.set(TOTALITY_SKY.horizon), dark * 0.85);
     mix(3, this.sun.color).lerp(this.scratchA.set(TOTALITY_SKY.light), dark);
     uniforms.sunColor.value.copy(this.sun.color);
     this.sun.intensity = (a[4] + (b[4] - a[4]) * t) * sunlight;
     // Shade is lit by the blue of the sky from above and by warm light bounced off sand and stucco from below,
     // so sunlit walls glow against cool shadows.
-    this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.3 * (1 - dark * 0.42);
+    this.ambient.intensity = (a[5] + (b[5] - a[5]) * t) * 1.3 * (1 - dark * 0.6);
     this.ambient.color.copy(uniforms.topColor.value).lerp(this.scratchA.set('#ffffff'), 0.6 - dark * 0.25);
     this.ambient.groundColor.copy(this.sun.color).lerp(this.scratchA.set('#c0926a'), 0.55);
     this.fill.intensity = this.sun.intensity * 0.16 + dark * 0.2;

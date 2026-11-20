@@ -61,7 +61,7 @@ export class PlayerHeadlamp {
     const fz = vehicle.forwardZ();
     this.lamp.position.set(vehicle.position.x + fx * 1.2, 1.3, vehicle.position.z + fz * 1.2);
     this.lamp.target.position.set(vehicle.position.x + fx * 22, 0, vehicle.position.z + fz * 22);
-    this.lamp.intensity = night * 1400;
+    this.lamp.intensity = night * 480;
   }
 }
 
