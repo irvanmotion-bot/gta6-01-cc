@@ -4,14 +4,6 @@ import { distance2D } from '../core/random.js';
 import { CharacterBody, LOOKS } from '../characters/characterBody.js';
 import { CRED_AWARDS } from '../progression/streetCred.js';
 
-const KINDS = {
-  officer: { look: 'officer', faction: 'police', health: 90, damage: 7, rate: 0.75, range: 42, accuracy: 0.42, speed: 5.4 },
-  tactical: { look: 'tactical', faction: 'police', health: 160, damage: 9, rate: 0.22, range: 55, accuracy: 0.34, speed: 5 },
-  enforcer: { look: 'enforcer', faction: 'gang', health: 100, damage: 8, rate: 0.6, range: 45, accuracy: 0.4, speed: 4.6 },
-  guard: { look: 'guard', faction: 'gang', health: 130, damage: 9, rate: 0.5, range: 45, accuracy: 0.45, speed: 4.4 },
-  capo: { look: 'capo', faction: 'gang', health: 240, damage: 11, rate: 0.4, range: 48, accuracy: 0.5, speed: 4.8 },
-};
-
 class Gunman extends CharacterBody {
   constructor(game, kind, x, z) {
     super(game, LOOKS[KINDS[kind].look], x, z);
@@ -180,3 +172,12 @@ export class Gunmen {
     }
   }
 }
+
+/** Every kind of gunman: whose side they are on, how tough they are and how well they shoot. */
+const KINDS = {
+  officer: { look: 'officer', faction: 'police', health: 90, damage: 7, rate: 0.75, range: 42, accuracy: 0.42, speed: 5.4 },
+  tactical: { look: 'tactical', faction: 'police', health: 160, damage: 9, rate: 0.22, range: 55, accuracy: 0.34, speed: 5 },
+  enforcer: { look: 'enforcer', faction: 'gang', health: 100, damage: 8, rate: 0.6, range: 45, accuracy: 0.4, speed: 4.6 },
+  guard: { look: 'guard', faction: 'gang', health: 130, damage: 9, rate: 0.5, range: 45, accuracy: 0.45, speed: 4.4 },
+  capo: { look: 'capo', faction: 'gang', health: 240, damage: 11, rate: 0.4, range: 48, accuracy: 0.5, speed: 4.8 },
+};

@@ -82,8 +82,8 @@ function chaseScene(game) {
   clearLane(game, rayo, 0, 150, 318);
   game.wanted.setStars(5, 99);
   // The pack: an interceptor and a cruiser boxing her in from ahead, a tactical van coming head-on, one more behind.
-  spawnPursuit(game, 'interceptor', 'lince', 4.8, 247, 0, 39);
-  spawnPursuit(game, 'patrol', 'centinela', -4.8, 244, 0, 38);
+  spawnPursuit(game, 'interceptor', 'lince', 4.8, 244, 0, 39);
+  spawnPursuit(game, 'patrol', 'centinela', -4.8, 241, 0, 38);
   spawnPursuit(game, 'tactical', 'bastion', 3.4, 366, Math.PI, 6);
   spawnPursuit(game, 'patrol', 'centinela', 3, 205, 0, 35);
   game.police.roadblocks.deploy({ x: 0, z: 392, alongX: false, direction: 1 }, true);
@@ -100,7 +100,7 @@ function chaseScene(game) {
     game.input.held.add('KeyW');
     if (t > 1.45) game.input.held.add('ShiftLeft');
     game.camera.yaw = 0.05;
-    game.camera.pitch = 0.2;
+    game.camera.pitch = 0.13;
     game.camera.idleLook = 0;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
   });
@@ -113,10 +113,10 @@ function shootoutScene(game) {
   game.player.cash = 61200;
   game.missions.start(missionById('sundownHeist'));
   game.hud.clearSpeech();
-  const wreck = game.vehicles.spawn('duna', bank.x - 7, bank.z + 9.5, Math.PI / 2, '#3498db');
+  const wreck = game.vehicles.spawn('duna', bank.x - 6, bank.z + 8.5, Math.PI / 2, '#3498db');
   wreck.health = 0;
   wreck.hitByPlayer = false;
-  wreck.burning = 2.36;
+  wreck.burning = 2.3;
   game.wanted.setStars(3, 99);
   spawnPursuit(game, 'patrol', 'centinela', bank.x + 30, bank.z + 5, -Math.PI / 2, 12);
   spawnPursuit(game, 'interceptor', 'lince', bank.x + 52, bank.z + 9, -Math.PI / 2, 14);
@@ -124,10 +124,12 @@ function shootoutScene(game) {
   game.police.helicopter.orbit = 0.2;
   game.police.helicopter.mesh.position.set(bank.x + 40, 27, bank.z + 2);
   game.hud.say('NOVA', 'Guards on every corner. Marlin was expecting company.', '#ff7b6b');
-  play(game, 1.35, (t) => {
-    game.camera.yaw = Math.PI / 2 + 0.14;
-    game.camera.pitch = 0.08;
-    game.input.buttons[0] = t > 0.2;
+  // Nova runs at the guards, then opens up with the rifle as the burning Duna goes off.
+  play(game, 1.5, (t) => {
+    game.camera.yaw = Math.PI / 2 + 0.2;
+    game.camera.pitch = 0.07;
+    if (t < 1.3) game.input.held.add('KeyW'); else game.input.held.delete('KeyW');
+    game.input.buttons[0] = t > 1.36;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
     game.player.health = Math.max(game.player.health, 58);
     if (t > 0.9) game.player.invulnerable = 1;

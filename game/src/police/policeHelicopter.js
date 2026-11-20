@@ -3,9 +3,6 @@ import * as THREE from 'three';
 import { MeshBatcher } from '../render/meshBatcher.js';
 import { distance2D } from '../core/random.js';
 
-const HOVER_HEIGHT = 26;
-const ORBIT_RADIUS = 46;
-
 export class PoliceHelicopter {
   constructor(game) {
     this.game = game;
@@ -164,3 +161,6 @@ export class PoliceHelicopter {
     }
   }
 }
+
+const HOVER_HEIGHT = 26;
+const ORBIT_RADIUS = 46;

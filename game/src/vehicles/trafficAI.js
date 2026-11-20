@@ -4,9 +4,6 @@ import { SeededRandom, angleDelta, clamp, distance2D } from '../core/random.js';
 import { chooseNextNode, lanePoint, lightState, nearestNode, neighborNodes, nodePosition, randomLaneSpawn, segmentHeading } from '../world/roadNetwork.js';
 import { randomTrafficModel } from './vehicleCatalog.js';
 
-const P = CITY.pitch;
-const CRUISE = 11.5;
-
 /** Steers one car along the road graph. */
 export class TrafficDriver {
   constructor(game, from, to, rng) {
@@ -169,3 +166,6 @@ export class Traffic {
     }
   }
 }
+
+const P = CITY.pitch;
+const CRUISE = 11.5;

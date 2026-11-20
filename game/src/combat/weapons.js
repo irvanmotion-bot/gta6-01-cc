@@ -64,6 +64,10 @@ export class Weapons {
     return { name: spec.name, ammo: this.reloading > 0 ? 'RELOADING' : `${this.clip[this.current]} / ${this.reserve[this.current]}` };
   }
 
+  nameOf(id) {
+    return WEAPONS[id].name;
+  }
+
   /** The five weapon slots for the HUD's weapon wheel: key, short name, whether owned, in hand, and rounds held. */
   slots() {
     return ORDER.map((id) => {

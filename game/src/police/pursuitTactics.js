@@ -1,7 +1,7 @@
 // How one police vehicle hunts the player: it tails, rams, flanks for a side-swipe or cuts the road off ahead,
 // follows the street grid when it has no line of sight, and puts its officers on the street when the player stops.
-import { angleDelta, clamp, distance2D } from '../core/random.js';
 import { nearestNode, nodePosition, stepToward } from '../world/roadNetwork.js';
+import { angleDelta, clamp, distance2D } from '../core/random.js';
 
 /** Drives one pursuit vehicle with the tactic the dispatcher gave it. */
 export class PursuitDriver {

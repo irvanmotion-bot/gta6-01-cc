@@ -4,13 +4,6 @@ import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, districtNameAt, kerbSpot } from '../world/cityLayout.js';
 import { CRED_AWARDS } from '../progression/streetCred.js';
 
-/** Where the Sun Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */
-const TOKEN_SPOTS = [
-  [0, 0, 34, 1.6], [1, 7, 1.6, 34], [3, 3, 20, 20], [3, 4, 48, 50], [5, 1, 66.4, 30], [7, 4, 34, 66.4],
-  [9, 8, 1.6, 12], [10, 0, 40, 1.6], [10, 5, 66.4, 60], [6, 8, 30, 66.4], [2, 6, 1.6, 50], [8, 3, 50, 1.6],
-];
-const TOKEN_REWARD = 500;
-
 export class SideActivities {
   constructor(game) {
     this.game = game;
@@ -148,3 +141,10 @@ export class SideActivities {
     }
   }
 }
+
+/** Where the Sun Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */
+const TOKEN_SPOTS = [
+  [0, 0, 34, 1.6], [1, 7, 1.6, 34], [3, 3, 20, 20], [3, 4, 48, 50], [5, 1, 66.4, 30], [7, 4, 34, 66.4],
+  [9, 8, 1.6, 12], [10, 0, 40, 1.6], [10, 5, 66.4, 60], [6, 8, 30, 66.4], [2, 6, 1.6, 50], [8, 3, 50, 1.6],
+];
+const TOKEN_REWARD = 500;

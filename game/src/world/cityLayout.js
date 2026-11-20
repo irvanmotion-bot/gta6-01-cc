@@ -1,9 +1,6 @@
 // The map of Solmara as data: its districts, street names, block rectangles and the landmarks the story visits.
 import { CITY } from '../core/config.js';
 
-const P = CITY.pitch;
-const HALF_ROAD = CITY.road / 2;
-
 export const DISTRICTS = {
   playa: { name: 'Playa Dorada', ground: '#d9c9a3', map: '#f2c08a' },
   centro: { name: 'Centro Alto', ground: '#b9bcc2', map: '#9fb6d6' },
@@ -15,6 +12,9 @@ export const DISTRICTS = {
 
 export const AVENUES = ['Ocean Drive', 'Avenida Coral', 'Flamingo Way', 'Calle Mango', 'Paseo Bravo', 'Grand Solmara Ave', 'Tidewave Blvd', 'Calle Lima', 'Avenida Ámbar', 'Pelican Row', 'Camino Alto', 'Sierra Parkway'];
 export const STREETS = ['Mirador Road', 'Hibiscus Street', 'Calle Uno', 'Sunset Street', 'Marlin Street', 'Calle Cinco', 'Neon Street', 'Cannery Road', 'Harbor Street', 'Dockside Way'];
+
+const P = CITY.pitch;
+const HALF_ROAD = CITY.road / 2;
 
 export function districtOfBlock(i, j) {
   if (j >= 7) return 'puerto';

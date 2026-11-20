@@ -5,9 +5,6 @@ import { completionPercent, completionRows } from '../progression/completionTrac
 import { createElement, formatCash } from './domBuilder.js';
 import { formatPlayTime, statisticRows } from './menus.js';
 
-/** The statistics the atlas has room for; the pause menu's statistics page shows them all. */
-const RECORD_ROWS = ['Cash earned', 'Cash spent', 'Cars stolen', 'Distance driven', 'Highest wanted level', 'Police escapes', 'Officers downed', 'Marlin guns downed', 'Helicopters downed', 'Shots fired', 'Crew favors called', 'Time played'];
-
 export class CityAtlas {
   constructor(game) {
     this.game = game;
@@ -60,3 +57,6 @@ export class CityAtlas {
       <h3>SAVE SLOTS</h3><div class="atlas-slots">${this.slotsMarkup()}</div>`;
   }
 }
+
+/** The statistics the atlas has room for; the pause menu's statistics page shows them all. */
+const RECORD_ROWS = ['Cash earned', 'Cash spent', 'Cars stolen', 'Distance driven', 'Highest wanted level', 'Police escapes', 'Officers downed', 'Marlin guns downed', 'Helicopters downed', 'Shots fired', 'Crew favors called', 'Time played'];

@@ -1,12 +1,6 @@
 // Merges many coloured boxes, cylinders and other shapes into one mesh, so a whole district draws in one call.
 import * as THREE from 'three';
 
-const scratchColor = new THREE.Color();
-const scratchMatrix = new THREE.Matrix4();
-const scratchNormalMatrix = new THREE.Matrix3();
-const scratchVector = new THREE.Vector3();
-const unitBox = new THREE.BoxGeometry(1, 1, 1);
-
 export class MeshBatcher {
   constructor() {
     this.positions = [];
@@ -121,3 +115,9 @@ export function placement(x, y, z, rotY = 0, sx = 1, sy = 1, sz = 1, rotX = 0, r
   );
   return matrix;
 }
+
+const scratchColor = new THREE.Color();
+const scratchMatrix = new THREE.Matrix4();
+const scratchNormalMatrix = new THREE.Matrix3();
+const scratchVector = new THREE.Vector3();
+const unitBox = new THREE.BoxGeometry(1, 1, 1);

@@ -1,11 +1,10 @@
 // Runs the story: offers jobs at their givers, steps through each one stage by stage, tracks timers and progress,
 // and passes or fails it. The HUD's job panel reads its stage number, progress bar and next step from here.
-import { SeededRandom, distance2D } from '../core/random.js';
+import { CHARACTERS, STORY_MISSIONS } from './storyMissions.js';
+import { CRED_AWARDS } from '../progression/streetCred.js';
 import { leaveVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
-import { CRED_AWARDS } from '../progression/streetCred.js';
-import { WEAPONS } from '../combat/weapons.js';
-import { CHARACTERS, STORY_MISSIONS } from './storyMissions.js';
+import { SeededRandom, distance2D } from '../core/random.js';
 
 export class MissionDirector {
   constructor(game) {
@@ -74,7 +73,7 @@ export class MissionDirector {
       for (const [who, line] of step.lines) game.hud.say(CHARACTERS[who].name, line, CHARACTERS[who].color);
       this.advance();
     } else if (step.kind === 'give') {
-      if (step.weapon) { game.weapons.give(step.weapon, step.ammo); game.hud.notify(`Received: ${WEAPONS[step.weapon].name}`); }
+      if (step.weapon) { game.weapons.give(step.weapon, step.ammo); game.hud.notify(`Received: ${game.weapons.nameOf(step.weapon)}`); }
       if (step.armor) game.player.armor = Math.max(game.player.armor, step.armor);
       this.advance();
     } else if (step.kind === 'steal') {

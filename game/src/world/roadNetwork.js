@@ -1,12 +1,6 @@
 // The road graph traffic and police drive on: intersections, right-hand lanes, traffic-light phases and spawn points.
 import { CITY } from '../core/config.js';
 
-const P = CITY.pitch;
-export const LANE_OFFSET = 2.6;
-export const LIGHT_CYCLE = 22;
-
-const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-
 export function nodePosition(i, j) {
   return { x: i * P, z: j * P };
 }
@@ -89,3 +83,8 @@ export function randomLaneSpawn(x, z, minDistance, maxDistance, rng, offset = LA
   }
   return null;
 }
+
+const P = CITY.pitch;
+export const LANE_OFFSET = 2.6;
+export const LIGHT_CYCLE = 22;
+const DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]];

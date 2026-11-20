@@ -4,15 +4,6 @@ import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, blockIndexAt } from '../world/cityLayout.js';
 import { CharacterBody, randomLook } from './characterBody.js';
 
-const INSET = 1.5;
-/** For each corner (NW, NE, SE, SW): the two street crossings that leave it, as [di, dj, corner on the far block]. */
-const CROSSINGS = [
-  [[-1, 0, 1], [0, -1, 3]],
-  [[1, 0, 0], [0, -1, 2]],
-  [[1, 0, 3], [0, 1, 1]],
-  [[-1, 0, 2], [0, 1, 0]],
-];
-
 function cornerPosition(i, j, corner) {
   const rect = blockRect(i, j);
   return {
@@ -216,3 +207,12 @@ export class PedestrianCrowd {
     }
   }
 }
+
+const INSET = 1.5;
+/** For each corner (NW, NE, SE, SW): the two street crossings that leave it, as [di, dj, corner on the far block]. */
+const CROSSINGS = [
+  [[-1, 0, 1], [0, -1, 3]],
+  [[1, 0, 0], [0, -1, 2]],
+  [[1, 0, 3], [0, 1, 1]],
+  [[-1, 0, 2], [0, 1, 0]],
+];

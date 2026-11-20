@@ -2,8 +2,6 @@
 // and, during a street race, the running order of the field.
 import { createElement } from './domBuilder.js';
 
-const MAX_ROWS = 6;
-
 export class HudDispatchPanel {
   constructor(game, parent, cache) {
     this.game = game;
@@ -41,3 +39,5 @@ export class HudDispatchPanel {
     cache.html(this.rows, this.rosterMarkup(roster));
   }
 }
+
+const MAX_ROWS = 6;

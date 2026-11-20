@@ -1,12 +1,12 @@
 // Solmara P.D.'s dispatcher: scales the response with the wanted level, names each unit, hands out pursuit tactics,
 // orders roadblocks and the helicopter, and reports the whole force to the HUD's dispatch panel and the minimap.
-import { SeededRandom, angleDelta, distance2D } from '../core/random.js';
-import { randomLaneSpawn } from '../world/roadNetwork.js';
-import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
-import { PoliceHelicopter } from './policeHelicopter.js';
 import { PursuitDriver, assignPursuitTactics } from './pursuitTactics.js';
 import { Roadblocks } from './roadblocks.js';
+import { PoliceHelicopter } from './policeHelicopter.js';
 import { UNIT_ROLES, assignCallsign } from './unitCallsigns.js';
+import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
+import { randomLaneSpawn } from '../world/roadNetwork.js';
+import { SeededRandom, angleDelta, distance2D } from '../core/random.js';
 
 export class PoliceDispatch {
   constructor(game) {
