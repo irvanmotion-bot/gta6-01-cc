@@ -149,15 +149,9 @@ function chaseScene(game) {
     ['duna', 3.0, blockadeZ + 9, Math.PI, '#1abc9c', false], ['toro', 3.0, blockadeZ + 20, Math.PI, '#ff7eb6', false],
   ];
   for (const [model, x, z, heading, paint, panics] of traffic) spawnCivilianCar(game, model, x, z, heading, paint, panics);
-  // A cruiser that tried to cut her off a block back went into the kerb on the city side: it has burned since, and
-  // its tank goes up a moment before the frame is taken, clear of the cars and the people on the pavement.
-  const wreck = game.vehicles.spawn('centinela', lane + 6, zEnd + 16, 0.45);
-  wreck.parked = true;
-  wreck.damage(wreck.maxHealth + 1, true);
-  wreck.burning = 3.6 - (seconds - 0.3);
   // The pavement and the boardwalk are full on eclipse afternoon; the people nearest the chase are already running.
-  for (const [x, z] of [[7.3, 1], [8.1, 4], [8.6, 27], [8.4, 30], [7.2, 33], [8.0, 37], [7.5, 42], [8.3, 47], [7.4, 53]]) {
-    if (z < 34) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane + 6, z: zEnd + 16 }); else spawnStroller(game, x, zEnd + z);
+  for (const [x, z] of [[7.3, 6], [8.1, 10], [7.6, 14], [8.4, 18], [7.2, 23], [8.0, 29], [7.5, 36], [8.3, 44], [7.4, 53]]) {
+    if (z < 20) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
   }
   for (const z of [5, 9, 14, 20, 27, 35, 44]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);
   const helicopter = game.police.helicopter;
@@ -223,7 +217,7 @@ function bountyScene(game, daylight = false) {
   const sight = daylight ? facing : -0.17;
   const spot = (aside, ahead) => ({ x: x0 + aside * Math.cos(sight) + ahead * Math.sin(sight), z: z0 - aside * Math.sin(sight) + ahead * Math.cos(sight) });
   // Where each stands as she opens up, and which way he sidesteps while he shoots (the gunmen's own strafe).
-  const posts = [[near, -0.6, 5.6, 1], [left, 0.9, 10.5, -1], [boss, -2.6, 8.6, 1], [right, -5.2, 10.8, 1]];
+  const posts = [[near, -0.9, 5.4, 1], [left, 2.2, 9.6, -1], [boss, -2.4, 9, 1], [right, -4.6, 12.4, 1]];
   for (const [gunman, aside, ahead, strafe] of posts) {
     const post = spot(aside, ahead);
     gunman.position.set(post.x, 0, post.z);
@@ -233,13 +227,13 @@ function bountyScene(game, daylight = false) {
     gunman.strafeClock = 9;
   }
   // A citizen's Avocet left in the road beside her: in reach, so the game rings it and offers F to steal it.
-  const kerb = spot(3.0, 2.2);
-  const parked = game.vehicles.spawn('avocet', kerb.x, kerb.z, sight - 0.2, '#ffd23f');
+  const kerb = spot(-3.4, 3.2);
+  const parked = game.vehicles.spawn('avocet', kerb.x, kerb.z, sight + 0.32, '#ffd23f');
   parked.parked = true;
   parked.ambient = true;
   // The crew's black Duna down the road: she has shot it up, it is burning, and it goes up as the frame is taken.
   clearLane(game, parked, 0, z0 - 20, z0 + 70);
-  const pyre = spot(-5.8, 22);
+  const pyre = spot(4.2, 21);
   const crewCar = game.vehicles.spawn('duna', pyre.x, pyre.z, sight - 0.5, '#17181d');
   crewCar.parked = true;
   crewCar.damage(crewCar.maxHealth + 1, true);
@@ -247,8 +241,8 @@ function bountyScene(game, daylight = false) {
   game.wanted.setStars(3, 99);
   // Saros P.D. answers the shots: one cruiser has pulled up across the drive and put its two officers on the
   // street (the dispatcher's own rule for a suspect on foot), and another is coming up the drive behind it.
-  const pulledUp = spot(4.2, 18.5);
-  spawnPursuit(game, 'patrol', 'centinela', pulledUp.x, pulledUp.z, Math.PI + sight - 1.05, 0);
+  const pulledUp = spot(-5.2, 16.5);
+  spawnPursuit(game, 'patrol', 'centinela', pulledUp.x, pulledUp.z, Math.PI + sight + 1.05, 0);
   spawnPursuit(game, 'patrol', 'centinela', -3.2, z0 + 64, Math.PI, 14);
   // The people out for the eclipse are caught in it, each in their own way: a sprint, hands up, ducked low, on the
   // ground, and two who would rather film it.
@@ -259,10 +253,10 @@ function bountyScene(game, daylight = false) {
     ped.fearStyle = style; ped.timid = false; ped.bold = false; ped.heading = Math.atan2(aside, 1.5) + sight;
     return ped;
   };
-  runner(6.2, 6.5, 'sprint');
+  runner(5.6, 5.2, 'sprint');
   runner(7.4, 11.5, 'handsUp');
-  runner(-7.6, 9, 'duck');
-  runner(-9, 14, 'handsUp');
+  runner(-5.6, 12.5, 'duck');
+  runner(-6.4, 19, 'handsUp');
   const bystander = (aside, ahead, style) => {
     const from = spot(aside, ahead);
     const fight = spot(0, 8);
@@ -271,8 +265,8 @@ function bountyScene(game, daylight = false) {
     return ped;
   };
   bystander(10.5, 17.5, 'film');
-  bystander(-11.5, 12, 'point');
-  const hiding = spot(4.8, 0.4);
+  bystander(-5.2, 24, 'point');
+  const hiding = spot(4.3, 3.3);
   const coward = spawnStroller(game, hiding.x, hiding.z);
   coward.timid = true;
   coward.cower(x0, z0 + 6, 30);
