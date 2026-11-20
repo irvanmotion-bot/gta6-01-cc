@@ -71,6 +71,7 @@ export class Minimap {
     const game = this.game;
     const canvas = this.canvas;
     const size = canvas.clientWidth * Math.min(window.devicePixelRatio || 1, 2);
+    if (size < 8) return;
     if (canvas.width !== Math.round(size)) { canvas.width = Math.round(size); canvas.height = Math.round(size); }
     const c = this.context;
     const half = canvas.width / 2;

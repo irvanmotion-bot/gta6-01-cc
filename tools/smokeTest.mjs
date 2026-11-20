@@ -49,7 +49,8 @@ export function playWholeGame() {
       else if (step.kind === 'loseCops') game.wanted.clear();
       run(2);
     }
-    missions.push(`${offer.id}:${game.missions.completed.has(offer.id) ? 'passed' : 'NOT PASSED'}`);
+    const passed = game.missions.completed.has(offer.id);
+    missions.push(passed ? `${offer.id}:passed` : `${offer.id}:NOT PASSED (${document.querySelector('.banner-sub').textContent}; ${game.down ? game.down.kind : 'standing'})`);
   }
   const afterStory = { cash: player.cash, cred: game.cred.points, rank: game.cred.rank, title: game.cred.title(), stagesSeen };
   game.wanted.reset();

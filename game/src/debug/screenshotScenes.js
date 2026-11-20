@@ -69,7 +69,7 @@ function clearLane(game, keep, x, zFrom, zTo) {
 
 /** The cover: Nova in Marlin's stolen Rayo on Ocean Drive at five stars, the whole response around her. */
 function chaseScene(game) {
-  loadCity(game, stagedSave(4), 16.7, 0, 232, 0);
+  loadCity(game, stagedSave(4), 15.3, 0, 232, 0);
   game.missions.start(missionById('paintItGone'));
   const rayo = game.missions.active.vehicle;
   rayo.position.set(0, 0, 236);

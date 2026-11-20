@@ -58,6 +58,8 @@ export class PursuitDriver {
     const sharp = Math.abs(turn) > 0.85;
     let throttle = sharp && vehicle.speed > 11 ? -0.7 : 1;
     if (aim.holdBack && vehicle.speed > playerSpeed + 1) throttle = distance < 8 ? -0.6 : 0;
+    // Closing on someone on foot or parked: come in under control and pull up, do not plough into the kerb beside them.
+    if (playerSpeed < 6 && vehicle.speed > Math.max(7, distance * 0.42)) throttle = -1;
     vehicle.setControls(throttle, clamp(turn * 2.2, -1, 1), sharp && vehicle.speed > 9 && Math.abs(turn) > 1.3);
     this.stuck = Math.abs(vehicle.speed) < 1.2 ? this.stuck + dt : 0;
     if (this.stuck > 1.5) {

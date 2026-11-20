@@ -19,8 +19,8 @@
 .menu-panel.visible { display: block; }
 .panel-title { font-family: var(--display); font-size: 3.4vh; letter-spacing: 0.25vh; color: var(--gold); margin-bottom: 1.4vh; }
 .panel-note { font-size: 1.8vh; font-weight: 600; color: #aeb9c9; margin: 1.6vh 0 0; }
-.menu-table { display: grid; gap: 0.6vh; font-size: 2vh; }
-.menu-table div { display: flex; justify-content: space-between; gap: 3vh; border-bottom: 0.15vh solid rgba(255, 255, 255, 0.14); padding-bottom: 0.4vh; }
+.menu-table { display: grid; gap: 0.45vh; font-size: 1.9vh; }
+.menu-table div { display: flex; justify-content: space-between; gap: 3vh; border-bottom: 0.15vh solid rgba(255, 255, 255, 0.14); padding-bottom: 0.3vh; }
 .menu-table b { font-family: var(--display); letter-spacing: 0.1vh; color: var(--gold); font-weight: 400; }
 .title-footer { position: absolute; left: 7vh; bottom: 3vh; font-size: 1.8vh; font-weight: 600; color: #e6edf5; text-shadow: 0 0.2vh 0.4vh var(--ink); }
 
