@@ -149,7 +149,10 @@ export class Weapons {
     this.clip[this.current] -= 1;
     game.stats.shotsFired += 1;
     if (!player.vehicle) player.heading = camera.yaw;
-    this.muzzle.set(player.position.x + Math.sin(camera.yaw) * 0.7, player.position.y + (player.vehicle ? 1.2 : 1.45), player.position.z + Math.cos(camera.yaw) * 0.7);
+    // On foot the shot leaves the gun in her right hand, a forearm's length ahead of her; in a car, the window.
+    const side = player.vehicle ? 0 : 0.33;
+    const ahead = player.vehicle ? 0.7 : 1.2;
+    this.muzzle.set(player.position.x + Math.sin(camera.yaw) * ahead - Math.cos(camera.yaw) * side, player.position.y + (player.vehicle ? 1.2 : 1.43), player.position.z + Math.cos(camera.yaw) * ahead + Math.sin(camera.yaw) * side);
     for (let pellet = 0; pellet < spec.pellets; pellet += 1) {
       const dx = camera.direction.x + (Math.random() - 0.5) * spec.spread * 2;
       const dy = camera.direction.y + (Math.random() - 0.5) * spec.spread * 2;

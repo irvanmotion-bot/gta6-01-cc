@@ -166,6 +166,51 @@ export class Minimap {
   }
 
   /** The pause screen's full map, north up, with street names and every landmark. */
+  /**
+   * The districts of Saros on a menu's small map: the painted city, the path of totality, the district names set
+   * large and a dot for each landmark. No street names, no blips and no player: the atlas (M) has those.
+   */
+  drawDistrictMap(canvas) {
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    const c = canvas.getContext('2d');
+    const scale = Math.min(canvas.width / MAP_WIDTH, canvas.height / MAP_DEPTH);
+    const offsetX = (canvas.width - MAP_WIDTH * scale) / 2;
+    const offsetY = (canvas.height - MAP_DEPTH * scale) / 2;
+    const toX = (x) => offsetX + (x - MAP_MIN_X) * scale;
+    const toY = (z) => offsetY + (z - MAP_MIN_Z) * scale;
+    c.fillStyle = '#2f9fcb';
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.drawImage(this.cityMap, offsetX, offsetY, MAP_WIDTH * scale, MAP_DEPTH * scale);
+    this.drawPathOfTotality(c, toX, toY, scale);
+    for (const place of Object.values(LANDMARKS)) {
+      c.beginPath();
+      c.arc(toX(place.x), toY(place.z), Math.max(3, 15 * scale), 0, Math.PI * 2);
+      c.fillStyle = place.color;
+      c.fill();
+      c.lineWidth = Math.max(1.5, 4 * scale);
+      c.strokeStyle = '#17122b';
+      c.stroke();
+    }
+    c.font = `900 ${Math.max(11, 46 * scale)}px Impact, "Arial Black", sans-serif`;
+    c.textAlign = 'center';
+    c.lineWidth = 4;
+    c.lineJoin = 'round';
+    c.strokeStyle = 'rgba(23,18,43,0.7)';
+    c.fillStyle = '#ffffff';
+    for (const [id, x, z] of [['orrery', 480, 340], ['hill', 520, 96], ['azimuth', 770, 236], ['yards', 440, 652]]) {
+      const text = DISTRICTS[id].name.toUpperCase();
+      c.strokeText(text, toX(x), toY(z));
+      c.fillText(text, toX(x), toY(z));
+    }
+    c.save();
+    c.translate(toX(86), toY(360));
+    c.rotate(-Math.PI / 2);
+    c.strokeText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
+    c.fillText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
+    c.restore();
+  }
+
   drawFullMap() {
     const game = this.game;
     const canvas = this.fullCanvas;

@@ -1,26 +1,56 @@
 /* The start screen, pause menu, save-slot cards, city atlas, shop counter, workshop showroom and loading card of
    Totality, in the HUD's palette: shadow indigo, low-sun amber, coral and corona cream. */
-.menu { position: fixed; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 0 7vh; background: linear-gradient(90deg, rgba(18, 14, 36, 0.9) 0%, rgba(18, 14, 36, 0.55) 40%, rgba(18, 14, 36, 0.08) 72%); }
+.menu { position: fixed; inset: 0; display: none; flex-direction: column; justify-content: center; padding: 0 4vh; background: linear-gradient(90deg, rgba(18, 14, 36, 0.94) 0%, rgba(18, 14, 36, 0.86) 38%, rgba(18, 14, 36, 0.5) 70%, rgba(18, 14, 36, 0.3) 100%); }
 .menu.visible { display: flex; }
-.menu header h1, .menu header h2 { margin: 0; font-family: var(--display); font-style: italic; line-height: 0.86; letter-spacing: 0.3vh; }
+.menu header h1 { position: relative; margin: 0; font-family: var(--display); font-style: italic; font-size: 13vh; line-height: 0.86; letter-spacing: 0.25vh; color: var(--cream); text-shadow: 0 0.6vh 0 var(--coral), 0 1.2vh 0 var(--ink), 0 0 5vh rgba(18, 14, 36, 0.7); }
 .menu-logo { position: relative; }
 /* The logo: the title set across a sun with the moon three quarters over it. */
-.logo-disc { position: absolute; left: 30vh; top: -9vh; width: 30vh; height: 30vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 9vh rgba(255, 181, 71, 0.8); overflow: hidden; }
-.logo-disc::after { content: ""; position: absolute; left: 6.5vh; top: 5vh; width: 31vh; height: 31vh; border-radius: 50%; background: #17122b; }
-#start-menu h1 { position: relative; font-size: 21vh; color: var(--cream); text-shadow: 0 0.8vh 0 var(--coral), 0 1.6vh 0 var(--ink), 0 0 5vh rgba(18, 14, 36, 0.7); }
-.menu header p { position: relative; margin: 2vh 0 2.4vh; font-size: 2.3vh; font-weight: 700; letter-spacing: 0.25vh; text-transform: uppercase; color: var(--amber); text-shadow: 0 0.2vh 0.4vh var(--ink); }
-#pause-menu header h2 { font-size: 12vh; color: var(--amber); text-shadow: 0 0.6vh 0 var(--ink); }
-#pause-menu { background: linear-gradient(90deg, rgba(18, 14, 36, 0.93) 0%, rgba(18, 14, 36, 0.72) 45%, rgba(18, 14, 36, 0.4) 100%); }
+.logo-disc { position: absolute; left: 18vh; top: -5.5vh; width: 19vh; height: 19vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 7vh rgba(255, 181, 71, 0.8); overflow: hidden; }
+.logo-disc::after { content: ""; position: absolute; left: 4.1vh; top: 3.2vh; width: 19.6vh; height: 19.6vh; border-radius: 50%; background: #17122b; }
+.menu header p { position: relative; margin: 2vh 0 2.6vh; font-size: 1.8vh; font-weight: 800; letter-spacing: 0.16vh; white-space: nowrap; text-transform: uppercase; color: var(--amber); text-shadow: 0 0.2vh 0.4vh var(--ink); }
 
-.menu-list { display: flex; flex-direction: column; gap: 0.7vh; width: 54vh; }
-.menu-item { all: unset; cursor: pointer; display: flex; flex-direction: column; padding: 0.8vh 2vh; border-left: 0.8vh solid transparent; background: rgba(18, 14, 36, 0.55); transition: 0.12s; }
-.menu-item span { font-family: var(--display); font-size: 3.5vh; letter-spacing: 0.2vh; }
-.menu-item small { font-size: 1.7vh; font-weight: 600; color: var(--dim); }
-.menu-item.selected { border-left-color: var(--cream); background: linear-gradient(90deg, rgba(255, 181, 71, 0.95), rgba(255, 181, 71, 0.2)); color: var(--ink); transform: translateX(1.2vh); }
+/* The items are buttons: a framed plate each, the chosen one filled with low-sun amber. */
+.menu-list { display: flex; flex-direction: column; gap: 1.1vh; width: 52vh; }
+.menu-item { all: unset; cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-height: 7.4vh; padding: 0 2.2vh; box-sizing: border-box; border: 0.3vh solid rgba(244, 236, 216, 0.4); border-left: 1vh solid var(--amber); border-radius: 0.9vh; background: rgba(23, 18, 43, 0.9); transition: 0.12s; }
+.menu-item span { font-family: var(--display); font-size: 3.9vh; line-height: 1.05; letter-spacing: 0.22vh; }
+.menu-item small { font-size: 1.6vh; font-weight: 600; color: var(--dim); }
+.menu-item.selected { border-color: var(--cream); background: linear-gradient(90deg, #ffb547, #ff8a4d); color: var(--ink); transform: translateX(1.4vh); box-shadow: 0 0 3vh rgba(255, 181, 71, 0.45); }
 .menu-item.selected small { color: var(--ink); }
+/* The pause menu has more items: its buttons are lower, and only the chosen one spells out its hint. */
+#pause-menu .menu-list { gap: 0.8vh; }
+#pause-menu .menu-item { min-height: 6vh; }
+#pause-menu .menu-item span { font-size: 3.3vh; }
+#pause-menu .menu-item small { display: none; }
+#pause-menu .menu-item.selected small { display: block; }
 
 .menu-panel { position: absolute; right: 5vh; top: 9vh; bottom: 9vh; width: 66vh; display: none; background: rgba(23, 18, 43, 0.86); border-top: 0.6vh solid var(--amber); border-radius: 0 0 1vh 1vh; padding: 2.4vh 2.8vh; overflow: hidden; box-sizing: border-box; }
 .menu-panel.visible { display: block; }
+/* The home panel: three save-slot cards over the district map and its legend. */
+.menu-panel.home.visible { display: flex; flex-direction: column; gap: 2vh; left: 61vh; right: 3vh; top: 4vh; bottom: 6vh; width: auto; padding: 0; background: none; border: 0; overflow: visible; }
+.save-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.6vh; flex: none; }
+.save-card { all: unset; cursor: pointer; position: relative; display: grid; grid-template-columns: 1fr; padding: 0 1.8vh 1.6vh; box-sizing: border-box; background: rgba(23, 18, 43, 0.94); border: 0.3vh solid rgba(244, 236, 216, 0.4); border-radius: 1vh; overflow: hidden; }
+.save-card:hover { border-color: var(--cream); }
+.save-card b { margin: 0 -1.8vh 1vh; padding: 0.7vh 1.8vh 0.6vh; font-family: var(--display); font-weight: 400; font-size: 3vh; letter-spacing: 0.2vh; color: var(--ink); background: var(--dim); }
+.save-card span { font-family: var(--display); font-size: 10vh; line-height: 0.95; color: var(--cream); }
+.save-card i { display: block; height: 1.8vh; margin: 1vh 0; background: rgba(244, 236, 216, 0.16); border-radius: 0.9vh; overflow: hidden; }
+.save-card i u { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
+.save-card em { font-family: var(--display); font-style: normal; font-size: 3.1vh; letter-spacing: 0.12vh; color: #fff; }
+.save-card small { font-size: 1.55vh; font-weight: 700; color: var(--dim); white-space: nowrap; }
+.save-card strong { position: absolute; right: 1.2vh; top: 0.9vh; padding: 0.1vh 0.8vh; font-family: var(--display); font-weight: 400; font-size: 1.8vh; letter-spacing: 0.12vh; color: var(--amber); background: var(--ink); border-radius: 0.5vh; }
+.save-card.lit { border-color: var(--amber); box-shadow: 0 0 3vh rgba(255, 181, 71, 0.4); }
+.save-card.lit b { background: var(--amber); }
+.save-card.lit span { color: var(--amber); }
+.save-card.empty span, .save-card.empty em { color: var(--dim); }
+.menu-map { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 25vh; border: 0.4vh solid var(--amber); border-radius: 1vh; overflow: hidden; background: rgba(23, 18, 43, 0.94); }
+.menu-map-canvas { width: 100%; height: 100%; display: block; min-height: 0; }
+.menu-legend { padding: 1.4vh 1.6vh; }
+.menu-legend b { display: block; font-family: var(--display); font-weight: 400; font-style: italic; font-size: 4.4vh; line-height: 1; letter-spacing: 0.2vh; color: var(--amber); }
+.menu-legend ul { list-style: none; margin: 1.2vh 0 0; padding: 0; display: grid; gap: 0.9vh; font-size: 1.75vh; font-weight: 800; color: var(--cream); }
+.menu-legend li { display: flex; align-items: center; gap: 1vh; white-space: nowrap; }
+.menu-legend li i { flex: none; width: 3vh; height: 2.4vh; border-radius: 0.4vh; box-shadow: inset 0 0 0 0.2vh rgba(18, 14, 36, 0.5); }
+.menu-legend li i.sea { background: #2f9fcb; }
+.menu-legend li i.path { background: repeating-linear-gradient(135deg, rgba(23, 18, 43, 0.9) 0 0.5vh, rgba(244, 236, 216, 0.85) 0.5vh 0.8vh); }
+.menu-legend li i.place { width: 2.4vh; margin: 0 0.3vh; border-radius: 50%; background: var(--coral); box-shadow: inset 0 0 0 0.3vh var(--ink); }
 .panel-title { font-family: var(--display); font-size: 3.4vh; letter-spacing: 0.25vh; color: var(--amber); margin-bottom: 1.4vh; }
 .panel-note { font-size: 1.8vh; font-weight: 600; color: var(--dim); margin: 1.6vh 0 0; }
 .menu-table { display: grid; gap: 0.45vh; font-size: 1.9vh; }

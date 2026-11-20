@@ -1,16 +1,18 @@
-// The start screen and the pause menu: continue, new game and load across three save slots (shown as cards with
-// rank, cash, completion and time played), statistics, controls and settings, by keyboard or mouse.
+// The start screen and the pause menu: the logo over a column of buttons (continue, new game, save, load, atlas,
+// statistics, controls, settings) and, beside them, the three save slots as cards that load on a click and the
+// district map of Saros with its legend. By keyboard or mouse.
 import { SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
 import { CITY_NAME, GAME_TITLE } from '../core/config.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
+import { DISTRICTS } from '../world/cityLayout.js';
 import { createElement, formatCash } from './domBuilder.js';
 
 export class Menus {
   constructor(game) {
     this.game = game;
-    this.start = this.buildScreen('start-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>An open-world crime story · ${CITY_NAME}, eclipse week</p>`);
-    this.pause = this.buildScreen('pause-menu', `<h2>PAUSED</h2><p>The moon waits for nobody.</p>`);
-    createElement('footer', 'title-footer', this.start, 'WASD move · Mouse look · F steal a car · Click to shoot · M city atlas · Z X C crew favors · L lights · Esc pause');
+    this.start = this.buildScreen('start-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Open-world crime · ${CITY_NAME}, eclipse week</p>`);
+    this.pause = this.buildScreen('pause-menu', `<div class="logo-disc"></div><h1>${GAME_TITLE}</h1><p>Paused · the moon waits for nobody</p>`);
+    createElement('footer', 'title-footer', this.start, 'WASD move · Mouse look · F steal a car · Click to shoot · M city atlas · Esc pause');
     this.screen = null;
     this.page = 'main';
     this.index = 0;
@@ -25,6 +27,9 @@ export class Menus {
     createElement('nav', 'menu-list', root);
     createElement('div', 'menu-panel', root);
     root.addEventListener('click', (event) => {
+      // A save-slot card loads its slot; an empty one starts a new week in it.
+      const card = event.target.closest('[data-slot]');
+      if (card) { this.game.audio.unlock(); this.game.audio.menuSelect(); this.game.continueGame(Number(card.dataset.slot)); return; }
       const row = event.target.closest('[data-index]');
       if (!row) return;
       this.index = Number(row.dataset.index);
@@ -59,8 +64,11 @@ export class Menus {
       items.push({ label: 'SETTINGS', hint: 'Sound, mouse and graphics', run: () => this.open('settings') });
       return items;
     }
+    const blocked = game.saveBlockedBy();
     return [
       { label: 'RESUME', hint: 'Back to the streets', run: () => game.setState('play') },
+      { label: 'SAVE GAME', hint: blocked || `Write slot ${game.saveSlot} now`, run: () => { if (blocked) game.audio.menuMove(); else { game.saveGame(false, true); this.render(); } } },
+      { label: 'LOAD GAME', hint: 'Pick one of three save slots', run: () => this.open('load') },
       { label: 'CITY ATLAS', hint: 'Map, jobs, progress and save slots', run: () => game.setState('map') },
       { label: 'STATISTICS', hint: `Your record in ${CITY_NAME}`, run: () => this.open('stats') },
       { label: 'CONTROLS', hint: 'Keyboard and mouse', run: () => this.open('controls') },
@@ -108,16 +116,24 @@ export class Menus {
     this.render();
   }
 
-  /** The three save slots as cards: rank, cash, completion, jobs done and time played, or EMPTY. */
-  slotCardsMarkup() {
+  /**
+   * The menu's home panel. On top the three save slots as cards, each a button that loads its slot: the slot's
+   * name, its completion as a big figure and a bar, the day and job it stands at, the time played and the rank.
+   * Under them the district map of Saros with its legend.
+   */
+  homeMarkup() {
+    const lit = this.screen === 'pause' ? this.game.saveSlot : latestSaveSlot();
     const cards = listSaveSlots().map((card, index) => {
-      if (!card) return `<div class="slot-card empty"><b>SLOT ${index + 1}</b><span>EMPTY</span><small>A new story starts here</small></div>`;
-      return `<div class="slot-card${card.slot === latestSaveSlot() ? ' latest' : ''}"><b>SLOT ${card.slot}</b><span>${card.percent}% COMPLETE</span>
-        <i><u style="width:${card.percent}%"></u></i>
-        <small>RANK ${card.rank} ${card.title.toUpperCase()} · ${formatCash(card.cash)}</small>
-        <small>${card.jobs}/${STORY_MISSIONS.length} jobs · ${card.district} · ${formatPlayTime(card.playSeconds)}</small></div>`;
+      const slot = index + 1;
+      const tag = slot === lit ? `<strong>${this.screen === 'pause' ? 'PLAYING' : 'LATEST'}</strong>` : '';
+      if (!card) return `<button class="save-card empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>NEW</span><i><u style="width:0"></u></i><em>EMPTY SLOT</em><small>Start a new week here</small>${tag}</button>`;
+      return `<button class="save-card${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>${card.percent}%</span><i><u style="width:${card.percent}%"></u></i>
+        <em>${card.day || 'MON'} · JOB ${card.jobs}/${STORY_MISSIONS.length}</em><small>${formatPlayTime(card.playSeconds)} PLAYED · RANK ${card.rank} · ${formatCash(card.cash)}</small>${tag}</button>`;
     }).join('');
-    return `<div class="panel-title">SAVE SLOTS</div><div class="slot-cards">${cards}</div><p class="panel-note">Rest at Casa Reyes to save. Jobs, races and bounties autosave.</p>`;
+    const districts = Object.values(DISTRICTS).map((district) => `<li><i style="background:${district.map}"></i>${district.name}</li>`).join('');
+    return `<div class="save-cards">${cards}</div>
+      <div class="menu-map"><canvas class="menu-map-canvas"></canvas>
+        <div class="menu-legend"><b>${CITY_NAME.toUpperCase()}</b><ul>${districts}<li><i class="sea"></i>Avocet Sound</li><li><i class="path"></i>Path of totality</li><li><i class="place"></i>Landmark</li></ul></div></div>`;
   }
 
   statsMarkup() {
@@ -135,9 +151,11 @@ export class Menus {
     list.innerHTML = this.items.map((item, index) => `<button class="menu-item" data-index="${index}"><span>${item.label}</span><small>${item.hint}</small></button>`).join('');
     if (this.page === 'controls') panel.innerHTML = `<div class="panel-title">CONTROLS</div><div class="menu-table">${CONTROLS.map(([k, v]) => `<div><b>${k}</b><span>${v}</span></div>`).join('')}</div>`;
     else if (this.page === 'stats') panel.innerHTML = this.statsMarkup();
-    else if (this.screen === 'start') panel.innerHTML = this.slotCardsMarkup();
-    else panel.innerHTML = this.statsMarkup();
+    else panel.innerHTML = this.homeMarkup();
     panel.classList.add('visible');
+    panel.classList.toggle('home', this.page !== 'controls' && this.page !== 'stats');
+    const map = panel.querySelector('.menu-map-canvas');
+    if (map) this.game.minimap.drawDistrictMap(map);
     this.highlight();
   }
 

@@ -19,7 +19,8 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   of the sun covered, and the seconds of darkness left during totality.
 - **A sun the moon really crosses.** The sky draws a large low sun and the moon's disc over it from the calendar's
   own numbers: first contact, a thinning crescent, the corona round a black moon, and the sun coming back. Sunlight,
-  shadows, haze, stars, street lamps, neon and headlights all follow the phase.
+  shadows, haze, stars, street lamps, neon and headlights all follow the phase. As in a real eclipse the afternoon
+  stays bright until about four fifths of the sun is covered, then the light falls away fast into totality.
 - **Story jobs tied to days.** Each job opens on its day of the week. Rest at Casa Reyes to sleep into the next
   afternoon; Thursday will not turn into Friday until the crew is ready.
 - **Rules of the dark.** During totality (and at night) Nova can only be seen where light is on her: under a street
@@ -58,8 +59,9 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
 - **HUD and menus**: one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating minimap, the
   job panel, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
   GPS list on a quiet walk, a city atlas with the map, the path of totality, the week's jobs day by day and the
-  three save slots as cards, a start screen with the same slots, pause menu with statistics, settings and shop
-  counters. Progress saves to the browser (localStorage).
+  three save slots as cards, a start screen and a pause menu with big buttons, the three save slots as cards that
+  load on a click (day, job, time played, completion) and a district map of Saros with its legend, SAVE GAME and
+  LOAD GAME on the pause menu, statistics, settings and shop counters. Progress saves to the browser (localStorage).
 
 Everything is original: the city, names, characters, vehicles and story. Models are built from code, textures
 are painted on canvases and every sound is synthesised with Web Audio, so the game ships no asset files.
@@ -91,7 +93,7 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # the hand-in: copies game
 ```
 
 The screenshots in `screenshots/` are unedited browser renders of the scenes in `game/src/debug/screenshotScenes.js`
-(`?shot=chase`, `standoff`, `workshop`, `atlas`), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`.
+(`?shot=chase`, `standoff`, `workshop`, `title`; `atlas` and `pause` stage the other two full screens), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`.
 Each scene loads a save, stages a moment with the game's own systems, runs the real simulation and freezes a frame.
 `tools/captureScreenshots.mjs --smoke` plays the whole game by script (`tools/smokeTest.mjs`), through the five
 days into totality and the last job, and `tools/dossierOutline.mjs` prints the order the dossier lists the sources in.

@@ -232,9 +232,20 @@ class Game {
     this.hud.notify(`Slot ${slot} loaded. Welcome back to ${CITY_NAME}.`);
   }
 
-  saveGame(auto) {
+  /** Write the slot being played: an autosave after a job, a rest at Casa Reyes, or SAVE GAME on the pause menu. */
+  saveGame(auto, fromMenu = false) {
     const saved = writeSaveSlot(this.saveSlot, summarizeGame(this), captureGame(this));
-    this.hud.notify(saved ? (auto ? `Autosaved to slot ${this.saveSlot}.` : `Saved to slot ${this.saveSlot} at Casa Reyes. Health restored.`) : 'Saving is blocked in this browser.');
+    const done = fromMenu ? `Saved to slot ${this.saveSlot}.` : auto ? `Autosaved to slot ${this.saveSlot}.` : `Saved to slot ${this.saveSlot} at Casa Reyes. Health restored.`;
+    this.hud.notify(saved ? done : 'Saving is blocked in this browser.');
+    return saved;
+  }
+
+  /** Why the pause menu cannot save right now, or '' when it can: not in the middle of a job, a race or a chase. */
+  saveBlockedBy() {
+    if (this.missions.active) return 'Finish or fail the job first';
+    if (this.races.active) return 'Finish the race first';
+    if (this.wanted.stars > 0) return 'Lose the police first';
+    return '';
   }
 
   quitToTitle() {

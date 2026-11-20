@@ -18,7 +18,7 @@ export function promptCarInReach(game) {
   const crewOut = car.controller && car.controller.deployed;
   if (car.driver === 'cop' && !crewOut) game.hud.hint(`${car.spec.name}: officers inside`);
   else game.hud.hint(car.driver === 'ai' ? `Press F to carjack the ${car.spec.name}` : mine ? `Press F to drive the ${car.spec.name}` : `Press F to steal the ${car.spec.name}`);
-  game.markers.show(car.position.x, car.position.z, car.driver === 'cop' && !crewOut ? '#ff6a4d' : '#ffb547', car.spec.length * 0.62, 2.2);
+  game.markers.show(car.position.x, car.position.z, car.driver === 'cop' && !crewOut ? '#ff6a4d' : '#ffb547', car.spec.length * 0.62, 0.4);
   return car;
 }
 

@@ -5,24 +5,8 @@ import { angleDelta, clamp } from '../core/random.js';
 import { groundHeight } from '../world/cityLayout.js';
 import { MeshBatcher } from '../render/meshBatcher.js';
 
-const limbGeometry = new THREE.BoxGeometry(1, 1, 1);
-limbGeometry.translate(0, -0.5, 0);
-const blockGeometry = new THREE.BoxGeometry(1, 1, 1);
-const materials = new Map();
+/** Every part of every character is vertex-coloured and shares this one material. */
 const trunkMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 });
-
-function materialOf(color) {
-  if (!materials.has(color)) materials.set(color, new THREE.MeshStandardMaterial({ color, roughness: 0.85 }));
-  return materials.get(color);
-}
-
-function part(geometry, color, sx, sy, sz, x, y, z) {
-  const mesh = new THREE.Mesh(geometry, materialOf(color));
-  mesh.scale.set(sx, sy, sz);
-  mesh.position.set(x, y, z);
-  mesh.castShadow = true;
-  return mesh;
-}
 
 /** How far a cowering citizen sinks onto their heels, in metres. */
 const COWER_DROP = 0.46;
@@ -36,12 +20,12 @@ export function randomLook(rng) {
   return {
     skin: rng.pick(SKINS), shirt: rng.pick(SHIRTS), pants: rng.pick(PANTS), hair: rng.pick(HAIR),
     hat: rng.chance(0.2) ? rng.pick(['#f5f0e1', '#e63946', '#1d3557', '#ffb703']) : null,
-    shorts: rng.chance(0.55), scale: rng.range(0.94, 1.06),
+    shorts: rng.chance(0.55), scale: rng.range(0.94, 1.06), longHair: rng.chance(0.4), shoes: rng.pick(['#f4f1e8', '#2b2d33', '#ff6b6b', '#3a86ff', '#ffd93d']),
   };
 }
 
 export const LOOKS = {
-  nova: { skin: '#c68642', shirt: '#ff5e5b', pants: '#27324a', hair: '#2a1a12', hat: null, shorts: false, scale: 1, jacket: '#1fb5a6' },
+  nova: { skin: '#c68642', shirt: '#ff5e5b', pants: '#27324a', hair: '#2a1a12', hat: null, shorts: false, scale: 1, jacket: '#1fb5a6', longHair: true },
   officer: { skin: '#e0ac69', shirt: '#2e4a7d', pants: '#16203a', hair: '#1b1b1b', hat: '#16203a', shorts: false, scale: 1.02 },
   tactical: { skin: '#c68642', shirt: '#1c2126', pants: '#1c2126', hair: '#1b1b1b', hat: '#2b3138', shorts: false, scale: 1.05 },
   enforcer: { skin: '#e0ac69', shirt: '#7d1f3a', pants: '#15151a', hair: '#1b1b1b', hat: null, shorts: false, scale: 1.04, jacket: '#f2e9dc' },
@@ -60,27 +44,58 @@ export function buildCharacterModel(look) {
   block(look.pants, 0.5, 0.24, 0.29, 0, 0.84, 0);
   block(look.skin, 0.26, 0.28, 0.27, 0, 1.63, 0);
   block(look.hair, 0.29, 0.12, 0.3, 0, 1.76, -0.01);
+  // Hair comes down the back of the head (to the shoulders on some), so nobody is a bare block from behind.
+  block(look.hair, 0.29, look.longHair ? 0.36 : 0.2, 0.08, 0, 1.66, -0.125);
   if (look.jacket) block(look.jacket, 0.53, 0.5, 0.2, 0, 1.2, -0.06);
   if (look.hat) {
     block(look.hat, 0.31, 0.1, 0.32, 0, 1.84, 0);
     block(look.hat, 0.3, 0.03, 0.2, 0, 1.8, 0.2);
   }
+  // A face: two eyes and a mouth on the front of the head, and a neck under it.
+  for (const side of [-1, 1]) block('#1b1b1b', 0.05, 0.055, 0.02, side * 0.065, 1.56, 0.137);
+  block('#7a3b2e', 0.1, 0.022, 0.02, 0, 1.43, 0.137);
+  block(look.skin, 0.14, 0.08, 0.14, 0, 1.36, 0);
   const trunk = trunkParts.build(trunkMaterial, { receiveShadow: false });
-  const legL = part(limbGeometry, legColor, 0.2, 0.84, 0.22, 0.14, 0.84, 0);
-  const legR = part(limbGeometry, legColor, 0.2, 0.84, 0.22, -0.14, 0.84, 0);
-  const armL = part(limbGeometry, look.jacket || look.shirt, 0.15, 0.64, 0.17, 0.33, 1.45, 0);
-  const armR = part(limbGeometry, look.jacket || look.shirt, 0.15, 0.64, 0.17, -0.33, 1.45, 0);
+  // Short sleeves over bare forearms unless a jacket covers them; shorts end above the knee; everyone wears shoes.
+  const sleeve = look.jacket || look.shirt;
+  // Uniforms and suits come with dark shoes; Nova and anyone unnamed wear pale trainers unless their look says so.
+  const shoes = look.shoes || (look.hat && !look.shorts ? '#17181c' : '#f4f1e8');
+  const legL = limb(look.shorts ? look.pants : legColor, legColor, look.shorts ? 0.3 : 0, shoes, 0.2, 0.84, 0.22, 0.14, 0.84);
+  const legR = limb(look.shorts ? look.pants : legColor, legColor, look.shorts ? 0.3 : 0, shoes, 0.2, 0.84, 0.22, -0.14, 0.84);
+  const armL = limb(sleeve, look.jacket ? sleeve : look.skin, look.jacket ? 0 : 0.42, look.skin, 0.15, 0.64, 0.17, 0.33, 1.45);
+  const armR = limb(sleeve, look.jacket ? sleeve : look.skin, look.jacket ? 0 : 0.42, look.skin, 0.15, 0.64, 0.17, -0.33, 1.45);
   armL.castShadow = false;
   armR.castShadow = false;
   group.add(trunk, legL, legR, armL, armR);
-  // The gun is a child of the right arm, so it follows the aim; scaled against the arm's own scale.
-  const gun = new THREE.Mesh(blockGeometry, materialOf('#16181b'));
-  gun.scale.set(0.62, 0.8, 0.75);
-  gun.position.set(0, -1.28, 0.2);
+  // The gun is held in the right hand and runs on past it, so it follows the aim: a dark body, a grip and a barrel.
+  const gunParts = new MeshBatcher();
+  gunParts.addBox(0, -0.98, 0.05, 0.085, 0.44, 0.13, '#16181b');
+  gunParts.addBox(0, -1.2, 0.04, 0.05, 0.24, 0.06, '#3a3f47');
+  gunParts.addBox(0, -0.66, 0.13, 0.07, 0.1, 0.16, '#5a3d2a');
+  const gun = gunParts.build(trunkMaterial, { receiveShadow: false });
   gun.visible = false;
   armR.add(gun);
   group.scale.setScalar(look.scale || 1);
   return { group, trunk, legL, legR, armL, armR, gun };
+}
+
+/**
+ * An arm or a leg hanging from its joint at (x, y): `upper` colours the top `upperShare` of it (a sleeve, a pair of
+ * shorts), `lower` the rest, and `end` the hand or the shoe. One mesh, so it swings as one piece.
+ */
+function limb(upper, lower, upperShare, end, sx, sy, sz, x, y) {
+  const parts = new MeshBatcher();
+  const endHeight = sx < 0.18 ? 0.11 : 0.1;
+  const upperHeight = sy * upperShare;
+  if (upperHeight > 0) parts.addBox(0, -upperHeight, 0, sx * 1.12, upperHeight, sz * 1.12, upper);
+  parts.addBox(0, -sy + endHeight, 0, sx, sy - endHeight - upperHeight, sz, lower);
+  // A hand is a little wider than the wrist; a shoe reaches forward of the ankle.
+  if (sx < 0.18) parts.addBox(0, -sy, 0, sx * 1.1, endHeight, sz * 1.1, end);
+  else parts.addBox(0, -sy, 0.05, sx * 1.08, endHeight, sz * 1.5, end);
+  const mesh = parts.build(trunkMaterial, { receiveShadow: false });
+  mesh.matrixAutoUpdate = true;
+  mesh.position.set(x, y, 0);
+  return mesh;
 }
 
 export class CharacterBody {
@@ -204,6 +219,7 @@ export class CharacterBody {
 
   dispose() {
     this.game.scene.remove(this.mesh);
-    this.model.trunk.geometry.dispose();
+    const m = this.model;
+    for (const mesh of [m.trunk, m.legL, m.legR, m.armL, m.armR, m.gun]) mesh.geometry.dispose();
   }
 }

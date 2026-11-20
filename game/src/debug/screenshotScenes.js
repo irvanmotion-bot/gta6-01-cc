@@ -174,8 +174,8 @@ function chaseScene(game) {
 }
 
 /**
- * On foot on Corona Drive as the eclipse begins: Vane's lookouts among the watch parties on the boardwalk, the low
- * sun behind Nova, a burning car going up, tracers both ways and the police coming down the drive.
+ * On foot on Corona Drive as the eclipse begins, the low sun behind Nova: she drops one of Vane's lookouts and
+ * turns her rifle on the next, a car at the kerb is hers for the taking, and the first cruiser is on its way.
  */
 function standoffScene(game) {
   const seconds = 1.0;
@@ -188,44 +188,31 @@ function standoffScene(game) {
   game.calendar.setHour(hourOfCoverage(0.34));
   game.weapons.select('rifle');
   // A citizen's Duna left at the kerb beside her: in reach, so the game rings it and offers F to steal it.
-  const parked = game.vehicles.spawn('avocet', x0 + 3.2, z0 - 3.5, Math.PI, '#ffd23f');
+  const parked = game.vehicles.spawn('avocet', x0 + 3.1, z0 - 3.7, Math.PI, '#ffd23f');
   parked.parked = true;
   parked.ambient = true;
-  // Vane's lookouts come off the boardwalk and the kerb, between the watch parties: one already down at her feet,
-  // one a few steps up the drive in her sights, the others further back by the boards.
+  // Two of Vane's lookouts have come off the boardwalk into the drive: one a few steps away in her sights, one
+  // further up. The other three are still down by the pier, out of this fight.
   const lookouts = game.gunmen.list.filter((gunman) => gunman.kind === 'enforcer');
-  const posts = [[x0 + 1.5, z0 - 4.4], [x0 + 2.1, z0 - 7.2], [x0 - 1.4, z0 - 11.5], [x0 - 5.5, z0 - 15], [x0 - 7.5, z0 - 20]];
+  const posts = [[x0 - 0.9, z0 - 6.2], [x0 - 2.6, z0 - 13], [x0 - 9, z0 + 62], [x0 - 10, z0 + 68], [x0 - 8, z0 + 74]];
   posts.forEach(([x, z], index) => {
     lookouts[index].position.set(x, 0, z);
-    lookouts[index].hostile = true;
+    lookouts[index].hostile = index < 2;
     lookouts[index].heading = 0;
   });
-  lookouts[0].takeDamage(999, true);
-  const target = lookouts[1];
-  // He is sidestepping across her sights, toward the middle of the drive.
-  target.strafe = 1;
-  target.strafeClock = 9;
-  const wreck = game.vehicles.spawn('estela', x0 - 2.2, z0 - 27, 0.5, '#3498db');
-  wreck.health = 0;
-  wreck.hitByPlayer = false;
-  wreck.burning = 3.6 - (seconds - 0.16);
-  game.wanted.setStars(3, 99);
-  // Saros P.D. arrives: one cruiser already stopped across the drive with its two officers out and shooting,
-  // another coming down it with an interceptor behind.
-  const first = spawnPursuit(game, 'patrol', 'centinela', x0 - 1.2, z0 - 13.5, 1.1, 0);
-  first.controller.deploy(first);
-  spawnPursuit(game, 'patrol', 'centinela', x0 - 2.6, z0 - 44, 0, 13);
-  spawnPursuit(game, 'interceptor', 'lince', x0 + 0.2, z0 - 60, 0, 15);
-  game.police.helicopter.scramble();
-  game.police.helicopter.orbit = -Math.PI / 2 + 0.3;
-  game.police.helicopter.mesh.position.set(x0 - 2, 22, z0 - 42);
+  const [near, far] = lookouts;
+  game.wanted.setStars(2, 99);
+  // Saros P.D. answers the shots: one cruiser coming down the drive toward her, lights on.
+  spawnPursuit(game, 'patrol', 'centinela', x0 - 3.6, z0 - 34, 0, 13);
   // The people who were strolling here are caught in it: the shots send them running or to the ground.
-  for (const [x, z] of [[-2.6, -5.2], [-3.8, -6.6], [-5.2, -5.4], [-4.6, -9.4], [-6.6, -8], [-7.4, -12], [4.9, -9.5], [5.4, -12.5]]) spawnStroller(game, x0 + x, z0 + z);
+  for (const [x, z] of [[-4.4, -4.6], [-5.8, -8.4], [5.0, -11]]) spawnStroller(game, x0 + x, z0 + z);
+  game.pedestrians.spawnFleeing(x0 - 3.4, z0 - 9.5, { x: x0, z: z0 });
   game.hud.say('NOVA', 'Half of Saros is on the boardwalk looking up. Five of them are looking for me.', '#ff9e7a');
-  // Nova holds the aim (right mouse) on the nearest lookout, as a player tracking him would, and opens fire as the
-  // burning Estela goes off behind them.
+  // Nova holds the aim (right mouse) on the near lookout and drops him, then swings onto the one behind him: the
+  // frame is her next shot, with the first man down in the road between them.
   play(game, seconds, (t) => {
     const camera = game.camera;
+    const target = near.alive ? near : far;
     for (let pass = 0; pass < 2; pass += 1) {
       const focusX = game.player.position.x - Math.cos(camera.yaw) * 1.15;
       const focusZ = game.player.position.z + Math.sin(camera.yaw) * 1.15;
@@ -233,16 +220,15 @@ function standoffScene(game) {
     }
     camera.pitch = 0.03;
     game.input.buttons[2] = true;
-    game.input.buttons[0] = t > seconds - 0.3;
-    // Her burst drops him as the frame is taken, and the others and the officers are due to fire, so their
-    // tracers are in the air.
-    const lastShots = t > seconds - 0.075;
-    target.health = lastShots ? Math.min(target.health, 30) : 400;
-    if ((lastShots && target.alive) || t > seconds - STEP * 1.5) game.weapons.cooldown = 0;
-    if (t > seconds - 0.07) for (const gunman of game.gunmen.list) if (gunman.alive && gunman !== target) gunman.cooldown = Math.min(gunman.cooldown, 0.01);
+    game.input.buttons[0] = t > seconds - 0.55;
+    near.health = t > seconds - 0.5 ? Math.min(near.health, 20) : 400;
+    far.health = 400;
+    if (t > seconds - STEP * 1.5) game.weapons.cooldown = 0;
+    // The lookouts hold their fire until she has shown herself; the far one answers as the frame is taken.
+    for (const gunman of lookouts) if (gunman.alive) gunman.cooldown = gunman === far && t > seconds - STEP * 1.5 ? 0 : 1;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
     game.player.health = Math.max(game.player.health, 58);
-    if (t > seconds - 0.7) game.player.invulnerable = 1;
+    game.player.invulnerable = 1;
   });
   game.input.buttons[0] = false;
   game.input.buttons[2] = false;
@@ -276,9 +262,9 @@ function atlasScene(game) {
   game.setState('map');
 }
 
-/** The start screen, with saves on file so CONTINUE, LOAD GAME and the slot cards are offered. */
+/** The start screen with three saves on file: CONTINUE and LOAD GAME are offered and every slot card is filled. */
 function titleScene(game) {
-  for (const [slot, jobs] of [[1, 2], [2, 6]]) {
+  for (const [slot, jobs] of [[1, 2], [3, 9], [2, 6]]) {
     loadCity(game, stagedSave(jobs), LANDMARKS.safehouse.x - 7, LANDMARKS.safehouse.z, Math.PI / 2);
     game.saveSlot = slot;
     writeSaveSlot(slot, summarizeGame(game), captureGame(game));
@@ -288,7 +274,14 @@ function titleScene(game) {
   play(game, 3);
 }
 
-const SCENES = { chase: chaseScene, standoff: standoffScene, workshop: workshopScene, atlas: atlasScene, title: titleScene };
+/** The pause menu over a week in progress: SAVE GAME and LOAD GAME beside the slot being played. */
+function pauseScene(game) {
+  atlasScene(game);
+  game.missions.reset();
+  game.setState('pause');
+}
+
+const SCENES = { chase: chaseScene, standoff: standoffScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
 
 export function stageScreenshot(game, name) {
   (SCENES[name] || titleScene)(game);
