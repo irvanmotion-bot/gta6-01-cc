@@ -150,9 +150,10 @@ function chaseScene(game) {
     if (z < 20) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
   }
   for (const z of [5, 9, 14, 20, 27, 35, 44]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);
+  // Dispatch put the helicopter up the moment she took the Rayo; it is on station when the frame is taken: ahead
+  // of the car and a little to the city side, as its orbit holds it.
   const helicopter = game.police.helicopter;
   helicopter.scramble();
-  // The helicopter is already on station: ahead of the car and a little to the city side, as its orbit holds it.
   helicopter.orbit = 1.1;
   helicopter.mesh.position.set(lane + Math.cos(helicopter.orbit) * 26, 17, z0 + Math.sin(helicopter.orbit) * 26 + speed * 0.45);
   game.crew.cooldowns.jam = 96;

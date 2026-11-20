@@ -3,6 +3,7 @@
 import * as THREE from 'three';
 import { MeshBatcher } from '../render/meshBatcher.js';
 import { distance2D } from '../core/random.js';
+import { districtNameAt } from '../world/cityLayout.js';
 
 export class PoliceHelicopter {
   constructor(game) {
@@ -116,6 +117,7 @@ export class PoliceHelicopter {
   /** Bring it in from over the hills. */
   scramble() {
     const player = this.game.player.position;
+    const called = !this.active;
     this.active = true;
     this.health = 400;
     this.crashing = 0;
@@ -125,6 +127,8 @@ export class PoliceHelicopter {
     this.lastSeen.copy(player);
     this.mesh.position.set(player.x + 150, HOVER_HEIGHT + 30, player.z - 120);
     this.mesh.rotation.set(0, 0, 0);
+    // Dispatch puts the air unit on the radio as it comes in.
+    if (called && this.unit) this.game.hud.notify(`POLICE RADIO · ${this.unit.callsign}: AIRBORNE OVER ${districtNameAt(player.x, player.z).toUpperCase()}`);
   }
 
   dismiss(instant = false) {
