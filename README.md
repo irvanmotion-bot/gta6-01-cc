@@ -36,13 +36,16 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   Observatory Hill, Cormorant Yards, Jacaranda Gardens), named streets and shops, pavements with benches, bus
   shelters and planters, a boardwalk with kiosks, a beach with boats offshore, docks with a container ship and a park.
 - **Traffic and pedestrians**: drivers keep their lanes, obey traffic lights, brake, honk and panic; citizens walk
-  the sidewalks and the boardwalk, cross at corners and run from danger.
+  the sidewalks and the boardwalk, cross at corners, and when shots are fired run with their hands in the air or
+  drop to the ground where they stand. Beside any car, the game rings it and offers F to steal it or pull its
+  driver out.
 - **Twelve vehicles to steal and drive**, from the Avocet compact to the Rayo supercar and the Lince police
   interceptor, with drift, handbrake, crashes, damage, fire and explosions, and three radio stations of generated music.
 - **A five-star wanted level with a tiered police response**. Every unit has a callsign and a tactic the HUD's
-  dispatch panel lists live: patrol cars that tail for an arrest, interceptors that flank for a side-swipe or cut
-  the road off, tactical vans that unload a squad, roadblocks with spike strips, and a helicopter that opens fire
-  at four stars. Break line of sight, respray the car, have Jazz jam their radio, or wait for the dark.
+  dispatch panel lists live under a count of every unit on the player: patrol cars that tail for an arrest,
+  interceptors that flank for a side-swipe or cut the road off, officers who shoot from the car window from three
+  stars, tactical vans that unload a squad, roadblocks with spike strips, and a helicopter that opens fire at four
+  stars. Break line of sight, respray the car, have Jazz jam their radio, or wait for the dark.
 - **A ten-job story in stages** with dialogue and portraits, timers, deliveries, a race, shoot-outs, chases, a
   clinic to defend at night and the vault job, which runs from first contact through totality.
 - **Progression**: street cred raises Nova through eight ranks; ranks unlock crew favors (Z a getaway car, X a
@@ -53,9 +56,10 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   taxi fares, twelve hidden Corona Tokens and powerslide bonuses.
 - **Combat**: fists and four guns, aiming, headshots, armed enforcers, guards and capos.
 - **HUD and menus**: one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating minimap, the
-  job panel, the eclipse panel, status, dispatch and vehicle panels, a GPS list on foot, a city atlas with the map,
-  the path of totality, the week's jobs day by day, statistics and save slots, a start screen with three save
-  slots, pause menu, settings and shop counters. Progress saves to the browser (localStorage).
+  job panel, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
+  GPS list on a quiet walk, a city atlas with the map, the path of totality, the week's jobs day by day and the
+  three save slots as cards, a start screen with the same slots, pause menu with statistics, settings and shop
+  counters. Progress saves to the browser (localStorage).
 
 Everything is original: the city, names, characters, vehicles and story. Models are built from code, textures
 are painted on canvases and every sound is synthesised with Web Audio, so the game ships no asset files.

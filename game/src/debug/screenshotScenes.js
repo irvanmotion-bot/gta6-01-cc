@@ -145,7 +145,7 @@ function chaseScene(game) {
   ];
   for (const [model, x, z, heading, paint, panics] of traffic) spawnCivilianCar(game, model, x, z, heading, paint, panics);
   // The pavement and the boardwalk are full on eclipse afternoon; the people nearest the chase are already running.
-  for (const [x, z] of [[7.3, 4], [8.1, 8], [7.6, 13], [8.4, 17], [7.2, 22], [8.0, 28], [7.5, 35], [8.3, 43], [7.4, 52]]) {
+  for (const [x, z] of [[7.3, 4], [8.1, 8], [7.9, 10.5], [7.6, 13], [7.2, 15.5], [8.4, 17], [8.0, 19.5], [7.2, 22], [8.0, 28], [7.5, 35], [8.3, 43], [7.4, 52]]) {
     if (z < 24) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
   }
   for (const z of [3, 7, 12, 18, 25, 33, 42]) spawnStroller(game, -9.5 + (z % 3) * 0.6, zEnd + z, true);

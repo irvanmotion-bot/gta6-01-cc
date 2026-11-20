@@ -14,6 +14,8 @@ const TINTS = {
   hill: ['#fff4e0', '#ffe0c2', '#e8f0d8', '#f7d9d0', '#dfeaf5', '#fbe8a6'],
   yards: ['#9db4c0', '#c2b8a3', '#b56b5a', '#7d9a8c', '#d0d0cc', '#6f8fae'],
 };
+/** Rails, piers and cornices: the second colour of a front. */
+const TRIMS = ['#f4efe6', '#2d3142', '#c0553a', '#1fb5a6', '#ffb547', '#7a5c48', '#e84393', '#3a86ff'];
 const AWNINGS = ['#e74c3c', '#16a085', '#f39c12', '#2980b9', '#e84393', '#27ae60', '#ffffff'];
 const CONTAINER_COLORS = ['#c0392b', '#2471a3', '#d68910', '#1e8449', '#7d3c98', '#839192', '#e67e22'];
 
@@ -50,6 +52,7 @@ export class CityBuildings {
     this.scene = scene;
     this.collision = collision;
     this.rng = new SeededRandom(CITY.seed);
+    this.detailRng = new SeededRandom(CITY.seed + 909);
     this.batches = {};
     this.materials = {};
     for (const style of Object.keys(FACADE_TILE)) {
@@ -90,6 +93,80 @@ export class CityBuildings {
     this.plain.addBox(cx, CITY.curb + height, cz, width + 0.5, 0.6, depth + 0.5, '#f4efe6');
     this.collision.addBox(minX, minZ, maxX, maxZ, height + 1);
     return { cx, cz, width, depth, top: CITY.curb + height + 0.6 };
+  }
+
+  /** The walls of a building that face a street, each with its middle, its outward normal and its length. */
+  streetWalls(cell, roof) {
+    const walls = [];
+    if (cell.edgeN) walls.push({ x: roof.cx, z: roof.cz - roof.depth / 2, nx: 0, nz: -1, length: roof.width });
+    if (cell.edgeS) walls.push({ x: roof.cx, z: roof.cz + roof.depth / 2, nx: 0, nz: 1, length: roof.width });
+    if (cell.edgeW) walls.push({ x: roof.cx - roof.width / 2, z: roof.cz, nx: -1, nz: 0, length: roof.depth });
+    if (cell.edgeE) walls.push({ x: roof.cx + roof.width / 2, z: roof.cz, nx: 1, nz: 0, length: roof.depth });
+    return walls;
+  }
+
+  /**
+   * Relief on what would otherwise be a plain box, so no two fronts on a street look alike: rows of balconies with
+   * coloured rails, corner piers, a cornice, a set-back upper storey, a rooftop pool. It draws from its own random
+   * stream, so the lots, heights and colliders the rest of the game relies on never move. Returns the new top.
+   */
+  dressFacade(district, cell, roof, style, tint) {
+    const rng = this.detailRng;
+    const trim = rng.pick(TRIMS);
+    const base = CITY.curb;
+    const wallTop = roof.top - 0.6;
+    const walls = this.streetWalls(cell, roof);
+    const look = rng.int(0, 3);
+    if (look !== 3) {
+      // Balconies: a slab and a rail on every floor of the street walls, in a run narrower than the wall.
+      const run = rng.range(0.55, 0.9);
+      for (const wall of walls) {
+        const along = wall.length * run;
+        for (let y = base + 4.3; y < wallTop - 1.6; y += 3.2) {
+          this.plain.addBox(wall.x + wall.nx * 0.55, y, wall.z + wall.nz * 0.55, wall.nx ? 1.1 : along, 0.16, wall.nz ? 1.1 : along, '#f4efe6');
+          this.plain.addBox(wall.x + wall.nx * 1.05, y + 0.16, wall.z + wall.nz * 1.05, wall.nx ? 0.1 : along, 0.6, wall.nz ? 0.1 : along, trim);
+        }
+      }
+    }
+    if (look === 1 || look === 3) {
+      // Piers in the trim colour up the ends of each street wall, standing a little proud of the roof line.
+      for (const wall of walls) {
+        for (const end of [-1, 1]) {
+          const reach = (wall.length / 2 - 0.5) * end;
+          this.plain.addBox(wall.x + wall.nx * 0.2 + (wall.nz ? reach : 0), base, wall.z + wall.nz * 0.2 + (wall.nx ? reach : 0), 1, wallTop - base + 1.5, 1, trim);
+        }
+      }
+    }
+    if (district === 'azimuth' || look === 2) this.plain.addBox(roof.cx, wallTop - 1.1, roof.cz, roof.width + 0.8, 0.5, roof.depth + 0.8, trim);
+    let top = roof.top;
+    if (rng.chance(0.42)) {
+      // A set-back upper storey or two, with its own parapet.
+      const extra = rng.range(4, district === 'strand' ? 13 : 8);
+      const share = rng.range(0.5, 0.72);
+      this.batches[style].addBox(roof.cx, roof.top, roof.cz, roof.width * share, extra, roof.depth * share, tint, { tile: FACADE_TILE[style], uvOffset: rng.int(0, 3) * 0.25 });
+      this.plain.addBox(roof.cx, roof.top + extra, roof.cz, roof.width * share + 0.5, 0.5, roof.depth * share + 0.5, trim);
+      top = roof.top + extra + 0.5;
+    } else if (district === 'strand' && rng.chance(0.5)) {
+      // A rooftop pool with its deck.
+      this.plain.addBox(roof.cx, roof.top, roof.cz + roof.depth * 0.2, roof.width * 0.5, 0.25, roof.depth * 0.26, '#35c4e8');
+      this.plain.addBox(roof.cx, roof.top, roof.cz - roof.depth * 0.22, roof.width * 0.3, 2.4, 0.3, trim);
+    }
+    return top;
+  }
+
+  /** Break a glass tower's height with pale sky-lobby bands and, on some, a spine up one corner. */
+  bandTower(tower) {
+    const rng = this.detailRng;
+    const height = tower.top - 0.6 - CITY.curb;
+    const bands = rng.int(0, 3);
+    for (let band = 1; band <= bands; band += 1) {
+      this.plain.addBox(tower.cx, CITY.curb + (height * band) / (bands + 1), tower.cz, tower.width + 0.6, 1.2, tower.depth + 0.6, '#e9e4da');
+    }
+    if (rng.chance(0.5)) {
+      const sx = rng.chance(0.5) ? 1 : -1;
+      const sz = rng.chance(0.5) ? 1 : -1;
+      this.plain.addBox(tower.cx + (tower.width / 2) * sx, CITY.curb, tower.cz + (tower.depth / 2) * sz, 2.2, height + rng.range(3, 9), 2.2, rng.pick(TRIMS));
+    }
   }
 
   roofClutter(roof, count) {
@@ -150,6 +227,7 @@ export class CityBuildings {
         } else {
           this.roofClutter(tower, 3);
         }
+        this.bandTower(tower);
         tallest = Math.max(tallest, tower.top, podium.top);
       }
     } else if (district === 'strand') {
@@ -158,14 +236,16 @@ export class CityBuildings {
         const roof = this.raise(cell, rng.range(0.5, 2.5), rng.range(13, 36), 'hotel', tint);
         this.plain.addBox(roof.cx, roof.top, roof.cz, roof.width * 0.4, 2.2, roof.depth * 0.4, tint);
         this.awnings(cell, 0.5, rng.pick(AWNINGS));
-        tallest = Math.max(tallest, roof.top);
+        tallest = Math.max(tallest, this.dressFacade(district, cell, roof, 'hotel', tint));
       }
     } else if (district === 'azimuth') {
       for (const cell of splitLot(lot, rng.chance(0.5) ? 3 : 2, 2, 3)) {
-        const roof = this.raise(cell, rng.range(0, 1.5), rng.range(8, 26), rng.chance(0.55) ? 'shop' : 'hotel', rng.pick(TINTS.azimuth));
+        const style = rng.chance(0.55) ? 'shop' : 'hotel';
+        const tint = rng.pick(TINTS.azimuth);
+        const roof = this.raise(cell, rng.range(0, 1.5), rng.range(8, 26), style, tint);
         this.roofClutter(roof, rng.int(0, 2));
         this.awnings(cell, 0, rng.pick(AWNINGS));
-        tallest = Math.max(tallest, roof.top);
+        tallest = Math.max(tallest, this.dressFacade(district, cell, roof, style, tint));
       }
     } else if (district === 'hill') {
       for (const cell of splitLot(lot, 3, 3, 6)) {
