@@ -55,9 +55,14 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   upgrade lines (engine, plating, tyres, nitro) in three tiers that follow Nova into every car she drives.
 - **Activities**: three street races against AI rivals with a live race board, four bounties on Vane's capos,
   taxi fares, twelve hidden Corona Tokens and powerslide bonuses.
-- **Combat**: fists and four guns, aiming, headshots, armed enforcers, guards and capos.
-- **HUD and menus**: one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating minimap, the
-  job panel, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
+- **Combat**: fists and four guns, aiming, headshots, armed enforcers, guards and capos. A bounty hit takes the job
+  panel over: the capo's face and name, the price on him and the guns still standing.
+- **Citizens who react**, each in their own way: some sprint, some run with their hands up, some duck low, the timid
+  drop to the ground, and the bold stop at a distance to film it on a phone or point it out.
+- **HUD and menus**: one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating radar with
+  the route to the objective, the district and health and armor under it, a job panel with the giver's face and
+  one bar cut into the job's steps, the crew by name and face with the favor each grants, the crew's dialogue
+  ribbon, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
   GPS list on a quiet walk, a city atlas with the map, the path of totality, the week's jobs day by day and the
   three save slots as cards, a start screen and a pause menu with big buttons, the three save slots as cards that
   load on a click (day, job, time played, completion) and a district map of Saros with its legend, SAVE GAME and
