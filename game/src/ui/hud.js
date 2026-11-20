@@ -1,5 +1,6 @@
-// The heads-up display: builds every panel (job, crew, eclipse countdown, status, dispatch, vehicle, radar) and runs the pieces
-// that belong to no panel: the crew's dialogue ribbon with portraits, banners, notifications, hints and the crosshair.
+// The heads-up display: builds every panel (job, eclipse countdown, status, dispatch, vehicle, radar, the crew bar and the
+// record strip) and runs the pieces that belong to no panel: the dialogue box with its portraits, banners, notifications,
+// hints and the crosshair.
 import { districtNameAt, streetNameAt } from '../world/cityLayout.js';
 import { DomCache, createElement } from './domBuilder.js';
 import { HudEclipsePanel } from './hudEclipsePanel.js';
@@ -37,8 +38,8 @@ export class Hud {
     const right = createElement('div', 'hud-column right-column', root);
     const radar = this.buildRadar(root);
     this.jobPanel = new HudJobPanel(game, left, this.cache);
-    this.crewPanel = new HudCrewPanel(game, left, this.cache);
     this.buildDialogue(left);
+    this.crewPanel = new HudCrewPanel(game, root, this.cache);
     this.eclipsePanel = new HudEclipsePanel(game, right, this.cache);
     this.statusPanel = new HudStatusPanel(game, right, this.cache, radar);
     this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);

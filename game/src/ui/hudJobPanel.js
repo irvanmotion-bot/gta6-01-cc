@@ -96,6 +96,8 @@ export class HudJobPanel {
     // The huge HUD has room for the first words of the header: what kind of job this is, and which.
     cache.text(this.header, game.hud.essentials ? info.header.split(' · ')[0] : info.header);
     cache.text(this.title, info.title.toUpperCase());
+    // A long name is set a size smaller, so the huge HUD keeps it on one line.
+    cache.toggle(this.title, 'long', info.title.length > 11);
     cache.text(this.stage, info.stageLine);
     cache.toggle(this.stage, 'empty', !info.stageLine);
     cache.html(this.track, this.trackMarkup(info));

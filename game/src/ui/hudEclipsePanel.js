@@ -64,7 +64,8 @@ export class HudEclipsePanel {
     cache.width(this.fill, readout.share);
     cache.toggle(this.root, 'ticking', readout.ticking);
     cache.toggle(this.root, 'totality', calendar.isTotality());
-    const cover = game.darkness.readout();
+    // The huge HUD says who can see her in the dark only while it matters: wanted, or inside the moon's shadow.
+    const cover = game.hud.essentials && game.wanted.stars === 0 && !calendar.isTotality() ? null : game.darkness.readout();
     cache.toggle(this.cover, 'visible', cover !== null);
     if (cover) {
       cache.text(this.cover, cover.hidden ? `◐ ${cover.text}` : `☀ ${cover.text}`);

@@ -8,7 +8,7 @@
 /* The logo: the title set across a sun with the moon three quarters over it. */
 .logo-disc { position: absolute; left: 15vh; top: -2.5vh; width: 15vh; height: 15vh; border-radius: 50%; background: radial-gradient(circle at 50% 50%, #fff3c8 0%, #ffcf6b 55%, #ffb547 100%); box-shadow: 0 0 6vh rgba(255, 181, 71, 0.8); overflow: hidden; }
 .logo-disc::after { content: ""; position: absolute; left: 3.3vh; top: 2.6vh; width: 15.6vh; height: 15.6vh; border-radius: 50%; background: #17122b; }
-.menu header p { position: relative; margin: 1.6vh 0 0; font-size: 2.5vh; letter-spacing: 0.06vh; white-space: nowrap; text-transform: uppercase; color: var(--amber); text-shadow: 0 0.2vh 0.4vh var(--ink); }
+.menu header p { position: relative; margin: 1.6vh 0 0; font-size: 2.3vh; line-height: 1.2; letter-spacing: 0.06vh; text-transform: uppercase; color: var(--amber); text-shadow: 0 0.2vh 0.4vh var(--ink); }
 
 /* The items are buttons: a framed plate each in big capitals, the chosen one filled with low-sun amber and
    spelling out what it does. */

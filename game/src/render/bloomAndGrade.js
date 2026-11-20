@@ -17,7 +17,7 @@ void main() {
     + texture2D(frame, vUv + texel * vec2(-1.0, 1.0)) + texture2D(frame, vUv + texel * vec2(1.0, 1.0))) * 0.25;
   float peak = max(mean.r, max(mean.g, mean.b));
   float keep = smoothstep(threshold, threshold * 1.9, peak);
-  gl_FragColor = vec4(min(mean.rgb, vec3(14.0)) * keep, 1.0 - mean.a);
+  gl_FragColor = vec4(min(mean.rgb, vec3(6.0)) * keep, 1.0 - mean.a);
 }`;
 
 /* Halve a picture, each new pixel the mean of the sixteen under it. */

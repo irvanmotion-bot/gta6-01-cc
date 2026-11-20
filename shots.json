@@ -1,6 +1,6 @@
 [
   { "name": "1-eclipse-chase.jpg", "query": "?shot=chase", "wait": 4800 },
   { "name": "2-strand-shootout.jpg", "query": "?shot=bounty", "wait": 4800 },
-  { "name": "3-bravo-workshop.jpg", "query": "?shot=workshop", "wait": 2500 },
-  { "name": "4-pause-menu.jpg", "query": "?shot=pause", "wait": 2500 }
+  { "name": "3-totality-escape.jpg", "query": "?shot=escape", "wait": 4800 },
+  { "name": "4-bravo-workshop.jpg", "query": "?shot=workshop", "wait": 2500 }
 ]

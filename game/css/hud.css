@@ -71,20 +71,25 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .job-fail .job-tag, .job-fail .job-text { color: var(--alarm); }
 .job-fail .job-text { font-size: var(--t9); }
 
-/* The crew, under the job panel: a row for each member with their face, name and role, then the key that calls
-   their favor, its name and whether it is ready */
-.crew-panel { padding: 0.7vh 1.25vh 0.83vh; border-top-width: 0.21vh; }
-.favor { display: flex; align-items: center; gap: 1.05vh; margin-top: 0.55vh; }
-.favor-face { width: 4.8vh; height: 4.8vh; flex: none; image-rendering: pixelated; border-radius: 0.4vh; }
-.favor-text { flex: 1; min-width: 0; line-height: 1.16; }
-.favor-who { font-size: var(--t10); white-space: nowrap; }
-.favor-who b { font-weight: 900; color: #fff; }
-.favor-role { margin-left: 1vh; font-size: var(--t9); letter-spacing: 0.04vh; color: var(--amber); }
-.favor-does { display: flex; align-items: center; gap: 0.9vh; font-size: var(--t9); white-space: nowrap; }
+/* The crew, along the foot of the screen between the radar and the dial, over the record strip: a cell for each
+   member with the key that calls their favor, their name and role, then the favor, whether it is ready, and a bar
+   that fills while it cools down */
+.crew-panel { position: absolute; left: 32.5vh; right: 45.5vh; bottom: 5.1vh; }
+.crew-caption { display: inline-block; padding: 0.3vh 1.1vh 0.2vh; background: var(--panel); border-radius: 0.6vh 0.6vh 0 0; font-size: var(--t8); line-height: 1.2; letter-spacing: 0.04vh; white-space: nowrap; color: var(--amber); }
+.crew-cells { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6vh; }
+.favor { position: relative; min-width: 0; padding: 0.45vh 1vh 0.75vh; box-sizing: border-box; background: var(--panel); border-radius: 0 0.6vh 0.6vh 0.6vh; line-height: 1.2; overflow: hidden; }
+.favor + .favor { border-radius: 0.6vh; }
+.favor-who { display: flex; align-items: center; gap: 0.7vh; font-size: var(--t10); white-space: nowrap; }
 .favor-key { flex: none; width: 2.5vh; height: 2.3vh; display: grid; place-items: center; font-weight: 900; font-size: var(--t9); line-height: 1; color: var(--ink); background: var(--amber); border-radius: 0.4vh; }
-.favor-name { flex: 1; color: var(--cream); }
+.favor-member { font-weight: 900; color: #fff; }
+.favor-role { font-size: var(--t9); letter-spacing: 0.02vh; color: var(--amber); }
+.favor-does { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6vh; font-size: var(--t9); white-space: nowrap; }
+.favor-name { color: var(--cream); }
 .favor-state { font-style: normal; font-weight: 900; color: var(--dim); }
+.favor-track { position: absolute; left: 0; right: 0; bottom: 0; height: 0.42vh; background: rgba(244, 236, 216, 0.2); }
+.favor-track u { display: block; height: 100%; background: var(--alarm); }
 .favor.ready .favor-state { color: var(--good); }
+.favor.ready .favor-track u { background: var(--good); }
 .favor.waiting .favor-state { color: var(--alarm); }
 .favor.locked { opacity: 0.55; }
 
@@ -139,7 +144,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .armor-meter .meter-fill { background: var(--cream); }
 .rank-meter { margin-top: 0.5vh; }
 .rank-meter .meter-head { flex-wrap: wrap; }
-.rank-meter .meter-label { font-weight: 900; }
+.rank-meter .meter-label { font-weight: 900; font-size: var(--t10); letter-spacing: 0.06vh; color: #fff; }
 .rank-meter .meter-track { height: 0.83vh; }
 
 /* Weapon bar, bottom right: the weapon's slot and name, its rounds in big figures, then five silhouettes */
@@ -167,8 +172,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .dispatch-names { min-width: 0; line-height: 1.16; white-space: nowrap; }
 .dispatch-label { font-weight: 900; font-size: var(--t10); letter-spacing: 0.04vh; color: #fff; }
 .dispatch-tier { font-size: var(--t9); letter-spacing: 0.04vh; color: var(--alarm); }
-.unit { display: grid; grid-template-columns: 5.2vh 12.3vh 1fr auto; align-items: baseline; column-gap: 0.7vh; font-size: var(--t9); line-height: 2.45vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.16); white-space: nowrap; }
-.unit i { font-style: normal; font-size: var(--t8); letter-spacing: 0.02vh; color: var(--dim); }
+.unit { display: grid; grid-template-columns: 6.3vh 11.9vh 1fr auto; align-items: baseline; column-gap: 0.6vh; font-size: var(--t9); line-height: 2.45vh; border-top: 0.21vh solid rgba(244, 236, 216, 0.16); white-space: nowrap; }
+.unit i { font-style: normal; font-weight: 900; font-size: var(--t8); letter-spacing: 0.04vh; color: var(--cream); }
 .unit b { font-weight: 900; color: #fff; }
 .unit em { font-style: normal; color: var(--amber); overflow: hidden; }
 .unit u { text-decoration: none; text-align: right; color: #fff; }
@@ -279,11 +284,20 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 #hud.essentials .hud-panel { padding: 0.4vh 0.8vh 0.5vh; border-top-width: 0.3vh; }
 #hud.essentials .job-face, #hud.essentials .job-track, #hud.essentials .job-stage, #hud.essentials .job-limit, #hud.essentials .job-fail, #hud.essentials .job-tag,
 #hud.essentials .crew-panel, #hud.essentials .dialogue, #hud.essentials .rank-meter, #hud.essentials .wanted-sight, #hud.essentials .escape-meter,
-#hud.essentials .eclipse-disc, #hud.essentials .eclipse-track, #hud.essentials .eclipse-line, #hud.essentials .dispatch-panel, #hud.essentials .race-board,
+#hud.essentials .eclipse-disc, #hud.essentials .eclipse-track, #hud.essentials .eclipse-line, #hud.essentials .dispatch-panel,
 #hud.essentials .weapon-slots, #hud.essentials .weapon-slot-line, #hud.essentials .place-line, #hud.essentials .place-district, #hud.essentials .radio-line,
 #hud.essentials .gps-panel, #hud.essentials .vehicle-name, #hud.essentials .notifications, #hud.essentials .meter-label { display: none; }
 #hud.essentials .job-header { font-size: var(--t9); letter-spacing: 0; }
-#hud.essentials .job-title { font-weight: 700; font-size: var(--t14); line-height: 1.12; }
+#hud.essentials .job-title { font-weight: 700; font-size: var(--t14); line-height: 1.12; white-space: normal; }
+#hud.essentials .job-title.long { font-size: var(--t11); line-height: 1.2; }
+/* A street race keeps its running order: place and name, a row a car. At the wheel the dial stands alone. */
+#hud.essentials .race-board { margin-top: 0; }
+#hud.essentials .race-board .panel-caption { font-size: var(--t8); letter-spacing: 0; }
+#hud.essentials .racer { gap: 0.7vh; font-size: var(--t9); line-height: 2.05vh; }
+#hud.essentials .racer b { font-weight: 700; letter-spacing: 0; }
+#hud.essentials .weapon-bar:has(~ .vehicle-panel.visible), #hud.essentials .gear-box { display: none; }
+#hud.essentials .speed-row { justify-content: space-between; }
+#hud.essentials .vehicle-panel { margin-top: 0; border-top: 0.3vh solid var(--amber); }
 #hud.essentials .job-line { margin-top: 0.1vh; font-size: var(--t9); line-height: 1.12; }
 #hud.essentials .job-next .job-text { color: var(--amber); }
 #hud.essentials .eclipse-panel { display: block; }

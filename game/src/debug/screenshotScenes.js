@@ -2,6 +2,7 @@
 // own systems, plays the real simulation forward for a few seconds with keys held down, then freezes the frame.
 import { LANDMARKS } from '../world/cityLayout.js';
 import { VANE_CAPOS } from '../activities/vaneBounties.js';
+import { STREET_RACES } from '../activities/streetRaces.js';
 import { tryEnterVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { GETAWAY_PAINT, STORY_MISSIONS } from '../missions/storyMissions.js';
@@ -66,12 +67,12 @@ function hourOfCoverage(share) {
   return CONTACTS.first + (CONTACTS.totalityStart - CONTACTS.first) * share;
 }
 
-/** Start the last job on eclipse afternoon and play its opening steps until the one of `kind` is running. */
-function startHeist(game, untilKind) {
+/** Start the last job on eclipse afternoon and play its steps until the one of that kind, or named that, is running. */
+function startHeist(game, until) {
   game.missions.start(missionById('totality'));
-  for (let guard = 0; guard < 12 && game.missions.active.step.kind !== untilKind; guard += 1) game.missions.advance();
-  // Skipping past the boardwalk fight leaves its lookouts dealt with, as playing it would.
-  if (untilKind !== 'eliminate') game.gunmen.removeTagged(game.missions.active.tag);
+  for (let guard = 0; guard < 24 && game.missions.active.step.kind !== until && game.missions.active.step.stage !== until; guard += 1) game.missions.advance();
+  // Skipping past a fight leaves its gunmen dealt with, as playing it would.
+  if (until !== 'eliminate') game.gunmen.removeTagged(game.missions.active.tag);
   play(game, 0.05);
   game.hud.clearSpeech();
 }
@@ -308,6 +309,75 @@ function bountyScene(game) {
   game.input.buttons[2] = false;
 }
 
+/**
+ * The getaway under the black sun: the vault is open, the ledger is in the Rayo, and Nova runs for Casa Reyes down
+ * Penumbra Avenue with her lights out, the corona over the dark towers ahead, while Saros P.D. hunts the streets.
+ */
+function escapeScene(game) {
+  const seconds = 1.5;
+  const speed = 27;
+  const lane = 4 * 80 + 2.9;
+  const zEnd = 446;
+  const z0 = zEnd - speed * seconds;
+  loadCity(game, stagedSave(9), lane - 3, z0, 0);
+  startHeist(game, 'Escape to Casa Reyes');
+  // The getaway Rayo she left at the door of the Trust: hers to take again, a block on.
+  const rayo = game.vehicles.spawn('rayo', lane, z0, 0, GETAWAY_PAINT);
+  rayo.parked = true;
+  rayo.stolen = true;
+  tryEnterVehicle(game);
+  play(game, 0.05);
+  game.hud.clearSpeech();
+  game.calendar.setHour(CONTACTS.totalityStart + (CONTACTS.totalityEnd - CONTACTS.totalityStart) * 0.42);
+  game.player.cash = 41250;
+  rayo.velZ = speed;
+  clearLane(game, rayo, lane, z0 - 60, z0 + 160);
+  game.wanted.setStars(4, 99);
+  // She runs dark: no headlights, so nothing gives her away but the lamps and the searchlight.
+  if (game.darkness.headlightsOn) game.darkness.toggleHeadlights();
+  // A cruiser comes up the avenue at her, another turns in from the next street, an interceptor closes from behind,
+  // and the helicopter hangs over the road ahead with its searchlight on her.
+  spawnPursuit(game, 'patrol', 'centinela', lane - 5.8, zEnd + 40, Math.PI, 13);
+  spawnPursuit(game, 'patrol', 'centinela', lane - 30, 480 + 2.9, Math.PI / 2, 12);
+  spawnPursuit(game, 'interceptor', 'lince', lane - 0.5, z0 - 46, 0, 22);
+  const helicopter = game.police.helicopter;
+  helicopter.scramble();
+  helicopter.orbit = 1.35;
+  helicopter.mesh.position.set(lane + 5, 15, zEnd + 30);
+  play(game, seconds, () => {
+    if (rayo.speed < speed + 1) game.input.held.add('KeyW'); else game.input.held.delete('KeyW');
+    helicopter.cooldown = 1;
+    game.player.invulnerable = 1;
+    game.camera.idleLook = 2;
+    game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
+  });
+}
+
+/**
+ * A street race after dark: the Orrery Circuit on a week night, moments off the line. Nova's Corona GT is in the
+ * pack down the north side of the square, under the lamps and the neon, with the first checkpoint's beam ahead.
+ */
+function raceScene(game) {
+  const event = STREET_RACES.find((entry) => entry.id === 'orreryCircuit');
+  const seconds = Number(sceneOption('at')) || 2.6;
+  loadCity(game, stagedSave(6), event.x - 5, event.z, event.heading);
+  game.calendar.setHour(21.4);
+  game.player.cash = 18650;
+  const ride = game.vehicles.spawn('coronaGT', event.x, event.z, event.heading, '#ff3b30');
+  ride.parked = true;
+  ride.stolen = true;
+  tryEnterVehicle(game);
+  play(game, 0.2);
+  game.hud.clearSpeech();
+  game.races.start(event);
+  // The lights count down with the grid held; then she floors it with the others down the first straight.
+  play(game, 3.45 + seconds, () => {
+    game.input.held.add('KeyW');
+    game.camera.idleLook = 2;
+    game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
+  });
+}
+
 /** Bravo's workshop on eclipse eve: the Rayo on the turntable, the upgrade list and its prices beside it. */
 function workshopScene(game) {
   const bay = LANDMARKS.garage.kerb;
@@ -355,9 +425,9 @@ function pauseScene(game) {
   game.setState('pause');
 }
 
-const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
-/** The HUD SIZE each scene is taken at: the cover at the standard size, the on-foot shot with only the essentials. */
-const SCENE_HUD_SIZE = { bounty: 'huge' };
+const SCENES = { chase: chaseScene, bounty: bountyScene, race: raceScene, escape: escapeScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+/** The HUD SIZE each scene is taken at: the cover at the standard size, the smaller shots with only the essentials. */
+const SCENE_HUD_SIZE = { bounty: 'huge', race: 'huge', escape: 'huge' };
 
 export function stageScreenshot(game, name) {
   // Every scene is drawn at twice the window's pixels (the RENDER SCALE setting) and with the HUD SIZE that suits it;

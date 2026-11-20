@@ -167,7 +167,7 @@ export class Menus {
   /** The start screen's side of the map: what the week holds, as one figure a line. */
   weekMarkup() {
     const lines = [[STORY_MISSIONS.length, 'STORY JOBS'], [STREET_RACES.length, 'STREET RACES'], [VANE_CAPOS.length, 'BOUNTIES'], [12, 'CORONA TOKENS'], [5, 'WEAPONS'], [3, 'CREW FAVORS']];
-    return `<div class="menu-record"><div class="record-rank">ECLIPSE WEEK IN ${CITY_NAME.toUpperCase()}</div>
+    return `<div class="menu-record"><div class="record-rank">${CITY_NAME.toUpperCase()} THIS WEEK</div>
       <div class="record-rows">${lines.map(([count, label]) => `<div><span>${label}</span><b>${count}</b></div>`).join('')}</div>
       <div class="record-title">TOTALITY · FRIDAY 17:12</div></div>`;
   }

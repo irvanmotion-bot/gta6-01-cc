@@ -39,8 +39,9 @@ export function flashSirenFlares(lights, phase) {
 
 /** Headlight beams and tail flares fade in with the night for every car at once. */
 export function setVehicleLightsNight(night) {
-  beamMaterial.opacity = night * 0.4;
-  tailFlareMaterial.opacity = night * 0.45;
+  // Beams and flares are added to the frame as light: a little goes a long way in the dark.
+  beamMaterial.opacity = night * 0.11;
+  tailFlareMaterial.opacity = night * 0.5;
   // By day the beams and tail glows are not drawn at all.
   beamMaterial.visible = night > 0.02;
   tailFlareMaterial.visible = night > 0.02;
@@ -62,9 +63,11 @@ export class PlayerHeadlamp {
     if (!on) return;
     const fx = vehicle.forwardX();
     const fz = vehicle.forwardZ();
-    this.lamp.position.set(vehicle.position.x + fx * 1.2, 1.3, vehicle.position.z + fz * 1.2);
-    this.lamp.target.position.set(vehicle.position.x + fx * 22, 0, vehicle.position.z + fz * 22);
-    this.lamp.intensity = night * 480;
+    // The lamp sits on the nose, clear of the bonnet, and throws its light well down the road.
+    const nose = vehicle.spec.length / 2 + 0.25;
+    this.lamp.position.set(vehicle.position.x + fx * nose, 0.8, vehicle.position.z + fz * nose);
+    this.lamp.target.position.set(vehicle.position.x + fx * 30, 0, vehicle.position.z + fz * 30);
+    this.lamp.intensity = night * 340;
   }
 }
 

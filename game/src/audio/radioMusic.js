@@ -3,13 +3,13 @@
 // station moves on to its next track when one has played through. R in a car tunes to the next station.
 
 /**
- * Each station: its frequency, who is on air, its tempo, scale and lead voice, and its playlist. A track has a
+ * Each station: its frequency, the DJ who hosts it and their show, its tempo, scale and lead voice, and its playlist. A track has a
  * title, an artist, the key it is played in (`shift`, semitones from the station's root), its bass line and how
  * busy its lead is.
  */
 export const STATIONS = [
   {
-    name: 'Penumbra FM', frequency: '98.6', host: 'Jazz counts down to totality', bpm: 104, root: 45, scale: [0, 3, 5, 7, 10, 12, 15], wave: 'sawtooth',
+    name: 'Penumbra FM', frequency: '98.6', dj: 'DJ Jazz', host: 'Jazz counts down to totality', bpm: 104, root: 45, scale: [0, 3, 5, 7, 10, 12, 15], wave: 'sawtooth',
     tracks: [
       { title: 'Shadow Band', artist: 'The Gnomons', shift: 0, bass: [0, 0, 5, 5, 3, 3, 7, 7], leadEvery: 2, density: 0.62 },
       { title: 'Diamond Ring', artist: 'Baily and the Beads', shift: 3, bass: [0, 7, 5, 7, 0, 7, 10, 7], leadEvery: 2, density: 0.7 },
@@ -18,7 +18,7 @@ export const STATIONS = [
     ],
   },
   {
-    name: 'Radio Azimuth', frequency: '101.3', host: 'Latin brass, all afternoon', bpm: 122, root: 48, scale: [0, 2, 4, 7, 9, 12, 14], wave: 'triangle',
+    name: 'Radio Azimuth', frequency: '101.3', dj: 'DJ Solana', host: 'Latin brass, all afternoon', bpm: 122, root: 48, scale: [0, 2, 4, 7, 9, 12, 14], wave: 'triangle',
     tracks: [
       { title: 'Mediodía en Saros', artist: 'Los Solsticios', shift: 0, bass: [0, 7, 0, 7, 5, 9, 5, 7], leadEvery: 1, density: 0.62 },
       { title: 'Avenida Zenit', artist: 'Orquesta Perihelio', shift: 2, bass: [0, 4, 7, 4, 5, 9, 7, 5], leadEvery: 1, density: 0.7 },
@@ -26,7 +26,7 @@ export const STATIONS = [
     ],
   },
   {
-    name: 'Umbra After Hours', frequency: '88.1', host: 'Slow grooves for the dark', bpm: 84, root: 41, scale: [0, 3, 7, 10, 12, 14, 15], wave: 'square',
+    name: 'Umbra After Hours', frequency: '88.1', dj: 'DJ Nadir', host: 'Slow grooves for the dark', bpm: 84, root: 41, scale: [0, 3, 7, 10, 12, 14, 15], wave: 'square',
     tracks: [
       { title: 'Totality Blues', artist: 'Nadir Quartet', shift: 0, bass: [0, 0, 0, 3, 5, 5, 5, 7], leadEvery: 4, density: 0.62 },
       { title: 'Low Sun', artist: 'Syzygy', shift: 5, bass: [0, 3, 0, 3, 7, 5, 3, 0], leadEvery: 4, density: 0.7 },
@@ -80,7 +80,7 @@ export class RadioMusic {
     const station = this.current();
     if (!station) return null;
     const track = station.tracks[this.track % station.tracks.length];
-    return { station: station.name, frequency: station.frequency, host: station.host, title: track.title, artist: track.artist, number: (this.track % station.tracks.length) + 1, count: station.tracks.length };
+    return { station: station.name, frequency: station.frequency, dj: station.dj, host: station.host, title: track.title, artist: track.artist, number: (this.track % station.tracks.length) + 1, count: station.tracks.length };
   }
 
   /** Tune to the next station, which starts on its next track; returns it for the HUD. */

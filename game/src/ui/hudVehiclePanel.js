@@ -46,7 +46,7 @@ export class HudVehiclePanel {
     const cache = this.cache;
     const playing = this.game.audio.radio.nowPlaying();
     cache.toggle(this.radio, 'off', !playing);
-    cache.text(this.station, playing ? `RADIO · ${playing.station.toUpperCase()} ${playing.frequency}` : 'RADIO OFF · R TO TUNE');
+    cache.text(this.station, playing ? `RADIO · ${playing.station.toUpperCase()} ${playing.frequency} · ${playing.dj.toUpperCase()}` : 'RADIO OFF · R TO TUNE');
     cache.text(this.track, playing ? `♪ ${playing.title.toUpperCase()} · ${playing.artist.toUpperCase()}` : '');
   }
 
