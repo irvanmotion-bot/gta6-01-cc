@@ -1,6 +1,5 @@
-// The HUD's weapon bar, bottom right: which of the five slots is in hand, the weapon's name with the rounds in the
-// clip and in reserve in big figures, then the five slots with the silhouette of each weapon and its number key:
-// the one in hand lit, the ones not yet bought dimmed and marked as locked.
+// The HUD's weapon bar, bottom right: five slots with the silhouette of each weapon and its number key, the one in
+// hand lit, the ones not yet bought dimmed, and the rounds in the clip and in reserve in big figures beside its name.
 import { createElement } from './domBuilder.js';
 import { WEAPON_ICON_SIZE, drawWeaponIcon } from './weaponIcons.js';
 
@@ -12,7 +11,6 @@ export class HudWeaponBar {
     this.game = game;
     this.cache = cache;
     const root = createElement('div', 'hud-panel weapon-bar', parent);
-    this.caption = createElement('div', 'panel-caption weapon-caption', root);
     const line = createElement('div', 'weapon-line', root);
     this.name = createElement('span', 'weapon-name', line);
     this.ammo = createElement('b', 'weapon-ammo', line);
@@ -30,20 +28,14 @@ export class HudWeaponBar {
   update() {
     const cache = this.cache;
     const weapons = this.game.weapons;
-    const slots = weapons.slots();
-    let inHand = 1;
-    let locked = 0;
-    slots.forEach((slot, index) => {
+    weapons.slots().forEach((slot, index) => {
       const entry = this.slots[index];
       cache.toggle(entry.node, 'owned', slot.owned);
       cache.toggle(entry.node, 'current', slot.current);
-      if (slot.current) inHand = slot.key;
-      if (!slot.owned) locked += 1;
       const color = slot.current ? INK : CREAM;
       if (entry.drawn !== color) { entry.drawn = color; drawWeaponIcon(entry.icon, entry.id, color); }
     });
     const status = weapons.status();
-    cache.text(this.caption, locked > 0 ? `WEAPON · SLOT ${inHand} OF ${slots.length} · ${locked} LOCKED` : `WEAPON · SLOT ${inHand} OF ${slots.length}`);
     cache.text(this.name, status.name.toUpperCase());
     cache.text(this.ammo, status.ammo);
   }

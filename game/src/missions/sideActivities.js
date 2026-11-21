@@ -1,4 +1,4 @@
-// Things to do between missions: taxi fares in a Saros Cab and the twelve hidden Corona Tokens.
+// Things to do between missions: taxi fares in a Saros Cab, the twelve hidden Corona Tokens and cash for powerslides.
 import { CITY } from '../core/config.js';
 import { SeededRandom, distance2D } from '../core/random.js';
 import { blockRect, districtNameAt, kerbSpot } from '../world/cityLayout.js';
@@ -11,6 +11,7 @@ export class SideActivities {
     this.tokens = new Set();
     this.fare = null;
     this.faresDone = 0;
+    this.airTime = 0;
   }
 
   reset(tokens = [], faresDone = 0) {
@@ -78,12 +79,9 @@ export class SideActivities {
     const fare = this.fare;
     if (!fare) return null;
     const pickup = fare.stage === 'pickup';
-    const rows = [['NOW', pickup ? 'Stop at the yellow marker for your fare' : `Drive the fare to ${fare.to}`], ['NEXT', pickup ? `DROP OFF IN ${fare.to.toUpperCase()}` : 'THE NEXT FARE']];
-    if (!pickup) rows.push(['TIME LIMIT', `${Math.max(0, Math.ceil(fare.timer))} S · FARE WALKS`]);
-    rows.push(['PAYS', `$${fare.pay} + TIP FOR SPEED`]);
     return {
-      header: `SAROS CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STEP 1 OF 2 · PICK UP' : 'STEP 2 OF 2 · DROP OFF', share: pickup ? 0.1 : 0.55,
-      rows, accent: `PAYS $${fare.pay} + TIP`, urgent: !pickup && fare.timer < 20, kind: 'fare',
+      header: `SAROS CAB · FARE ${this.faresDone + 1}`, title: 'Taxi duty', stageLine: pickup ? 'STAGE 1/2 · PICK UP' : 'STAGE 2/2 · DROP OFF', share: pickup ? 0.1 : 0.55,
+      objective: pickup ? 'Stop at the yellow marker for your fare' : `Drive the fare to ${fare.to}`, next: pickup ? `Drop off in ${fare.to}` : `$${fare.pay} + tip for speed`, timer: pickup ? null : fare.timer, counting: 'down',
     };
   }
 
@@ -103,6 +101,7 @@ export class SideActivities {
     const vehicle = player.vehicle;
     if (game.input.wasPressed('KeyT')) this.toggleTaxi();
     if (vehicle && vehicle.spec.taxi && !this.fare && !game.missions.active) game.hud.hint('Press T to take taxi fares');
+    this.updateStunts(dt, vehicle);
     if (!this.fare) return;
     if (!vehicle || !vehicle.spec.taxi) { this.fare = null; game.hud.notify('Taxi duty off.'); return; }
     const fare = this.fare;
@@ -127,6 +126,20 @@ export class SideActivities {
     }
   }
 
+  /** A long powerslide pays a little stunt money. */
+  updateStunts(dt, vehicle) {
+    if (vehicle && vehicle.skidding && Math.abs(vehicle.speed) > 12) {
+      this.airTime += dt;
+    } else {
+      if (this.airTime > 1.6) {
+        const bonus = Math.round(this.airTime * 40);
+        this.game.player.addCash(bonus);
+        this.game.hud.notify(`Powerslide ${this.airTime.toFixed(1)}s · +$${bonus}`);
+        this.game.cred.earn(Math.round(this.airTime * CRED_AWARDS.powerslide), 'powerslide');
+      }
+      this.airTime = 0;
+    }
+  }
 }
 
 /** Where the Corona Tokens hide: [block i, block j, offset x, offset z] from the block's north-west kerb. */

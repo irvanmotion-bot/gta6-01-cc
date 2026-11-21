@@ -1,10 +1,9 @@
-// The shop counter shared by Ammo Amigo and Bravo's workshop: the shop's name and Nova's cash, then numbered rows
-// in big type, each with its name, its state (the tier it sells, a car's condition), what it does and its price,
-// bought by key or click. The gun counter is a card in the middle of the screen; the workshop's stands down the
-// right, beside the car on its turntable, whose name plate and spec sheet sit under the car.
+// The shop counter shared by Ammo Amigo and Bravo's workshop: numbered rows with a price, bought by key or click.
+// The gun counter is a card in the middle of the screen; the workshop's fills the right half, beside the car on its
+// turntable, with the car's spec sheet above the upgrade rows.
 import { createElement, formatCash } from './domBuilder.js';
 
-/** The pictures on the workshop's rows, drawn on a 48 by 48 grid: a spanner, an engine, a shield, a wheel, a flame. */
+/** The pictures on the workshop's cards, drawn on a 48 by 48 grid: a spanner, an engine, a shield, a wheel, a flame. */
 const UPGRADE_ICONS = {
   repair: '<path d="M31 4a11 11 0 0 0-10 15L5 35l8 8 16-16a11 11 0 0 0 15-10l-7 6-7-2-2-7 6-7a11 11 0 0 0-3-3z"/>',
   engine: '<path d="M14 8h18v6h-6v4h10l4 5h4v14h-4l-4 5H14l-6-6H4V20h4v-2h10v-4h-4z"/>',
@@ -52,13 +51,13 @@ export class CounterMenu {
     this.game.setState('play');
   }
 
-  /**
-   * The car on the turntable, as the plate under it: its name, its class and condition, and four bars with their
-   * figures (top speed, acceleration, grip, armor) that move as upgrades are fitted.
-   */
-  plateMarkup(sheet) {
+  /** The car on the turntable: its name plate at the foot of the picture and four stat bars above the rows. */
+  specSheetMarkup(sheet) {
     const bars = sheet.bars.map(([label, value, share]) => `<div class="spec-bar"><span>${label}</span><i><u style="width:${Math.round(Math.min(1, share) * 100)}%"></u></i><b>${value}</b></div>`).join('');
-    return `<div class="showroom-plate"><small>ON THE TURNTABLE</small><b>${sheet.name}</b><span>${sheet.kind} · CONDITION ${sheet.condition}%</span><div class="spec-bars">${bars}</div></div>`;
+    return {
+      plate: `<div class="showroom-plate"><small>ON THE TURNTABLE</small><b>${sheet.name}</b><span>${sheet.kind} · CONDITION ${sheet.condition}%</span></div>`,
+      bars: `<div class="spec-bars">${bars}</div>`,
+    };
   }
 
   /** Three pips for an upgrade line: filled for every tier already fitted. */
@@ -68,19 +67,17 @@ export class CounterMenu {
   }
 
   /**
-   * One row of a counter: its number key (over a picture of the part, in the workshop), the name in big capitals,
-   * the row's state when it has one (TIER 2 OF 3 with a pip per tier fitted, or the car's condition), a line on what
-   * it does or what rank it waits for, and the price.
+   * One line of the workshop as a card: its key, a picture of the part, the name and what it does, three pips for
+   * the tiers fitted and the price of the next one. The repair, which has no tiers, is a wide card across the top.
    */
-  rowMarkup(item, index, cash, pictured) {
-    const state = item.locked ? ' locked' : item.price === null ? ' fitted' : item.price > cash ? ' too-dear' : '';
-    const key = pictured
-      ? `<span class="shop-key pictured"><svg viewBox="0 0 48 48">${UPGRADE_ICONS[item.id] || UPGRADE_ICONS.repair}</svg><u>${index + 1}</u></span>`
-      : `<span class="shop-key">${index + 1}</span>`;
-    const status = item.status ? `<em>${item.status}${this.pipsMarkup(item.tier)}</em>` : '';
-    return `<button class="shop-row${state}" data-item="${item.id}">${key}
-        <span class="shop-label"><b>${item.label.toUpperCase()}</b>${status}<small>${item.locked || item.detail}</small></span>
-        <span class="shop-price">${item.price === null ? (item.sold || 'DONE') : formatCash(item.price)}</span>
+  upgradeCardMarkup(item, index, cash) {
+    const state = item.locked ? ' locked' : item.price > cash ? ' too-dear' : '';
+    return `<button class="shop-row upgrade-card${item.tier === undefined ? ' wide' : ''}${state}" data-item="${item.id}">
+        <span class="shop-key">${index + 1}</span>
+        <svg class="upgrade-icon" viewBox="0 0 48 48">${UPGRADE_ICONS[item.id] || UPGRADE_ICONS.repair}</svg>
+        <span class="shop-label">${item.label}<small>${item.locked || item.detail}</small></span>
+        ${this.pipsMarkup(item.tier)}
+        <span class="shop-price">${item.price === null ? 'MAX' : formatCash(item.price)}</span>
       </button>`;
   }
 
@@ -89,15 +86,23 @@ export class CounterMenu {
     const game = this.game;
     const cash = game.player.cash;
     const showroom = shop.layout === 'showroom';
-    const stock = shop.stock();
-    const rows = stock.map((item, index) => this.rowMarkup(item, index, cash, showroom)).join('');
+    const rows = shop.stock().map((item, index) => (showroom ? this.upgradeCardMarkup(item, index, cash) : `
+      <button class="shop-row${item.locked ? ' locked' : item.price > cash ? ' too-dear' : ''}" data-item="${item.id}">
+        <span class="shop-key">${index + 1}</span>
+        <span class="shop-label">${item.label}<small>${item.locked || item.detail}</small></span>
+        ${this.pipsMarkup(item.tier)}
+        <span class="shop-price">${item.price === null ? '—' : formatCash(item.price)}</span>
+      </button>`)).join('');
+    const sheet = shop.summary ? this.specSheetMarkup(shop.summary()) : { plate: '', bars: '' };
     this.panel.innerHTML = `
-      ${shop.summary ? this.plateMarkup(shop.summary()) : ''}
+      ${sheet.plate}
       <div class="shop-card" style="border-top-color:${shop.accent}">
-        <div class="shop-head"><h2>${shop.title}</h2><div class="shop-cash"><span>CASH</span><b>${formatCash(cash)}</b></div></div>
-        <p class="shop-tag">${shop.tagline} · RANK ${game.cred.rank} ${game.cred.title().toUpperCase()} · KEYS 1 TO ${stock.length} BUY</p>
+        <h2>${shop.title}</h2>
+        <p class="shop-tag">${shop.tagline} · Rank ${game.cred.rank} ${game.cred.title()}</p>
+        <div class="shop-cash"><span>CASH</span><b>${formatCash(cash)}</b></div>
+        ${sheet.bars}
         <div class="shop-rows">${rows}</div>
-        <button class="shop-close" data-close="1">LEAVE · ESC</button>
+        <button class="shop-close" data-close="1">Leave (Esc)</button>
       </div>`;
   }
 

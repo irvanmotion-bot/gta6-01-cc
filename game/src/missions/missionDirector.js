@@ -3,7 +3,6 @@
 import { CHARACTERS, SETUP_JOB_COUNT, STORY_MISSIONS } from './storyMissions.js';
 import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
 import { CRED_AWARDS } from '../progression/streetCred.js';
-import { completionPercent } from '../progression/completionTracker.js';
 import { leaveVehicle } from '../vehicles/carjacking.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
 import { SeededRandom, distance2D } from '../core/random.js';
@@ -14,14 +13,12 @@ export class MissionDirector {
     this.rng = new SeededRandom(60606);
     this.completed = new Set();
     this.active = null;
-    this.passed = null;
     this.cooldown = 0;
   }
 
   reset(completed = []) {
     this.abandon();
     this.completed = new Set(completed);
-    this.passed = null;
   }
 
   /** The jobs on offer now: not yet passed, with everything they require passed, on or after the day they open. */
@@ -80,10 +77,7 @@ export class MissionDirector {
   start(mission) {
     const game = this.game;
     const stages = mission.steps.filter((step) => step.stage).map((step) => step.stage);
-    this.active = { mission, index: -1, step: null, timer: null, vehicle: null, tag: mission.id, remaining: [], targets: [], total: 0, progress: 0, stages, stage: 0, number: STORY_MISSIONS.indexOf(mission) + 1, elapsed: 0 };
-    this.passed = null;
-    // Where the job stops racing the eclipse: the step that waits for the dark.
-    this.active.darkStep = mission.steps.findIndex((step) => step.kind === 'awaitTotality');
+    this.active = { mission, index: -1, step: null, timer: null, vehicle: null, tag: mission.id, remaining: [], targets: [], total: 0, progress: 0, stages, stage: 0, number: STORY_MISSIONS.indexOf(mission) + 1 };
     if (mission.hour !== undefined) game.calendar.setHour(mission.hour);
     game.hud.banner(mission.title.toUpperCase(), `Job ${this.active.number} · ${CHARACTERS[mission.giver].name} · reward $${mission.reward.toLocaleString('en-US')}`, '#ffb547');
     game.audio.menuSelect();
@@ -178,65 +172,6 @@ export class MissionDirector {
     };
   }
 
-  /**
-   * True while the job in hand must be done before the sun goes out: every step of the heist up to the one that
-   * waits for the dark at the vault door. Totality falling during one of them fails the job.
-   */
-  underEclipseDeadline() {
-    const run = this.active;
-    return Boolean(run && run.mission.deadline === 'totality' && run.index < run.darkStep);
-  }
-
-  /**
-   * The clock the job panel prints as TIME LIMIT, with what it runs to: a step's own timer, or the seconds left
-   * until totality while the heist is under its deadline. Null when nothing is counting.
-   */
-  timeLimit() {
-    const run = this.active;
-    if (!run || !run.step) return null;
-    if (run.timer !== null) return { seconds: run.timer, until: 'ON THE CLOCK' };
-    if (this.underEclipseDeadline() || run.step.kind === 'awaitTotality') {
-      const seconds = this.game.calendar.secondsToTotality();
-      if (seconds !== null) return { seconds, until: 'TOTALITY' };
-    }
-    return null;
-  }
-
-  /**
-   * The job just passed, as the job panel shows it for a few seconds: JOB PASSED over its name and the time it
-   * took, then what it paid in cash and cred, the job that comes next and the slot the autosave went to.
-   */
-  resultInfo() {
-    const done = this.passed;
-    if (!done || this.active || done.age > RESULT_SECONDS) return null;
-    const game = this.game;
-    const giver = CHARACTERS[done.mission.giver];
-    const next = this.offers()[0];
-    const waiting = this.waitingForDay();
-    const nextLine = next ? `${next.title.toUpperCase()} · ${CHARACTERS[next.giver].name}` : waiting ? `${waiting.title.toUpperCase()} · OPENS ${ECLIPSE_WEEK[waiting.day - 1].short}` : 'THE CITY IS YOURS';
-    const minutes = Math.floor(done.seconds / 60);
-    const reward = `+$${done.mission.reward.toLocaleString('en-US')}`;
-    return {
-      header: `STORY JOB ${done.number}/${STORY_MISSIONS.length} · ${giver.name}`, title: 'JOB PASSED', stageLine: `${done.mission.title.toUpperCase()} · DONE IN ${minutes}:${String(Math.floor(done.seconds % 60)).padStart(2, '0')}`,
-      steps: done.steps, stepsDone: done.steps, share: 1, face: giver.name, faceColor: giver.color,
-      rows: [['REWARD', reward], ['CRED', `+${done.mission.cred} · RANK ${game.cred.rank} ${game.cred.title().toUpperCase()}`], ['NEXT JOB', nextLine], ['SAVED', `SLOT ${game.saveSlot} · ${completionPercent(game)}% COMPLETE`]],
-      accent: `${reward} · +${done.mission.cred} CRED`, kind: 'result',
-    };
-  }
-
-  /** Everything that fails the step in hand, as the job panel lists it after FAIL IF. */
-  failConditions() {
-    const run = this.active;
-    if (!run || !run.step) return [];
-    const list = [];
-    if (run.timer !== null) list.push('TIME RUNS OUT');
-    if (this.underEclipseDeadline()) list.push('TOTALITY COMES FIRST');
-    if (run.step.kind === 'awaitTotality') list.push('THE SUN COMES BACK');
-    if (run.vehicle) list.push(`${run.vehicle.spec.name.toUpperCase()} WRECKED`);
-    list.push('ARRESTED', 'WIPED OUT');
-    return list;
-  }
-
   objectiveText() {
     const run = this.active;
     if (!run || !run.step) return '';
@@ -255,7 +190,6 @@ export class MissionDirector {
     const game = this.game;
     const player = game.player;
     this.cooldown -= dt;
-    if (this.passed) this.passed.age += dt;
     if (!this.active) {
       if (this.cooldown > 0 || !player.alive || game.races.active) return;
       for (const mission of this.offers()) {
@@ -270,14 +204,11 @@ export class MissionDirector {
     const step = run.step;
     const px = player.position.x;
     const pz = player.position.z;
-    run.elapsed += dt;
     if (run.timer !== null) {
       run.timer -= dt;
       if (run.timer <= 0) { this.fail('You ran out of time.'); return; }
     }
     if (run.vehicle && run.vehicle.dead) { this.fail(`The ${run.vehicle.spec.name} was destroyed.`); return; }
-    // The heist races the moon: the vault door must be hers before the sun goes out.
-    if (this.underEclipseDeadline() && ['totality', 'waning', 'after'].includes(game.calendar.phase())) { this.fail('Totality came before you held the vault door.'); return; }
 
     if (step.kind === 'steal') {
       game.markers.show(run.vehicle.position.x, run.vehicle.position.z, '#4dabf7', 2.6, 10);
@@ -405,7 +336,6 @@ export class MissionDirector {
   pass() {
     const game = this.game;
     const mission = this.active.mission;
-    this.passed = { mission, number: this.active.number, steps: this.active.stages.length, seconds: this.active.elapsed, age: 0 };
     this.completed.add(mission.id);
     this.cleanup();
     this.cooldown = 5;
@@ -424,7 +354,5 @@ export class MissionDirector {
 }
 
 const OBJECTIVE_COLOR = '#ffb547';
-/** How long the job panel keeps JOB PASSED and its rewards up. */
-const RESULT_SECONDS = 9;
 /** How many times faster the clock runs while Nova waits at the door for the dark. */
 const TOTALITY_RUSH = 12;

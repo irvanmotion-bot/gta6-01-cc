@@ -5,23 +5,14 @@ import { CITY } from '../core/config.js';
 import { CONTACTS } from '../eclipse/eclipseCalendar.js';
 import { blockRect, kerbSpot, LANDMARKS } from '../world/cityLayout.js';
 
-/**
- * The cast: the colour of each speaker's name and portrait, their part in the story as the dialogue box prints it
- * beside their name, and the line under their name in the atlas.
- */
+/** The cast: the colour of each speaker's name and portrait, and the line under their name in the atlas. */
 export const CHARACTERS = {
-  nova: { name: 'NOVA', color: '#ff9e7a', part: 'THE DRIVER', role: 'Nova Reyes · back in town' },
-  bravo: { name: 'TÍO BRAVO', color: '#ffb547', part: 'CREW MECHANIC', role: 'Bravo Motors · workshop' },
-  jazz: { name: 'JAZZ', color: '#f4ecd8', part: 'CREW HACKER', role: 'Penumbra FM · the city\'s ear' },
-  ines: { name: 'DOC INÉS', color: '#cfe8d8', part: 'CREW MEDIC', role: 'Avocet Medical · night clinic' },
-  vane: { name: 'CASSIUS VANE', color: '#e3c06a', part: 'THE BANKER', role: 'Orrery Trust · owns the debt' },
+  nova: { name: 'NOVA', color: '#ff9e7a', role: 'Nova Reyes · back in town' },
+  bravo: { name: 'TÍO BRAVO', color: '#ffb547', role: 'Bravo Motors · workshop' },
+  jazz: { name: 'JAZZ', color: '#f4ecd8', role: 'Penumbra FM · the city\'s ear' },
+  ines: { name: 'DOC INÉS', color: '#cfe8d8', role: 'Avocet Medical · night clinic' },
+  vane: { name: 'CASSIUS VANE', color: '#e3c06a', role: 'Orrery Trust · owns the debt' },
 };
-
-/** The part a speaker plays, by the name hud.say receives; '' for a voice with no part in the crew's story. */
-export function partOfSpeaker(name) {
-  const entry = Object.values(CHARACTERS).find((character) => character.name === name);
-  return entry ? entry.part : '';
-}
 
 /** A spot on one sidewalk of block (i, j): side 'n', 's', 'e' or 'w', `t` of the way along it. */
 function sidewalk(i, j, side, t) {
@@ -44,8 +35,7 @@ export const GETAWAY_PAINT = '#ec2f0a';
 
 /**
  * Each job: who gives it and where, the day of eclipse week it opens on, what it needs done first, its cash and
- * cred, and its steps. A step with `stage` opens a new stage of the job, which the HUD counts ("STEP 2 OF 3").
- * A job with `deadline: 'totality'` fails if the sun goes out before its awaitTotality step is reached.
+ * cred, and its steps. A step with `stage` opens a new stage of the job, which the HUD counts ("STAGE 2/3").
  * Step kinds are run by missionDirector.js: say, give, steal, deliver, goto, collect, race, eliminate, destroy,
  * loseCops, wait and awaitTotality (hold a place until the sun goes out). `onFoot` lets the job's car go.
  */
@@ -153,7 +143,7 @@ export const STORY_MISSIONS = [
     ],
   },
   {
-    id: 'totality', title: 'Totality', day: 5, giver: 'bravo', at: L.garage, requires: ['borrowedSirens', 'lightsOut', 'raceTheShadow', 'nightClinic'], reward: 40000, cred: 1200, hour: CONTACTS.first - 0.02, deadline: 'totality',
+    id: 'totality', title: 'Totality', day: 5, giver: 'bravo', at: L.garage, requires: ['borrowedSirens', 'lightsOut', 'raceTheShadow', 'nightClinic'], reward: 40000, cred: 1200, hour: CONTACTS.first - 0.02,
     brief: 'Friday. First contact is at 16:12. When the sun goes out, the vault of the Orrery Trust opens, and so does the city.',
     steps: [
       { kind: 'say', lines: [['bravo', 'First contact. The moon has started on the sun, and Vane has every guard he owns on the square.'], ['nova', 'Then I clear the door before the dark, and take the vault in it.'], ['bravo', 'The Rayo you stole him is at Strand Parking, in a new coat. His lookouts are on the boardwalk beside it.']] },

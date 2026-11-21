@@ -44,17 +44,7 @@ class Gunman extends CharacterBody {
       this.turnToward(Math.atan2(dx, dz), dt, 9);
       this.strafeClock -= dt;
       if (this.strafeClock <= 0) { this.strafe = -this.strafe; this.strafeClock = 1 + Math.random() * 2.5; }
-      if (this.faction === 'police' && !sees && game.wanted.evading) {
-        // An officer who has lost her makes for the place she was last seen, not for the place she is.
-        const toX = game.wanted.lastSeen.x - this.position.x;
-        const toZ = game.wanted.lastSeen.z - this.position.z;
-        const gap = Math.hypot(toX, toZ);
-        if (gap > 4) {
-          speed = this.spec.speed * 0.7;
-          this.turnToward(Math.atan2(toX, toZ), dt, 9);
-          this.step((toX / gap) * speed * dt, (toZ / gap) * speed * dt);
-        }
-      } else if (!sees || distance > keep + 6) {
+      if (!sees || distance > keep + 6) {
         speed = this.spec.speed;
         this.step((dx / distance) * speed * dt, (dz / distance) * speed * dt);
       } else if (!arresting) {

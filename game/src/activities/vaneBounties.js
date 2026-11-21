@@ -67,15 +67,10 @@ export class VaneBounties {
     if (!hit) return null;
     const { capo, left, total } = hit;
     const guards = Math.max(0, left - 1);
-    const reward = `$${capo.price.toLocaleString('en-US')} + ${CRED_AWARDS.bounty} CRED`;
     return {
-      header: `BOUNTY HUNT ${this.claimed.size + 1}/${VANE_CAPOS.length}`, title: capo.name, stageLine: `${capo.turf} · ${left} OF ${total} GUNS STANDING`,
+      header: `BOUNTY HUNT ${this.claimed.size + 1}/${VANE_CAPOS.length} · JAZZ PAYS $${capo.price.toLocaleString('en-US')}`, title: capo.name, stageLine: `${capo.turf} · ${left} OF ${total} GUNS STANDING`,
       steps: total, stepsDone: total - left, share: (total - left) / total, face: 'VANE CAPO', faceColor: '#ff6a4d',
-      rows: [
-        ['NOW', guards > 0 ? `Take down ${capo.name} and his ${guards} ${guards === 1 ? 'guard' : 'guards'}` : `Take down ${capo.name}`],
-        ['REWARD', reward], ['PAID BY', 'JAZZ · PENUMBRA FM'],
-      ],
-      accent: reward, kind: 'bounty',
+      objective: guards > 0 ? `Take down ${capo.name} and his ${guards} ${guards === 1 ? 'guard' : 'guards'}` : `Take down ${capo.name}`, next: 'Cash and cred on the kill', timer: null, kind: 'bounty',
     };
   }
 

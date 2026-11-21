@@ -1,6 +1,5 @@
 // Street races: three events with a starting grid, a countdown, AI rivals who drive the checkpoints, live
-// positions, a purse by finishing place, a result with the finishing order and every gap, and a best result saved
-// per event.
+// positions, a purse by finishing place and a best result saved per event.
 import { CITY } from '../core/config.js';
 import { SeededRandom, angleDelta, clamp, distance2D } from '../core/random.js';
 import { createTrafficDriverFor } from '../vehicles/trafficAI.js';
@@ -57,13 +56,11 @@ export class StreetRaces {
     this.rng = new SeededRandom(5150);
     this.best = {};
     this.active = null;
-    this.result = null;
   }
 
   reset(best = {}) {
     this.cancel();
     this.best = { ...best };
-    this.result = null;
   }
 
   winsCount() {
@@ -96,7 +93,6 @@ export class StreetRaces {
       race.rivals.push(rival);
     });
     this.active = race;
-    this.result = null;
     game.camera.snapBehind(event.heading);
     game.hud.banner(event.name.toUpperCase(), `Street race · ${points.length} checkpoints · purse $${event.purse.toLocaleString('en-US')}`, '#35d0ff');
   }
@@ -115,10 +111,7 @@ export class StreetRaces {
     if (reason) this.game.hud.banner('RACE OVER', reason, '#ff3b30');
   }
 
-  /**
-   * The player crossed the line: pay by place, keep the best place and time, hand out cred, and keep the result
-   * (the finishing order with each rival's gap, the time, the purse) for the job panel to show.
-   */
+  /** The player crossed the line: pay by place, keep the best place and time, hand out cred. */
   finish() {
     const game = this.game;
     const race = this.active;
@@ -126,57 +119,15 @@ export class StreetRaces {
     const event = race.event;
     const payout = Math.round(event.purse * PURSE_SHARE[place - 1]);
     const best = this.best[event.id];
-    const record = !best || place < best.place || (place === best.place && race.clock < best.time);
-    if (record) this.best[event.id] = { place, time: race.clock };
-    const cred = place === 1 ? CRED_AWARDS.raceWin : place <= 3 ? CRED_AWARDS.racePodium : 0;
-    this.result = { event, place, field: race.rivals.length + 1, time: race.clock, payout, cred, record, order: this.finishingOrder(race), age: 0 };
+    if (!best || place < best.place || (place === best.place && race.clock < best.time)) this.best[event.id] = { place, time: race.clock };
     game.player.addCash(payout);
     game.stats.racesRun += 1;
     if (place === 1) game.stats.racesWon += 1;
     game.hud.banner(place === 1 ? 'RACE WON' : `FINISHED ${PLACE_NAMES[place - 1]}`, `${event.name} · ${race.clock.toFixed(1)}s · +$${payout.toLocaleString('en-US')}`, place === 1 ? '#ffd60a' : '#35d0ff');
-    if (cred > 0) game.cred.earn(cred, `${PLACE_NAMES[place - 1]} in ${event.name}`);
+    if (place <= 3) game.cred.earn(place === 1 ? CRED_AWARDS.raceWin : CRED_AWARDS.racePodium, `${PLACE_NAMES[place - 1]} in ${event.name}`);
     game.audio.jingle(place <= 3);
     this.cancel();
     game.saveGame(true);
-  }
-
-  /**
-   * The order as Nova crosses the line, each rival with its gap to her: seconds for one already home, metres of
-   * road still to run for one behind her.
-   */
-  finishingOrder(race) {
-    const line = race.points[race.points.length - 1];
-    // The race is called a car's length before the line's marker: her own run-in comes off every rival's gap.
-    const runIn = distance2D(race.car.position.x, race.car.position.z, line.x, line.z);
-    const rows = race.rivals.map((rival) => {
-      const driver = rival.controller;
-      if (driver.finishTime !== null) return { name: driver.name, sort: driver.finishTime - race.clock, gap: `-${(race.clock - driver.finishTime).toFixed(1)} S` };
-      let metres = -runIn;
-      let from = rival.position;
-      for (let index = driver.index; index < race.points.length; index += 1) {
-        metres += distance2D(from.x, from.z, race.points[index].x, race.points[index].z);
-        from = race.points[index];
-      }
-      return { name: driver.name, sort: Math.max(0.1, metres), gap: `+${Math.max(1, Math.round(metres))} M` };
-    });
-    rows.push({ name: 'NOVA', sort: 0, gap: formatRaceTime(race.clock), player: true });
-    return rows.sort((a, b) => a.sort - b.sort);
-  }
-
-  /**
-   * The result of the race just run, as the job panel shows it for a few seconds after the line: RACE WON or the
-   * place she finished in, the event, the order with her time and every rival's gap, then the purse and the cred.
-   */
-  resultInfo() {
-    const result = this.result;
-    if (!result || result.age > RESULT_SECONDS) return null;
-    const pay = result.payout > 0 ? `+$${result.payout.toLocaleString('en-US')}` : 'NO PURSE';
-    return {
-      header: `STREET RACE · ${PLACE_NAMES[result.place - 1]} OF ${result.field}`, title: result.place === 1 ? 'RACE WON' : `FINISHED ${PLACE_NAMES[result.place - 1]}`,
-      stageLine: result.event.name.toUpperCase(), share: 1,
-      rows: result.order.map((row, index) => [PLACE_NAMES[index], row.player && result.record ? `${row.name} ${row.gap} · BEST` : `${row.name} ${row.gap}`]),
-      accent: result.cred > 0 ? `${pay} · +${result.cred} CRED` : pay, kind: 'result',
-    };
   }
 
   /** What the job panel shows while racing: place, checkpoint count, the clock and the gap to the leader. */
@@ -184,15 +135,9 @@ export class StreetRaces {
     const race = this.active;
     if (!race) return null;
     const count = race.points.length;
-    const field = race.rivals.length + 1;
-    const clock = formatRaceTime(race.clock).slice(0, -2);
     return {
-      header: `STREET RACE · ${field} CARS`, title: race.event.name, stageLine: `POSITION ${race.place} OF ${field}`, share: race.index / count,
-      rows: [
-        ['NOW', race.countdown > 0 ? 'Hold the line: engines hot' : `Checkpoint ${Math.min(race.index + 1, count)} of ${count}`],
-        ['RACE TIME', clock], ['PURSE', `$${race.event.purse.toLocaleString('en-US')} FOR FIRST PLACE`],
-      ],
-      accent: `PLACE ${race.place} OF ${field} · ${clock}`, kind: 'race',
+      header: 'STREET RACE', title: race.event.name, stageLine: `POSITION ${race.place}/${race.rivals.length + 1}`, share: race.index / count,
+      objective: race.countdown > 0 ? 'Hold the line… engines hot' : `Checkpoint ${Math.min(race.index + 1, count)} of ${count}`, next: `Purse $${race.event.purse.toLocaleString('en-US')} for first`, timer: race.clock, counting: 'up',
     };
   }
 
@@ -243,7 +188,6 @@ export class StreetRaces {
     const game = this.game;
     const player = game.player;
     const race = this.active;
-    if (this.result) this.result.age += dt;
     if (!race) {
       if (!game.missions.active && !game.activities.fare && player.alive) this.offer();
       return;
@@ -282,17 +226,9 @@ function raceProgress(points, index, x, z) {
   return index + clamp(1 - distance2D(x, z, point.x, point.z) / Math.max(leg, 1), 0, 0.999);
 }
 
-/** A race clock as M:SS.T, the way the result prints it. */
-function formatRaceTime(seconds) {
-  const whole = Math.floor(seconds);
-  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}.${Math.floor((seconds - whole) * 10)}`;
-}
-
 const P = CITY.pitch;
 const PURSE_SHARE = [1, 0.4, 0.15, 0];
 const PLACE_NAMES = ['1ST', '2ND', '3RD', '4TH'];
-/** How long the job panel keeps the result of a race up after the line. */
-const RESULT_SECONDS = 9;
 
 /**
  * The events: a start line (position and heading), the route as street-grid junctions, the purse for first,

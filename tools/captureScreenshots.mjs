@@ -2,7 +2,6 @@
 // Playwright and saves what the browser rendered, untouched, into screenshots/.
 //
 //   PLAYWRIGHT_DIR=<folder with node_modules/playwright> node tools/captureScreenshots.mjs [--only <name>] [--out <dir>]
-//   ... --shots <file>   takes the scenes of another list than shots.json (a candidate scene being tried out)
 //   ... --smoke          plays the whole game by script instead and reports what happened and any console error
 //   ... --sheet <dir>    renders a preview of the judge's contact sheet from screenshots/ into <dir> (never into the entry)
 import { createServer } from 'node:http';
@@ -21,9 +20,7 @@ const only = option('--only');
 const outDir = option('--out') ? resolve(option('--out')) : join(root, 'screenshots');
 const sheetDir = option('--sheet') ? resolve(option('--sheet')) : null;
 const smoke = args.includes('--smoke');
-// The judge's contact sheet fits the cover inside 768 by 480: a frame taken at that size reaches it pixel for pixel,
-// its small type as sharp as the browser drew it. Each scene sets the game's own RENDER SCALE and HUD SIZE settings.
-const VIEWPORT = { width: 768, height: 480 };
+const VIEWPORT = { width: 1280, height: 800 };
 const MAX_BYTES = 250 * 1024;
 
 /** Serve game/ at the root and the entry's screenshots under /__shots/ (for the contact-sheet preview only). */
@@ -83,7 +80,7 @@ if (smoke) {
 } else if (sheetDir) {
   await previewContactSheet(page, base);
 } else {
-  const shots = JSON.parse(readFileSync(option('--shots') ? resolve(option('--shots')) : join(root, 'shots.json'), 'utf8'));
+  const shots = JSON.parse(readFileSync(join(root, 'shots.json'), 'utf8'));
   mkdirSync(outDir, { recursive: true });
   for (const shot of shots) {
     if (only && !shot.name.includes(only)) continue;
@@ -91,10 +88,10 @@ if (smoke) {
     await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 120000 });
     // The frame is frozen; a longer wait only lets the notification toasts time out of a crowded shot.
     await page.waitForTimeout(shot.wait ?? 1500);
-    let quality = 97;
+    let quality = 92;
     let image = await page.screenshot({ type: 'jpeg', quality });
     while (image.length > MAX_BYTES && quality > 50) {
-      quality -= 2;
+      quality -= 3;
       image = await page.screenshot({ type: 'jpeg', quality });
     }
     await page.screenshot({ type: 'jpeg', quality, path: join(outDir, shot.name) });

@@ -54,26 +54,20 @@ export class TuningWorkshop {
     return Math.round(60 + missing * 340 + (vehicle.tiresShredded ? 150 : 0));
   }
 
-  /**
-   * The counter's rows: a repair for the car in the bay, then each upgrade line with the tier it sells next.
-   * `status` is the row's state in capitals (the car's condition, or TIER 2 OF 3), `tier` the tiers already fitted.
-   */
+  /** The counter's rows: a repair for the car in the bay, then the next tier of each upgrade line. */
   stock() {
     const cred = this.game.cred;
     const vehicle = this.game.player.vehicle;
     const rows = [];
     if (vehicle) {
       const worn = vehicle.health < vehicle.maxHealth - 1 || vehicle.tiresShredded;
-      rows.push({
-        id: 'repair', label: 'Full repair', status: `${vehicle.spec.name.toUpperCase()} · CONDITION ${vehicle.conditionPercent()}%`, detail: vehicle.tiresShredded ? 'Body, engine and four new tyres' : worn ? 'Body and engine back to new' : 'Nothing to fix',
-        price: worn ? cred.priceOf(this.repairPrice(vehicle)) : null, sold: 'FIXED',
-      });
+      rows.push({ id: 'repair', label: `Repair the ${vehicle.spec.name}`, detail: worn ? `Condition ${vehicle.conditionPercent()}%${vehicle.tiresShredded ? ' · tyres shredded' : ''}` : 'Nothing to fix', price: worn ? cred.priceOf(this.repairPrice(vehicle)) : null });
     }
     for (const line of UPGRADE_LINES) {
       const level = this.levels[line.id];
-      if (level >= TIERS) { rows.push({ id: line.id, label: line.name, status: `TIER ${TIERS} OF ${TIERS} FITTED`, detail: line.detail, price: null, sold: 'MAX', tier: TIERS }); continue; }
+      if (level >= 3) { rows.push({ id: line.id, label: `${line.name} · MAX`, detail: line.detail, price: null, tier: 3 }); continue; }
       const rank = line.ranks[level];
-      rows.push({ id: line.id, label: line.name, status: `TIER ${level + 1} OF ${TIERS}`, detail: line.detail, price: cred.priceOf(line.prices[level]), locked: cred.hasRank(rank) ? '' : `Needs rank ${rank}`, tier: level });
+      rows.push({ id: line.id, label: `${line.name} · tier ${level + 1}`, detail: line.detail, price: cred.priceOf(line.prices[level]), locked: cred.hasRank(rank) ? '' : `Needs rank ${rank}`, tier: level });
     }
     return rows;
   }
@@ -84,7 +78,7 @@ export class TuningWorkshop {
     this.levels[row.id] += 1;
     this.retune();
     if (vehicle) this.fit(vehicle);
-    this.game.hud.notify(`Workshop: ${row.label.toLowerCase()}, tier ${this.levels[row.id]} fitted.`);
+    this.game.hud.notify(`Workshop: ${row.label} fitted.`);
     return true;
   }
 
@@ -121,17 +115,14 @@ export class TuningWorkshop {
     return {
       name: spec.name.toUpperCase(), kind: spec.kind.toUpperCase(), condition: vehicle.conditionPercent(),
       bars: [
-        ['TOP SPEED', `${Math.round(spec.maxSpeed * tuning.speed * 3.6)} KM/H`, (spec.maxSpeed * tuning.speed) / 70],
-        ['ACCELERATION', `${(spec.accel * tuning.accel).toFixed(1)} M/S²`, (spec.accel * tuning.accel) / 29],
+        ['TOP SPEED', `${Math.round(spec.maxSpeed * tuning.speed * 3.6)} km/h`, (spec.maxSpeed * tuning.speed) / 70],
+        ['ACCELERATION', `${(spec.accel * tuning.accel).toFixed(1)} m/s²`, (spec.accel * tuning.accel) / 29],
         ['GRIP', `${(spec.grip * tuning.grip).toFixed(1)}`, (spec.grip * tuning.grip) / 11],
         ['ARMOR', `${Math.round(spec.health * tuning.plating)}`, (spec.health * tuning.plating) / 500],
       ],
     };
   }
 }
-
-/** Every upgrade line is sold in this many tiers. */
-const TIERS = 3;
 
 /** The upgrade lines: the price and the rank each of the three tiers asks for. */
 export const UPGRADE_LINES = [

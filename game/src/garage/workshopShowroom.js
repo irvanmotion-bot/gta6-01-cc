@@ -9,10 +9,6 @@ import { buildVehicleModel } from '../vehicles/vehicleModel.js';
 const YARD = { x: -1150, y: 6, z: 380 };
 const TURNTABLE_RADIUS = 3.9;
 const TURN_SPEED = 0.22;
-/** The sign on the shop wall: where its middle hangs and how big it is, so the camera sees all of it over the car. */
-const SIGN = { x: -3.1, y: 3.75, width: 6.8, height: 1.28 };
-/** The camera: how far aside of the car it stands, how high, how far back, and the height it aims at. */
-const VIEW = { aside: 2.75, height: 2.0, back: 10, aimHeight: 0.6 };
 
 export class WorkshopShowroom {
   constructor(game) {
@@ -41,7 +37,7 @@ export class WorkshopShowroom {
     batch.addBox(0, 0, -9, 46, 2.3, 0.6, '#3b2f4f');
     batch.addBox(0, 2.3, -9, 46, 6.3, 0.6, '#f6e3bf');
     batch.addBox(0, 8.6, -9, 46.4, 0.5, 1, '#2a2530');
-    batch.addBox(SIGN.x, SIGN.y - SIGN.height / 2 - 0.2, -8.62, SIGN.width + 0.4, SIGN.height + 0.4, 0.2, '#1b1638');
+    batch.addBox(-1.5, 3.05, -8.62, 10.9, 2.5, 0.2, '#1b1638');
     // A roller door, half open, and the wall that returns along the side.
     batch.addBox(9, 0, -8.62, 8, 6, 0.2, '#2a2530');
     for (let k = 0; k < 7; k += 1) batch.addBox(9, 3 + k * 0.42, -8.5, 7.6, 0.3, 0.14, k % 2 ? '#8c8496' : '#a59cae');
@@ -58,8 +54,8 @@ export class WorkshopShowroom {
     for (let k = 0; k < 3; k += 1) batch.addBox(-3.4, 0.18 + k * 0.36, -7.22, 2.1, 0.26, 0.04, '#b9453a');
     batch.addBox(0.4, 0, -7.9, 1.1, 1.9, 0.7, '#3d6f9e');
     const mesh = batch.build(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85 }));
-    const sign = new THREE.Mesh(new THREE.PlaneGeometry(SIGN.width, SIGN.height), new THREE.MeshBasicMaterial({ map: paintSign() }));
-    sign.position.set(SIGN.x, SIGN.y, -8.5);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(10.5, 1.97), new THREE.MeshBasicMaterial({ map: paintSign() }));
+    sign.position.set(-1.5, 4.3, -8.5);
     const group = new THREE.Group();
     group.add(mesh, sign);
     return group;
@@ -103,16 +99,13 @@ export class WorkshopShowroom {
     this.active = false;
   }
 
-  /**
-   * Stand the camera off the car's quarter and aim it past the car, so the car sits in the left two fifths of the
-   * frame with the shop's sign over it, clear of the counter that stands down the right.
-   */
+  /** Stand the camera off the car's quarter and aim it so the car sits in the left half of the frame. */
   frame() {
     const view = this.view;
     view.aspect = window.innerWidth / window.innerHeight;
     view.updateProjectionMatrix();
-    view.position.set(YARD.x + VIEW.aside, YARD.y + VIEW.height, YARD.z + VIEW.back);
-    view.lookAt(YARD.x + VIEW.aside - 0.1, YARD.y + VIEW.aimHeight, YARD.z);
+    view.position.set(YARD.x + 2.3, YARD.y + 2.0, YARD.z + 10);
+    view.lookAt(YARD.x + 2.15, YARD.y + 1.0, YARD.z);
   }
 
   /** Called every frame while the counter is open: the table turns even though the city is paused. */
@@ -145,8 +138,7 @@ function paintSign() {
   context.fillText('BRAVO MOTORS', 190, 84);
   context.fillStyle = '#ffb547';
   context.font = '700 30px "Segoe UI", Arial, sans-serif';
-  // The line is held to the width of the board, so its last word is never cut by the board's edge.
-  context.fillText('REPAIRS · TUNING · NO QUESTIONS · OPEN THROUGH TOTALITY', 194, 160, 806);
+  context.fillText('REPAIRS · TUNING · NO QUESTIONS · OPEN THROUGH TOTALITY', 194, 160);
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;

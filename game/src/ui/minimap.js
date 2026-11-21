@@ -96,10 +96,8 @@ export class Minimap {
     const vehicle = player.vehicle;
     const targetZoom = vehicle ? 1.05 - Math.min(Math.abs(vehicle.speed) / 60, 1) * 0.3 : 1.2;
     this.zoom += (targetZoom - this.zoom) * 0.05;
-    // The map keeps the same stretch of city in view whatever the radar's size; blips and labels are drawn large
-    // enough to read on a small one.
-    const unit = height / 125;
-    const scale = (this.zoom * height) / 220;
+    const unit = height / 220;
+    const scale = this.zoom * unit;
     const angle = game.camera.yaw - Math.PI;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
@@ -121,12 +119,6 @@ export class Minimap {
 
     const target = this.routeTarget();
     if (target) this.drawRoute(c, routeAlongStreets(player.position, target), toMap, halfX, halfY, unit, target.color);
-    // With every unit's eyes off her, the zone the force is searching: out of it, the stars come off faster.
-    const zone = game.wanted.searchZone();
-    if (zone) {
-      const centre = toMap(zone.x, zone.z);
-      this.drawSearchZone(c, halfX + centre.x, halfY + centre.y, zone.radius * scale, unit);
-    }
 
     const edgeX = halfX - 11 * unit;
     const edgeTop = halfY - 11 * unit;
@@ -161,20 +153,6 @@ export class Minimap {
       c.strokeStyle = '#ff6a4d';
       c.strokeRect(0, 0, width, height);
     }
-  }
-
-  /** The search zone: a coral disc with a dashed rim, round the place the police last saw her. */
-  drawSearchZone(c, x, y, radius, unit) {
-    c.save();
-    c.beginPath();
-    c.arc(x, y, radius, 0, Math.PI * 2);
-    c.fillStyle = 'rgba(255, 106, 77, 0.24)';
-    c.fill();
-    c.setLineDash([6 * unit, 4 * unit]);
-    c.lineWidth = 2.4 * unit;
-    c.strokeStyle = '#ff6a4d';
-    c.stroke();
-    c.restore();
   }
 
   /** The route as a bright line with a dark edge, from the player's arrow to the objective. */
@@ -254,20 +232,18 @@ export class Minimap {
     c.restore();
   }
 
+  /** The pause screen's full map, north up, with street names and every landmark. */
   /**
-   * The districts of Saros on a menu's small map: the painted city, the path of totality, a dot for each landmark
-   * and the district names set as large as the map allows, one word a line. No street names, no blips and no
-   * player: the atlas (M) has those. The foot of the frame is left clear for the menu's caption.
+   * The districts of Saros on a menu's small map: the painted city, the path of totality, the district names set
+   * large and a dot for each landmark. No street names, no blips and no player: the atlas (M) has those.
    */
   drawDistrictMap(canvas) {
-    const ratio = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(canvas.clientWidth * ratio);
-    canvas.height = Math.round(canvas.clientHeight * ratio);
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
     const c = canvas.getContext('2d');
-    const foot = canvas.height * 0.1;
-    const scale = Math.min(canvas.width / MAP_WIDTH, (canvas.height - foot) / (MAP_DEPTH - 70));
+    const scale = Math.min(canvas.width / MAP_WIDTH, canvas.height / MAP_DEPTH);
     const offsetX = (canvas.width - MAP_WIDTH * scale) / 2;
-    const offsetY = -18 * scale;
+    const offsetY = (canvas.height - MAP_DEPTH * scale) / 2;
     const toX = (x) => offsetX + (x - MAP_MIN_X) * scale;
     const toY = (z) => offsetY + (z - MAP_MIN_Z) * scale;
     c.fillStyle = '#2f9fcb';
@@ -276,39 +252,30 @@ export class Minimap {
     this.drawPathOfTotality(c, toX, toY, scale);
     for (const place of Object.values(LANDMARKS)) {
       c.beginPath();
-      c.arc(toX(place.x), toY(place.z), Math.max(3, 13 * scale), 0, Math.PI * 2);
+      c.arc(toX(place.x), toY(place.z), Math.max(3, 15 * scale), 0, Math.PI * 2);
       c.fillStyle = place.color;
       c.fill();
       c.lineWidth = Math.max(1.5, 4 * scale);
       c.strokeStyle = '#17122b';
       c.stroke();
     }
-    const type = Math.max(11, canvas.height * 0.07);
-    c.font = `900 ${type}px "Arial Black", "Segoe UI Black", Arial, sans-serif`;
+    c.font = `900 ${Math.max(11, 46 * scale)}px Impact, "Arial Black", sans-serif`;
     c.textAlign = 'center';
-    c.textBaseline = 'middle';
-    c.lineWidth = type * 0.3;
+    c.lineWidth = 4;
     c.lineJoin = 'round';
-    c.strokeStyle = 'rgba(13,10,30,0.9)';
+    c.strokeStyle = 'rgba(23,18,43,0.7)';
     c.fillStyle = '#ffffff';
-    /** Each word of a district's name on its own line, centred on a point of the city; `turn` stands it on end. */
-    const nameDistrict = (id, x, z, turn = 0) => {
-      const words = DISTRICTS[id].name.toUpperCase().split(' ');
-      c.save();
-      c.translate(toX(x), toY(z));
-      c.rotate(turn);
-      words.forEach((word, index) => {
-        const y = (index - (words.length - 1) / 2) * type * 1.02;
-        c.strokeText(word, 0, y);
-        c.fillText(word, 0, y);
-      });
-      c.restore();
-    };
-    nameDistrict('hill', 520, 82);
-    nameDistrict('orrery', 450, 318);
-    nameDistrict('azimuth', 760, 470);
-    nameDistrict('yards', 400, 642);
-    nameDistrict('strand', 84, 330, -Math.PI / 2);
+    for (const [id, x, z] of [['orrery', 480, 340], ['hill', 520, 96], ['azimuth', 770, 236], ['yards', 440, 652]]) {
+      const text = DISTRICTS[id].name.toUpperCase();
+      c.strokeText(text, toX(x), toY(z));
+      c.fillText(text, toX(x), toY(z));
+    }
+    c.save();
+    c.translate(toX(86), toY(360));
+    c.rotate(-Math.PI / 2);
+    c.strokeText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
+    c.fillText(DISTRICTS.strand.name.toUpperCase(), 0, 0);
+    c.restore();
   }
 
   drawFullMap() {
@@ -360,8 +327,6 @@ export class Minimap {
     c.strokeText(DISTRICTS.jacaranda.name.toUpperCase(), toX(280), toY(330));
     c.fillText(DISTRICTS.jacaranda.name.toUpperCase(), toX(280), toY(330));
     const unit = Math.max(1.2, scale * 2.4);
-    const zone = game.wanted.searchZone();
-    if (zone) this.drawSearchZone(c, toX(zone.x), toY(zone.z), zone.radius * scale, unit);
     const places = Object.values(LANDMARKS).map((p) => ({ x: p.x, z: p.z, color: p.color, label: p.icon }));
     for (const blip of [...places, ...this.collectBlips()]) this.drawBlip(c, toX(blip.x), toY(blip.z), blip, unit);
     // Every landmark carries its name under its icon.

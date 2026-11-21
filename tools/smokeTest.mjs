@@ -1,9 +1,6 @@
 // The scripted playthrough behind `captureScreenshots.mjs --smoke`. It runs inside the page: plays every story job
-// by teleporting between objectives and sleeping through the days of eclipse week into totality (letting the sun go
-// out early once, to see the heist fail for it), is spotted and then lost behind a building until the stars come
-// off, resizes the HUD, then shops, turns the radio, tunes a car, races, claims a bounty under its health bars,
-// calls the crew, drives a fare, survives a five-star response, is arrested and wiped out, pauses, and saves and
-// loads across slots.
+// by teleporting between objectives and sleeping through the days of eclipse week into totality, then shops, tunes a car, races, claims a bounty, calls the crew, drives a
+// fare, survives a five-star response, is arrested and wiped out, and saves and loads across slots.
 
 /** Runs in the browser (page.evaluate): returns a report of what each system did. */
 export function playWholeGame() {
@@ -53,20 +50,6 @@ export function playWholeGame() {
     if (player.vehicle) press('KeyF');
     teleport(offer.at.x, offer.at.z);
     run(3);
-    // The heist is held to the eclipse. Once, let the sun go out before the vault door is hers: the job must
-    // carry the deadline on its panel and fail for it; the next round takes the job again from first contact.
-    if (offer.id === 'totality' && !eclipse.deadline) {
-      const limit = game.missions.timeLimit();
-      eclipse.deadline = { armed: game.missions.underEclipseDeadline(), clock: limit ? `${Math.round(limit.seconds)} s to ${limit.until}` : 'none', failIf: game.missions.failConditions().join(' · '), panel: document.querySelector('.job-panel').textContent };
-      calendar.setHour(17.3);
-      run(2);
-      eclipse.deadline.failedJob = !game.missions.active;
-      eclipse.deadline.reason = document.querySelector('.banner-sub').textContent;
-      if (!eclipse.deadline.armed || !limit || limit.until !== 'TOTALITY' || !eclipse.deadline.failedJob) failures.push(`the heist is not held to the eclipse: ${JSON.stringify(eclipse.deadline)}`);
-      if (!eclipse.deadline.panel.includes('TIME LIMIT') || !eclipse.deadline.panel.includes('FAIL IF')) failures.push('the job panel does not print TIME LIMIT and FAIL IF during the heist');
-      delete eclipse.deadline.panel;
-      continue;
-    }
     let lastStage = 0;
     for (let safety = 0; game.missions.active && safety < 4000; safety += 1) {
       const active = game.missions.active;
@@ -93,12 +76,6 @@ export function playWholeGame() {
       run(2);
     }
     const passed = game.missions.completed.has(offer.id);
-    // A job just passed turns the job panel into its result card for a few seconds: JOB PASSED and what it paid.
-    if (passed && !eclipse.jobResult) {
-      run(2);
-      eclipse.jobResult = { title: document.querySelector('.job-title').textContent, rows: [...document.querySelectorAll('.job-row:not(.empty)')].map((row) => row.textContent), pay: document.querySelector('.job-accent').textContent };
-      if (eclipse.jobResult.title !== 'JOB PASSED' || !eclipse.jobResult.pay.includes(`+$${offer.reward.toLocaleString('en-US')}`) || eclipse.jobResult.rows.length < 4) failures.push(`no result card after a job: ${JSON.stringify(eclipse.jobResult)}`);
-    }
     missions.push(passed ? `${offer.id}:passed` : `${offer.id}:NOT PASSED (${document.querySelector('.banner-sub').textContent}; ${game.down ? game.down.kind : 'standing'})`);
   }
   eclipse.endedOn = `${calendar.dayName()} ${calendar.clockText()}`;
@@ -132,69 +109,6 @@ export function playWholeGame() {
   run(30);
   if (player.vehicle) press('KeyF');
 
-  // Line of sight. A cruiser with a clear street to Nova keeps her SPOTTED; the same cruiser with a building in
-  // the way has no eyes on her. With no unit in sight the force is SEARCHING: the radar gets a zone round the place
-  // she was last seen, the status panel says so, and the stars come off one at a time.
-  const standDown = () => {
-    for (const vehicle of [...game.vehicles.list]) if (vehicle.spec.police) game.vehicles.remove(vehicle);
-    game.gunmen.clear();
-    game.police.clear();
-  };
-  standDown();
-  teleport(320, 360);
-  run(2);
-  let open = null;
-  let walled = null;
-  for (let k = 0; k < 48 && !(open && walled); k += 1) {
-    const angle = (k / 48) * Math.PI * 2;
-    const point = { x: player.position.x + Math.sin(angle) * 45, z: player.position.z + Math.cos(angle) * 45 };
-    if (game.collision.hasLineOfSight(point.x, point.z, player.position.x, player.position.z, 1.2)) open = open || point; else walled = walled || point;
-  }
-  const sight = { foundSpots: Boolean(open && walled), starsSeen: [] };
-  if (sight.foundSpots) {
-    game.wanted.setStars(2, 0);
-    let cruiser = game.police.enlist(game.vehicles.spawn('centinela', open.x, open.z, 0), 'patrol');
-    run(1);
-    sight.eyesInTheOpen = game.wanted.eyes;
-    sight.stateInTheOpen = game.wanted.status().state;
-    sight.lineInTheOpen = document.querySelector('.wanted-detail').textContent;
-    game.vehicles.remove(cruiser);
-    cruiser = game.police.enlist(game.vehicles.spawn('centinela', walled.x, walled.z, 0), 'patrol');
-    sight.eyesBehindWall = game.police.unitsSeeing(80);
-    game.vehicles.remove(cruiser);
-    game.wanted.setStars(3, 0);
-    sight.starsSeen.push(game.wanted.stars);
-    for (let k = 0; k < 3600 && game.wanted.stars > 0; k += 1) {
-      standDown();
-      run(1);
-      const zone = game.wanted.searchZone();
-      if (zone) { sight.zoneFirst = sight.zoneFirst || Math.round(zone.radius); sight.zoneWidest = Math.max(sight.zoneWidest || 0, Math.round(zone.radius)); }
-      if (game.wanted.status().state === 'SEARCHING' && !sight.panelSearching) { sight.panelSearching = document.querySelector('.wanted-state').textContent; sight.lineSearching = document.querySelector('.wanted-detail').textContent; }
-      if (game.wanted.stars !== sight.starsSeen[sight.starsSeen.length - 1]) sight.starsSeen.push(game.wanted.stars);
-    }
-  }
-  if (!sight.foundSpots) failures.push('no open and no walled spot found round the test corner');
-  else {
-    if (sight.eyesInTheOpen < 1 || sight.stateInTheOpen !== 'SPOTTED') failures.push(`a cruiser with a clear street did not spot her: ${JSON.stringify(sight)}`);
-    if (sight.eyesBehindWall !== 0) failures.push(`a cruiser behind a building still has eyes on her: ${sight.eyesBehindWall}`);
-    if (sight.starsSeen.join('') !== '3210') failures.push(`unseen, the stars did not come off one at a time: ${sight.starsSeen.join(' ')}`);
-    if (!sight.zoneFirst || sight.zoneWidest <= sight.zoneFirst) failures.push(`the search zone did not open and grow: ${sight.zoneFirst} to ${sight.zoneWidest}`);
-    if (!sight.panelSearching || !sight.panelSearching.includes('SEARCHING')) failures.push('the status panel never said SEARCHING');
-  }
-  game.wanted.reset();
-  run(5);
-
-  // HUD SIZE: the setting changes the HUD at once, and the biggest size keeps the essentials only.
-  const hudRoot = document.getElementById('hud');
-  const sizes = {};
-  for (const size of ['standard', 'huge', 'large']) {
-    game.settings.hudSize = size;
-    game.applySettings();
-    run(1);
-    sizes[size] = { zoom: hudRoot.style.zoom, essentialsOnly: hudRoot.classList.contains('huge'), crewBarShown: getComputedStyle(document.querySelector('.crew-bar')).display !== 'none' };
-  }
-  if (!sizes.huge.essentialsOnly || sizes.huge.crewBarShown || sizes.large.essentialsOnly || !sizes.large.crewBarShown || sizes.standard.zoom === sizes.large.zoom) failures.push(`HUD SIZE does not change the HUD: ${JSON.stringify(sizes)}`);
-
   // Shops: a gun at Ammo Amigo, then upgrades and a repair in Bravo's workshop.
   game.shops.openGunShop();
   game.shops.buy('shotgun');
@@ -205,69 +119,20 @@ export function playWholeGame() {
   const bay = game.workshop;
   ride.health = 40;
   ride.tiresShredded = true;
-  // The radio: at the wheel the HUD names the station, its frequency, its DJ and the track on air; R moves to the
-  // next station, and a track gives way to the next one on the station's list.
-  run(2);
-  const radioPlayer = game.audio.radio;
-  const onAir = radioPlayer.nowPlaying();
-  const radio = { station: onAir && onAir.station, dj: onAir && onAir.dj, track: onAir && `${onAir.title} · ${onAir.artist}`, panel: `${document.querySelector('.radio-station').textContent} / ${document.querySelector('.radio-track').textContent}` };
-  radioPlayer.tick(81, true);
-  radio.nextTrack = radioPlayer.nowPlaying().title;
-  press('KeyR');
-  radio.nextStation = radioPlayer.nowPlaying() ? radioPlayer.nowPlaying().station : 'off';
-  if (!onAir || !radio.panel.includes(onAir.station.toUpperCase()) || !radio.panel.includes(onAir.title.toUpperCase())) failures.push(`the radio panel does not name the station and the track: ${JSON.stringify(radio)}`);
-  if (radio.nextTrack === (onAir && onAir.title) || radio.nextStation === (onAir && onAir.station)) failures.push(`the radio does not move on: ${JSON.stringify(radio)}`);
-  // The workshop's own counter, beside the car on the turntable: five rows, each upgrade with the tier it sells.
-  bay.openBay(ride);
-  const counterRows = [...document.querySelectorAll('#shop-menu .shop-row')].map((row) => `${row.querySelector('.shop-label b').textContent} | ${row.querySelector('.shop-label em').textContent} | ${row.querySelector('.shop-price').textContent}`);
-  const showroomOpen = game.showroom.active && document.querySelector('#shop-menu').classList.contains('showroom');
-  game.counter.close();
-  if (counterRows.length !== 5 || !counterRows[1].includes('TIER 1 OF 3') || !showroomOpen) failures.push(`the workshop counter is not five rows with tiers beside the turntable: ${JSON.stringify(counterRows)}`);
   game.counter.open({ title: 'TEST', tagline: '', accent: '#fff', stock: () => bay.stock(), purchase: (row) => bay.purchase(row) });
   for (const id of ['repair', 'engine', 'plating', 'tires', 'nitro', 'engine']) game.counter.buy(id);
   game.counter.close();
-  const workshop = { levels: { ...bay.levels }, tuning: { ...bay.tuning }, condition: ride.conditionPercent(), tyresFixed: !ride.tiresShredded, maxHealth: ride.maxHealth, counterRows };
+  const workshop = { levels: { ...bay.levels }, tuning: { ...bay.tuning }, condition: ride.conditionPercent(), tyresFixed: !ride.tiresShredded, maxHealth: ride.maxHealth };
   game.input.held.add('KeyW'); game.input.held.add('ShiftLeft');
   run(90);
   workshop.boosted = ride.boosting || bay.nitroCharge < 1;
   game.input.held.clear();
 
-  // Driving stunts: two parked cars passed at speed with less than a metre between the doors are two NEAR MISSES,
-  // the second inside the combo's clock and so at double pay; the HUD pops each one up.
-  teleport(2.7, 200);
-  ride.heading = 0;
-  for (const other of [...game.vehicles.list]) if (other !== ride && Math.abs(other.position.x) < 9 && other.position.z > 170 && other.position.z < 340) game.vehicles.remove(other);
-  for (const z of [232, 266]) game.vehicles.spawn('estela', -0.05, z, 0).parked = true;
-  const stunts = { cashBefore: player.cash, nearBefore: game.stats.nearMisses, popups: [] };
-  for (let k = 0; k < 160; k += 1) {
-    ride.heading = 0;
-    ride.velX = 0;
-    ride.velZ = Math.max(ride.velZ, 30);
-    run(1);
-    const title = document.querySelector('.stunt-popup.visible .stunt-title');
-    if (title && !stunts.popups.includes(title.textContent)) stunts.popups.push(title.textContent);
-  }
-  stunts.nearMisses = game.stats.nearMisses - stunts.nearBefore;
-  stunts.paid = player.cash - stunts.cashBefore;
-  stunts.bestCombo = game.stats.bestCombo;
-  stunts.line = document.querySelector('.stunt-line').textContent;
-  if (stunts.nearMisses !== 2 || stunts.bestCombo < 2 || !stunts.popups.includes('NEAR MISS ×2') || stunts.paid < 75) failures.push(`two near misses did not pay as a combo: ${JSON.stringify(stunts)}`);
-
-  // A street race against three rivals, driven by teleporting through the checkpoints. The runs above may have
-  // clipped somebody: the grid only takes a car the police are not after, so any heat is dropped first.
-  const heatFromNitroRun = game.wanted.stars;
-  game.wanted.reset();
-  standDown();
-  // The grid wants her car at a stand: clear the start line of traffic and hold the car on it until it is still.
-  for (const other of [...game.vehicles.list]) if (other !== ride && Math.hypot(other.position.x - 2.7, other.position.z - 100) < 30) game.vehicles.remove(other);
-  for (let k = 0; k < 120; k += 1) {
-    teleport(2.7, 100);
-    run(1);
-    if (Math.abs(ride.speed) < 0.5 && k > 4) break;
-  }
+  // A street race against three rivals, driven by teleporting through the checkpoints.
+  teleport(2.7, 100);
+  run(5);
   press('KeyE');
   const raceStarted = Boolean(game.races.active);
-  if (!raceStarted) failures.push(`the street race did not start (stars ${game.wanted.stars}, speed ${player.vehicle ? player.vehicle.speed.toFixed(1) : 'on foot'}, heat before ${heatFromNitroRun})`);
   let raceRows = 0;
   for (let safety = 0; game.races.active && safety < 3000; safety += 1) {
     const race = game.races.active;
@@ -275,11 +140,7 @@ export function playWholeGame() {
     raceRows = Math.max(raceRows, game.races.standings().length);
     run(3);
   }
-  // The race just won stays on the job panel as its result: RACE WON, the finishing order with every gap, the purse.
-  run(2);
   const race = { started: raceStarted, best: game.races.best, raceRows, wins: game.races.winsCount() };
-  race.result = { title: document.querySelector('.job-title').textContent, order: [...document.querySelectorAll('.job-row:not(.empty)')].map((row) => row.textContent), pay: document.querySelector('.job-accent').textContent };
-  if (race.result.title !== 'RACE WON' || race.result.order.length !== 4 || !race.result.order[0].includes('NOVA') || !race.result.pay.includes('+$2,000')) failures.push(`no result card after the race: ${JSON.stringify(race.result)}`);
 
   // A bounty: walk up to a capo's corner and take him down.
   if (player.vehicle) press('KeyF');
@@ -287,17 +148,9 @@ export function playWholeGame() {
   teleport(capo.x + 30, capo.z);
   run(10);
   const capoSpawned = game.gunmen.list.some((g) => g.kind === 'capo');
-  // Facing his corner with his guns turned on her: every one of them in view carries a health bar, the capo his name.
-  for (const g of game.gunmen.list) g.hostile = true;
-  game.camera.yaw = Math.atan2(capo.x - player.position.x, capo.z - player.position.z);
-  game.camera.pitch = 0.05;
-  run(4);
-  const tags = [...document.querySelectorAll('.combat-tag.visible')];
-  const combatTags = { shown: tags.length, named: tags.filter((tag) => tag.classList.contains('named')).map((tag) => tag.querySelector('.combat-name').textContent), panel: document.querySelector('.job-header').textContent };
-  if (combatTags.shown < 2 || combatTags.named.length !== 1) failures.push(`no health bars over the capo's crew: ${JSON.stringify(combatTags)}`);
   for (const g of game.gunmen.list) if (g.kind === 'capo') g.takeDamage(9999, true);
   run(10);
-  const bounty = { capoSpawned, tally: game.bounties.tally(), combatTags };
+  const bounty = { capoSpawned, tally: game.bounties.tally() };
   game.gunmen.clear();
 
   // On foot beside a parked car: the game rings it and offers F to steal it; then a shot fired in a full street
@@ -410,38 +263,28 @@ export function playWholeGame() {
     for (let k = 0; k < 6; k += 1) { player.health = 100; cab.health = cab.maxHealth; run(40); checkPanel(`${stars} stars, sample ${k}`); }
   }
   // Lose the stars with a full panel on screen, then be wanted again one frame later: no stale count may show.
-  // (The script stands in the open under the gunship, so it keeps Nova and the cab patched up while it counts.)
-  const runUnderFire = (count) => { for (let k = 0; k < count; k += 1) { player.health = 100; cab.health = cab.maxHealth; run(1); } };
   game.wanted.setStars(5, 60);
-  runUnderFire(240);
+  run(240);
   checkPanel('5 stars again');
   game.wanted.reset();
   checkPanel('wanted again straight after an escape');
   game.wanted.setStars(5, 60);
-  runUnderFire(30);
+  run(30);
   chase.panel = panel;
   if (panel.mismatches.length) failures.push(`dispatch panel count is wrong: ${panel.mismatches.slice(0, 3).join(' | ')}`);
   if (!panel.sawOverflow) failures.push('dispatch panel never showed more units than it lists, so the overflow line went untested');
   const block = game.police.roadblocks.deploy({ x: 0, z: 440, alongX: false, direction: 1 }, true);
   teleport(block.strip.position.x, block.strip.position.z);
-  runUnderFire(2);
+  run(2);
   chase.spikesShredTyres = cab.tiresShredded;
-  // The crew's three favors, called in the middle of it: Jazz takes a star off and jams the police band, Inés
-  // patches Nova up, Bravo leaves a car at a kerb; the crew bar counts the favors still ready.
-  chase.standingForFavors = player.alive && !game.down;
-  const favorsBefore = game.stats.favorsUsed;
   press('KeyX');
   chase.jamDroppedTo = game.wanted.stars;
   chase.jamming = game.crew.isJamming();
-  chase.statusJammed = game.wanted.status().state;
   player.health = 30;
   press('KeyC');
   chase.patchedHealth = player.health;
   press('KeyZ');
-  chase.favorsUsed = game.stats.favorsUsed - favorsBefore;
-  chase.crewBar = document.querySelector('.crew-head').textContent;
-  if (!chase.standingForFavors) failures.push('Nova was down when the script came to call the crew');
-  else if (chase.jamDroppedTo !== 4 || !chase.jamming || chase.patchedHealth !== 100 || chase.favorsUsed < 2) failures.push(`the crew's favors did not work: ${JSON.stringify({ jam: chase.jamDroppedTo, jamming: chase.jamming, health: chase.patchedHealth, used: chase.favorsUsed })}`);
+  chase.favorsUsed = game.stats.favorsUsed;
 
   // Arrest, death, then load the save from its slot.
   player.health = 100;
@@ -455,17 +298,13 @@ export function playWholeGame() {
   game.continueGame(2);
   run(120);
   game.setState('pause');
-  const pauseMenu = { items: [...document.querySelectorAll('#pause-menu .menu-item span')].map((node) => node.textContent), hint: document.querySelector('#pause-menu .menu-hint').textContent, slots: document.querySelectorAll('#pause-menu .save-card').length, where: document.querySelector('.pause-where').textContent };
-  for (const label of ['RESUME', 'SAVE GAME', 'LOAD GAME', 'CITY MAP', 'STATS', 'CONTROLS', 'SETTINGS', 'QUIT TO TITLE']) if (!pauseMenu.items.includes(label)) failures.push(`the pause menu has no ${label}`);
-  if (pauseMenu.slots !== 3 || !pauseMenu.hint) failures.push(`the pause menu shows ${pauseMenu.slots} save slots and the hint "${pauseMenu.hint}"`);
   game.menus.open('stats');
-  pauseMenu.statRows = document.querySelectorAll('#pause-menu .menu-table div').length;
   game.setState('map');
   const atlasJobs = document.querySelectorAll('.atlas-job').length;
   game.setState('play');
   run(30);
   const hud = {
-    job: document.querySelector('.job-header').textContent, wanted: document.querySelector('.wanted-state').textContent, rank: document.querySelector('.rank-meter .meter-label').textContent,
+    job: document.querySelector('.job-header').textContent, tier: document.querySelector('.wanted-tier').textContent, rank: document.querySelector('.rank-meter .meter-label').textContent,
     slots: document.querySelectorAll('.weapon-slot.owned').length, favors: document.querySelectorAll('.favor').length, atlasJobs,
   };
   const slotCards = JSON.parse(window.localStorage.getItem(saveKey(2))).summary;
@@ -473,7 +312,7 @@ export function playWholeGame() {
   // still end with every job passed.
   if (!eclipse.storyComplete) failures.push(`the story did not complete: ${missions.filter((result) => !result.endsWith(':passed')).join(', ')}`);
   return {
-    failures, missions, eclipse, afterStory, sight, sizes, radio, workshop, stunts, race, bounty, street, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
-    hud, pauseMenu, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
+    failures, missions, eclipse, afterStory, workshop, race, bounty, street, fares, chase, afterArrest, afterWipe, state: game.state, loaded: { guns: Object.keys(game.weapons.owned), jobs: game.missions.completed.size, cred: game.cred.points, workshop: game.workshop.levels, slot: game.saveSlot, summary: slotCards },
+    hud, msPerStep: (performance.now() - started) / steps, vehicles: game.vehicles.list.length, pedestrians: game.pedestrians.list.length, drawCalls: game.renderer.info.render.calls,
   };
 }

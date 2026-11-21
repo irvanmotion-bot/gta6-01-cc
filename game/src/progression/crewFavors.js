@@ -31,11 +31,6 @@ export class CrewFavors {
     });
   }
 
-  /** How many of the three favors can be called this instant: the figure in the head of the HUD's crew panel. */
-  readyCount() {
-    return this.status().filter((favor) => favor.ready).length;
-  }
-
   /** Bravo sends a tuned Coyote to the nearest kerb. */
   callWheels() {
     const game = this.game;
@@ -93,12 +88,9 @@ export class CrewFavors {
   }
 }
 
-/**
- * The favors: the key that calls each, the crew member who grants it and what they do in the crew, the rank it
- * unlocks at and its cooldown in seconds.
- */
+/** The favors: the key that calls each, the crew member who grants it, the rank it unlocks at and its cooldown. */
 export const CREW_FAVORS = [
-  { id: 'wheels', key: 'Z', code: 'KeyZ', name: 'GETAWAY CAR', who: 'BRAVO', role: 'MECHANIC', portrait: 'TÍO BRAVO', rank: 2, cooldown: 120, color: '#ffb547' },
-  { id: 'jam', key: 'X', code: 'KeyX', name: 'SIGNAL JAM', who: 'JAZZ', role: 'HACKER', portrait: 'JAZZ', rank: 3, cooldown: 150, color: '#ff7eb6' },
-  { id: 'patch', key: 'C', code: 'KeyC', name: 'PATCH-UP', who: 'DOC INÉS', role: 'MEDIC', portrait: 'DOC INÉS', rank: 4, cooldown: 180, color: '#7be0c3' },
+  { id: 'wheels', key: 'Z', code: 'KeyZ', name: 'WHEELS', who: 'BRAVO', portrait: 'TÍO BRAVO', rank: 2, cooldown: 120, color: '#ffb547' },
+  { id: 'jam', key: 'X', code: 'KeyX', name: 'SIGNAL JAM', who: 'JAZZ', portrait: 'JAZZ', rank: 3, cooldown: 150, color: '#ff7eb6' },
+  { id: 'patch', key: 'C', code: 'KeyC', name: 'PATCH-UP', who: 'DOC INÉS', portrait: 'DOC INÉS', rank: 4, cooldown: 180, color: '#7be0c3' },
 ];

@@ -1,8 +1,6 @@
-// The HUD's status panel, under the eclipse panel: the wanted stars and the cash on one line; the wanted level in
-// words with its state (SPOTTED, SEARCHING, JAMMED) and a line of detail (how many units have eyes on Nova, or the
-// search zone and the seconds until a star comes off); then the street-cred rank with its points and the points
-// the next rank asks for. It also owns the health and armor bars, which sit under the minimap.
-import { CRED_RANKS } from '../progression/streetCred.js';
+// The HUD's status panel, under the eclipse panel: big wanted stars and cash on one line, the street-cred rank on a
+// thin line and the escape bar while evading. It also owns the health and armor bars, which sit under the minimap.
+// (The response tier is named in the dispatch panel's head; the weapons have their own bar: hudWeaponBar.js.)
 import { createElement, createMeter, formatCash } from './domBuilder.js';
 
 export class HudStatusPanel {
@@ -12,15 +10,14 @@ export class HudStatusPanel {
     this.cache = cache;
     this.shownCash = 0;
     const root = createElement('div', 'hud-panel status-panel', parent);
-    this.root = root;
+    // Stars and cash share the top line; the rank is one thin line under them, and the escape bar shows while evading.
     const top = createElement('div', 'status-top', root);
     this.stars = createElement('div', 'wanted-stars', top);
     for (let index = 0; index < 5; index += 1) createElement('i', '', this.stars, '★');
     this.cash = createElement('div', 'cash-readout', top);
-    this.state = createElement('div', 'wanted-state', root);
-    this.detail = createElement('div', 'wanted-detail', root);
-    this.escape = createMeter(root, 'escape-meter', 'STAR COMING OFF');
     this.rank = createMeter(root, 'rank-meter', 'RANK');
+    this.tier = createElement('div', 'wanted-tier', root);
+    this.escape = createMeter(root, 'escape-meter', 'EVADING');
     const vitals = createElement('div', 'vitals', vitalsParent);
     this.health = createMeter(vitals, 'health-meter', 'HEALTH');
     this.armor = createMeter(vitals, 'armor-meter', 'ARMOR');
@@ -33,14 +30,11 @@ export class HudStatusPanel {
     const wanted = game.wanted;
     const blink = wanted.evading && Math.floor(game.time * 4) % 2 === 0;
     for (let index = 0; index < 5; index += 1) cache.toggle(this.stars.children[index], 'on', index < wanted.stars && !blink);
-    const status = wanted.status();
-    cache.text(this.state, wanted.stars > 0 ? `WANTED ${wanted.stars}★ · ${status.state}` : 'NOT WANTED · CLEAR');
-    cache.text(this.detail, status.line);
-    cache.toggle(this.root, 'wanted', wanted.stars > 0);
-    cache.toggle(this.root, 'searching', status.state === 'SEARCHING' || status.state === 'JAMMED');
+    cache.toggle(this.tier, 'visible', wanted.stars > 0);
+    cache.text(this.tier, wanted.stars > 0 ? wanted.responseTier() : '');
     cache.toggle(this.escape.root, 'visible', wanted.stars > 0 && wanted.evading);
     cache.width(this.escape.fill, wanted.escapeProgress());
-    cache.text(this.escape.value, `${Math.round(wanted.escapeProgress() * 100)}%`);
+    cache.text(this.escape.value, game.crew.isJamming() ? 'JAMMED' : 'OUT OF SIGHT');
 
     this.shownCash += (player.cash - this.shownCash) * Math.min(1, dt * 8);
     if (Math.abs(player.cash - this.shownCash) < 1) this.shownCash = player.cash;
@@ -54,9 +48,8 @@ export class HudStatusPanel {
     cache.width(this.armor.fill, armor / game.cred.maxArmor());
     cache.text(this.armor.value, String(armor));
     const cred = game.cred;
-    const next = CRED_RANKS[cred.rank];
     cache.text(this.rank.label, `RANK ${cred.rank} · ${cred.title().toUpperCase()}`);
-    cache.text(this.rank.value, next ? `CRED ${cred.points.toLocaleString('en-US')} / ${next.cred.toLocaleString('en-US')}` : `CRED ${cred.points.toLocaleString('en-US')} · TOP RANK`);
+    cache.text(this.rank.value, cred.points.toLocaleString('en-US'));
     cache.width(this.rank.fill, cred.progressToNextRank());
   }
 }

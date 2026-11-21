@@ -13,14 +13,11 @@ export class StreetCred {
     this.rank = rankForPoints(points);
   }
 
-  /**
-   * Earn cred for a named deed; climbing a rank announces what it unlocked. A `quiet` deed (a driving stunt, which
-   * has its own pop-up) leaves no line in the feed.
-   */
-  earn(amount, reason, quiet = false) {
+  /** Earn cred for a named deed; climbing a rank announces what it unlocked. */
+  earn(amount, reason) {
     if (amount <= 0) return;
     this.points += Math.round(amount);
-    if (!quiet) this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason}`);
+    this.game.hud.notify(`+${Math.round(amount)} CRED · ${reason}`);
     const rank = rankForPoints(this.points);
     if (rank > this.rank) {
       this.rank = rank;
@@ -71,7 +68,7 @@ export function rankForPoints(points) {
 /** The ladder: the cred each rank needs and what reaching it unlocks. */
 export const CRED_RANKS = [
   { title: 'Newcomer', cred: 0, unlocks: 'the streets of Saros' },
-  { title: 'Runner', cred: 250, unlocks: 'Bravo\'s GETAWAY CAR favor · workshop tier 1' },
+  { title: 'Runner', cred: 250, unlocks: 'Bravo\'s WHEELS ON CALL favor · workshop tier 1' },
   { title: 'Hustler', cred: 700, unlocks: 'Jazz\'s SIGNAL JAM favor · Hornet SMG · workshop tier 2' },
   { title: 'Getaway Ace', cred: 1500, unlocks: 'Inés\'s PATCH-UP favor · Boomstick 12 · nitro' },
   { title: 'Fixer', cred: 2800, unlocks: 'Longshot AR · workshop tier 3' },
@@ -80,5 +77,5 @@ export const CRED_RANKS = [
   { title: 'Queen of Saros', cred: 10000, unlocks: 'the crown' },
 ];
 
-/** What each deed is worth; the systems that pay cred read their amount here (driving stunts keep theirs in drivingStunts.js). */
-export const CRED_AWARDS = { stage: 30, escapePerStar: 45, fare: 30, token: 50, bounty: 140, raceWin: 220, racePodium: 110, officer: 8, enforcer: 14, helicopter: 160 };
+/** What each deed is worth; the systems that pay cred read their amount here. */
+export const CRED_AWARDS = { stage: 30, escapePerStar: 45, fare: 30, token: 50, bounty: 140, raceWin: 220, racePodium: 110, officer: 8, enforcer: 14, helicopter: 160, powerslide: 6 };

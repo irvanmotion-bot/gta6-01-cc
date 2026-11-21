@@ -1,6 +1,6 @@
-// The HUD's bottom-right panel. In a car: the gear, the car's name and class, the speed in km/h, and the body and
-// nitro gauges (the radio has its own panel under it: hudRadioPanel.js). On foot and not wanted: the GPS list of
-// the nearest places with their distance.
+// The HUD's bottom-right panel. In a car: its name and class, the speedometer and gear, and the body and nitro
+// gauges (the radio names its station in the feed when it changes). On foot and not wanted: the GPS list of the
+// nearest places with their distance.
 import { distance2D } from '../core/random.js';
 import { LANDMARKS } from '../world/cityLayout.js';
 import { createElement, createMeter } from './domBuilder.js';
@@ -11,16 +11,16 @@ export class HudVehiclePanel {
     this.cache = cache;
     this.gpsClock = 0;
     this.root = createElement('div', 'hud-panel vehicle-panel', parent);
+    this.name = createElement('div', 'vehicle-name', this.root);
     const dial = createElement('div', 'speed-row', this.root);
     this.gear = createElement('span', 'gear-box', dial);
-    this.name = createElement('div', 'vehicle-name', dial);
     this.speed = createElement('b', 'speed-value', dial);
-    createElement('small', '', dial, 'KM/H');
+    createElement('small', '', dial, 'km/h');
     const gauges = createElement('div', 'vitals', this.root);
     this.condition = createMeter(gauges, 'condition-meter', 'BODY');
     this.nitro = createMeter(gauges, 'nitro-meter', 'NITRO');
     this.gps = createElement('div', 'hud-panel gps-panel', parent);
-    createElement('div', 'panel-caption', this.gps, 'GPS · NEAREST PLACES');
+    createElement('div', 'panel-caption', this.gps, 'GPS · NEAREST');
     this.gpsRows = createElement('div', 'gps-rows', this.gps);
   }
 
@@ -35,7 +35,7 @@ export class HudVehiclePanel {
   gpsMarkup() {
     const p = this.game.player.position;
     const places = Object.values(LANDMARKS).map((place) => ({ place, distance: distance2D(p.x, p.z, place.x, place.z) })).sort((a, b) => a.distance - b.distance).slice(0, 3);
-    return places.map(({ place, distance }) => `<div><i style="background:${place.color}">${place.icon}</i><b>${place.name}</b><u>${Math.round(distance)} M</u></div>`).join('');
+    return places.map(({ place, distance }) => `<div><i style="background:${place.color}">${place.icon}</i><b>${place.name}</b><u>${Math.round(distance)} m</u></div>`).join('');
   }
 
   update(dt) {
@@ -60,6 +60,6 @@ export class HudVehiclePanel {
     const workshop = game.workshop;
     cache.toggle(this.nitro.root, 'empty', !workshop.hasNitro());
     cache.width(this.nitro.fill, workshop.hasNitro() ? workshop.nitroCharge : 0);
-    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURNING' : workshop.nitroCharge >= 1 ? 'READY' : `${Math.round(workshop.nitroCharge * 100)}%`);
+    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURN' : workshop.nitroCharge >= 1 ? 'SHIFT' : '···');
   }
 }

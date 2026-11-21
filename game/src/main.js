@@ -1,23 +1,20 @@
 // Totality: boots the city of Saros, owns every system and runs the game loop and its states (title, play, pause,
 // atlas, shop). The eclipse calendar is the first system it loads: every other one asks it what day and hour it is.
-// After it come the rules of play, each in its own module: the dark, the wanted level, cred and rank, the crew's
-// favors, driving stunts, the police, the workshop, bounties, races and the story.
 import * as THREE from 'three';
 import { ECLIPSE_DAY, EclipseCalendar } from './eclipse/eclipseCalendar.js';
+import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
 import { DarknessCover } from './eclipse/darknessCover.js';
+import { LANDMARKS } from './world/cityLayout.js';
+import { PoliceDispatch } from './police/policeDispatch.js';
 import { WantedLevel } from './police/wantedLevel.js';
+import { MissionDirector } from './missions/missionDirector.js';
 import { StreetCred } from './progression/streetCred.js';
 import { CrewFavors } from './progression/crewFavors.js';
-import { DrivingStunts } from './activities/drivingStunts.js';
-import { PoliceDispatch } from './police/policeDispatch.js';
 import { TuningWorkshop } from './garage/tuningWorkshop.js';
-import { VaneBounties } from './activities/vaneBounties.js';
-import { StreetRaces } from './activities/streetRaces.js';
-import { MissionDirector } from './missions/missionDirector.js';
-import { SideActivities } from './missions/sideActivities.js';
-import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
 import { WorkshopShowroom } from './garage/workshopShowroom.js';
-import { LANDMARKS } from './world/cityLayout.js';
+import { StreetRaces } from './activities/streetRaces.js';
+import { VaneBounties } from './activities/vaneBounties.js';
+import { SideActivities } from './missions/sideActivities.js';
 import { captureGame, restoreGame, summarizeGame } from './core/gameSnapshot.js';
 import { freshStats, loadSaveSlot, loadSettings, migrateRetiredSaves, writeSaveSlot } from './core/saveGame.js';
 import { PedestrianCrowd } from './characters/pedestrians.js';
@@ -118,7 +115,6 @@ class Game {
     this.activities = new SideActivities(this);
     this.races = new StreetRaces(this);
     this.bounties = new VaneBounties(this);
-    this.stunts = new DrivingStunts(this);
     this.shops = new Shops(this);
     this.darkness = new DarknessCover(this);
     this.watchParties = new EclipseWatchParties(this);
@@ -144,21 +140,10 @@ class Game {
     this.hud.fitToWindow();
   }
 
-  /**
-   * Put the settings to work: volume, mouse speed, shadows, the size of the HUD, and RENDER SCALE, which draws the
-   * city at more pixels than the window has and lets the browser average them down: smoother edges for more work.
-   */
   applySettings() {
-    const settings = this.settings;
-    this.audio.setVolume(settings.volume);
-    this.camera.sensitivity = settings.sensitivity;
-    this.sky.setShadows(settings.shadows);
-    this.hud.setSize(settings.hudSize);
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.5) * (settings.renderScale || 1);
-    if (this.renderer.getPixelRatio() !== ratio) {
-      this.renderer.setPixelRatio(ratio);
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
+    this.audio.setVolume(this.settings.volume);
+    this.camera.sensitivity = this.settings.sensitivity;
+    this.sky.setShadows(this.settings.shadows);
   }
 
   /** Everyone a bullet, a bumper or a blast can reach: Nova, the citizens and the gunmen. */
@@ -186,7 +171,6 @@ class Game {
     this.down = null;
     this.hud.hideDown();
     this.hud.clearSpeech();
-    this.hud.clearFeed();
     this.races.reset();
     this.missions.reset();
     this.vehicles.clear();
@@ -202,7 +186,6 @@ class Game {
     this.crew.reset();
     this.workshop.reset();
     this.bounties.reset();
-    this.stunts.reset();
     this.darkness.headlightsOn = true;
     this.stats = freshStats();
     this.player.armor = 0;
@@ -360,12 +343,10 @@ class Game {
       this.missions.update(dt);
       this.races.update(dt);
       this.bounties.update(dt);
-      this.stunts.update(dt);
       this.activities.update(dt);
       this.shops.update(dt);
       this.workshop.update(dt);
       this.darkness.update(dt);
-      this.audio.radio.tick(dt, Boolean(this.player.vehicle));
       this.stats.playSeconds += dt;
     }
     this.watchParties.update(dt);
@@ -473,9 +454,8 @@ const TITLE_HOUR = 16.72;
 
 const game = new Game();
 window.totality = game;
-const query = new URLSearchParams(window.location.search);
-const shot = query.get('shot');
-if (shot) stageScreenshot(game, shot, query.get('hud'));
+const shot = new URLSearchParams(window.location.search).get('shot');
+if (shot) stageScreenshot(game, shot);
 else game.showTitle();
 document.getElementById('loading').classList.add('done');
 game.run();
