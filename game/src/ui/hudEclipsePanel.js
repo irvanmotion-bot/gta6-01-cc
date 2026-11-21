@@ -56,7 +56,7 @@ export class HudEclipsePanel {
     const cache = this.cache;
     const calendar = game.calendar;
     const readout = calendar.readout();
-    cache.text(this.caption, readout.caption);
+    cache.text(this.caption, `ECLIPSE · ${readout.caption}`);
     cache.text(this.big, readout.big);
     // The panel has room for the first words of the line; the atlas prints it whole.
     cache.text(this.line, readout.line.split(/ · |: /)[0]);

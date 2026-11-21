@@ -1,7 +1,7 @@
 // The start screen and the pause menu: the logo over a column of buttons (continue, new game, save, load, atlas,
 // statistics, controls, settings) and, beside them, the three save slots as cards that load on a click and the
 // district map of Saros with its legend. By keyboard or mouse.
-import { SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
+import { HUD_SIZES, SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
 import { CITY_NAME, GAME_TITLE } from '../core/config.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
 import { DISTRICTS } from '../world/cityLayout.js';
@@ -106,6 +106,7 @@ export class Menus {
       { label: `VOLUME · ${Math.round(settings.volume * 100)}%`, hint: 'Master volume', run: cycle('volume', [0, 0.2, 0.4, 0.6, 0.8, 1]) },
       { label: `MOUSE SPEED · ${settings.sensitivity.toFixed(2)}`, hint: 'Camera sensitivity', run: cycle('sensitivity', [0.5, 0.75, 1, 1.25, 1.5, 2]) },
       { label: `SHADOWS · ${settings.shadows ? 'ON' : 'OFF'}`, hint: 'Turn off for more speed', run: cycle('shadows', [true, false]) },
+      { label: `HUD SIZE · ${settings.hudSize.toUpperCase()}`, hint: 'Standard, large or huge panels and type', run: cycle('hudSize', Object.keys(HUD_SIZES)) },
       { label: 'BACK', hint: '', run: () => this.open('main') },
     ];
   }
@@ -198,7 +199,7 @@ export function statisticRows(game) {
     ['Cars stolen', s.carsStolen], ['Distance driven', `${(s.metresDriven / 1000).toFixed(1)} km`], ['Street races won', `${s.racesWon} of ${s.racesRun}`], ['Taxi fares delivered', s.faresDone],
     ['Corona Tokens found', game.activities.tokenCount()], ['Bounties claimed', game.bounties.tally()], ['Highest wanted level', '★'.repeat(s.maxStars) || 'none'], ['Police escapes', s.escapes],
     ['Officers downed', s.copsDowned], ['Vane guns downed', s.enforcersDowned], ['Helicopters downed', s.choppersDowned], ['Shots fired', s.shotsFired],
-    ['Crew favors called', s.favorsUsed], ['Times arrested', s.timesBusted], ['Times wiped out', s.timesWiped], ['Time played', formatPlayTime(s.playSeconds)],
+    ['Near misses', s.nearMisses || 0], ['Stunt cash', `$${(s.stuntCash || 0).toLocaleString('en-US')}`], ['Crew favors called', s.favorsUsed], ['Times arrested', s.timesBusted], ['Times wiped out', s.timesWiped], ['Time played', formatPlayTime(s.playSeconds)],
   ];
 }
 

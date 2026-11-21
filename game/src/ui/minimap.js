@@ -117,6 +117,21 @@ export class Minimap {
     c.drawImage(this.cityMap, MAP_MIN_X - player.position.x, MAP_MIN_Z - player.position.z);
     c.restore();
 
+    // The zone the police are combing after they lost sight of her: a red circle round where they last saw her.
+    const zone = game.wanted.searchZone();
+    if (zone) {
+      const centre = toMap(zone.x, zone.z);
+      c.beginPath();
+      c.arc(halfX + centre.x, halfY + centre.y, zone.radius * scale, 0, Math.PI * 2);
+      c.fillStyle = Math.floor(game.time * 2) % 2 === 0 ? 'rgba(255, 59, 48, 0.24)' : 'rgba(58, 123, 255, 0.24)';
+      c.fill();
+      c.lineWidth = 2.5 * unit;
+      c.setLineDash([6 * unit, 4 * unit]);
+      c.strokeStyle = '#ff6a4d';
+      c.stroke();
+      c.setLineDash([]);
+    }
+
     const target = this.routeTarget();
     if (target) this.drawRoute(c, routeAlongStreets(player.position, target), toMap, halfX, halfY, unit, target.color);
 

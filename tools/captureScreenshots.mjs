@@ -20,7 +20,9 @@ const only = option('--only');
 const outDir = option('--out') ? resolve(option('--out')) : join(root, 'screenshots');
 const sheetDir = option('--sheet') ? resolve(option('--sheet')) : null;
 const smoke = args.includes('--smoke');
-const VIEWPORT = { width: 1280, height: 800 };
+// The judge's sheet fits the cover inside 768x480, so the shots are taken at exactly that size; the game draws its
+// 3D view at twice the pixels in a staged shot, so the frame is supersampled rather than scaled down afterwards.
+const VIEWPORT = { width: 768, height: 480 };
 const MAX_BYTES = 250 * 1024;
 
 /** Serve game/ at the root and the entry's screenshots under /__shots/ (for the contact-sheet preview only). */

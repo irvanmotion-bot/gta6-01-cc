@@ -304,7 +304,8 @@ export function playWholeGame() {
   game.setState('play');
   run(30);
   const hud = {
-    job: document.querySelector('.job-header').textContent, tier: document.querySelector('.wanted-tier').textContent, rank: document.querySelector('.rank-meter .meter-label').textContent,
+    job: document.querySelector('.job-header').textContent, sight: document.querySelector('.sight-label').textContent, rank: document.querySelector('.rank-name').textContent, crew: document.querySelector('.crew-caption').textContent,
+    stunts: { nearMisses: game.stats.nearMisses, stuntCash: game.stats.stuntCash },
     slots: document.querySelectorAll('.weapon-slot.owned').length, favors: document.querySelectorAll('.favor').length, atlasJobs,
   };
   const slotCards = JSON.parse(window.localStorage.getItem(saveKey(2))).summary;

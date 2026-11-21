@@ -10,6 +10,9 @@ import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
+import { HUD_SIZES } from '../core/saveGame.js';
+import { CREW_FAVORS } from '../progression/crewFavors.js';
+import { CHARACTERS } from '../missions/storyMissions.js';
 
 export class Hud {
   constructor(game) {
@@ -22,8 +25,9 @@ export class Hud {
     const right = createElement('div', 'hud-column right-column', root);
     const radar = this.buildRadar(root);
     this.jobPanel = new HudJobPanel(game, left, this.cache);
-    this.crewPanel = new HudCrewPanel(game, left, this.cache);
     this.buildDialogue(left);
+    // The crew strip runs along the foot of the screen, between the radar and the weapon and car panels.
+    this.crewPanel = new HudCrewPanel(game, createElement('div', 'crew-dock', root), this.cache);
     this.eclipsePanel = new HudEclipsePanel(game, right, this.cache);
     this.statusPanel = new HudStatusPanel(game, right, this.cache, radar);
     this.dispatchPanel = new HudDispatchPanel(game, right, this.cache);
@@ -38,15 +42,25 @@ export class Hud {
     this.hintText = '';
     this.hintClock = 0;
     this.hitClock = 0;
+    this.sizeFactor = 1;
+    this.sizeName = 'standard';
+    this.fitToWindow();
+  }
+
+  /** HUD SIZE from the settings: standard, large or huge. */
+  setSize(name) {
+    this.sizeName = HUD_SIZES[name] ? name : 'standard';
+    this.sizeFactor = HUD_SIZES[this.sizeName];
+    this.root.dataset.size = this.sizeName;
     this.fitToWindow();
   }
 
   /**
-   * The panels are sized in window heights and laid out for a 16:10 frame. In a narrower window the whole HUD
-   * shrinks in step, so the columns, the radar and the dialogue box never run into each other.
+   * The panels are sized in window heights and laid out for a 16:10 frame, then drawn at the HUD SIZE factor. In a
+   * narrower window the whole HUD shrinks in step, so the columns, the radar and the dialogue box never collide.
    */
   fitToWindow() {
-    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6);
+    const scale = Math.min(1, window.innerWidth / window.innerHeight / 1.6) * (this.sizeFactor || 1);
     const style = this.root.style;
     style.zoom = String(scale);
     style.right = 'auto';
@@ -78,12 +92,15 @@ export class Hud {
     this.portrait.width = 96;
     this.portrait.height = 96;
     const text = createElement('div', 'dialogue-text', this.dialogue);
-    this.speaker = createElement('b', 'dialogue-speaker', text);
+    const head = createElement('div', 'dialogue-head', text);
+    this.speaker = createElement('b', 'dialogue-speaker', head);
+    this.role = createElement('span', 'dialogue-role', head);
     this.line = createElement('div', 'dialogue-line', text);
   }
 
   buildOverlays(root) {
     this.notifications = createElement('div', 'notifications', root);
+    this.stuntFeed = createElement('div', 'stunt-feed', root);
     this.crosshair = createElement('div', 'crosshair', root);
     this.hintBox = createElement('div', 'hint', root);
     this.hintKey = createElement('b', 'hint-key', this.hintBox);
@@ -176,6 +193,7 @@ export class Hud {
     if (!next) { this.dialogue.classList.remove('visible'); return; }
     drawSpeakerPortrait(this.portrait, next.speaker, next.color);
     this.speaker.textContent = next.speaker;
+    this.role.textContent = roleOf(next.speaker);
     this.speaker.style.color = next.color;
     this.line.textContent = next.line;
     this.dialogue.style.borderColor = next.color;
@@ -210,5 +228,21 @@ export class Hud {
       if (this.bannerClock <= 0) this.bannerBox.classList.remove('visible');
     }
     this.advanceDialogue(dt);
+    this.drawStunts();
   }
+
+  /** The stunt popups over the road: what was pulled off, how close or how far, the cash and the combo. */
+  drawStunts() {
+    const markup = this.game.stunts.visiblePopups().map((popup) => `<div class="stunt${popup.clock < 0.5 ? ' fading' : ''}"><b>${popup.title}</b><span>${popup.detail}</span><em>+$${popup.cash.toLocaleString('en-US')}${popup.combo > 1 ? ` · COMBO ×${popup.combo}` : ''}</em></div>`).join('');
+    this.cache.html(this.stuntFeed, markup);
+  }
+}
+
+/** A speaker's part in the story for the dialogue box: the crew by their trade, the others by their own line. */
+function roleOf(speaker) {
+  const favor = CREW_FAVORS.find((entry) => entry.portrait === speaker);
+  const person = Object.values(CHARACTERS).find((entry) => entry.name === speaker);
+  const where = person ? person.role.split(' · ')[0] : '';
+  if (favor) return `${favor.role} · ${where}`.toUpperCase();
+  return where.toUpperCase();
 }

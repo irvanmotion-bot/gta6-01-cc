@@ -17,6 +17,9 @@ export class WantedLevel {
     this.lastCrime = {};
     this.locked = 0;
     this.peakStars = 0;
+    this.seenBy = 0;
+    this.lastSeen = null;
+    this.searchRadius = SEARCH_RADIUS;
   }
 
   reportCrime(type) {
@@ -29,6 +32,8 @@ export class WantedLevel {
     this.heat = Math.min(this.heat + crime.heat, STAR_HEAT[5] + 40);
     if (crime.floor) this.heat = Math.max(this.heat, STAR_HEAT[crime.floor]);
     this.unseen = 0;
+    // A fresh crime gives her away: the search starts again from where she is.
+    this.lastSeen = null;
     this.refresh();
   }
 
@@ -89,18 +94,47 @@ export class WantedLevel {
     return responseTierName(this.stars);
   }
 
+  /**
+   * What the HUD says about the hunt: SPOTTED with the count of units that can see her, or SEARCHING with the
+   * zone they are combing, or nothing when nobody is looking.
+   */
+  sightState() {
+    if (this.stars === 0) return null;
+    if (this.evading) return { label: 'SEARCHING', line: `ZONE ${Math.round(this.searchRadius)} M · LOST YOU ${Math.floor(this.unseen)}s AGO` };
+    const eyes = this.seenBy;
+    return { label: 'SPOTTED', line: eyes > 0 ? `${eyes} ${eyes === 1 ? 'UNIT HAS' : 'UNITS HAVE'} EYES ON YOU` : 'LAST SEEN SECONDS AGO' };
+  }
+
+  /** Where the police last saw her, and how wide the circle they search has grown: the minimap draws it. */
+  searchZone() {
+    return this.stars > 0 && this.evading && this.lastSeen ? { x: this.lastSeen.x, z: this.lastSeen.z, radius: this.searchRadius } : null;
+  }
+
   update(dt) {
-    if (this.stars === 0) { this.evading = false; return; }
+    if (this.stars === 0) { this.evading = false; this.seenBy = 0; this.lastSeen = null; return; }
     this.locked = Math.max(0, this.locked - dt);
     const jammed = this.game.crew.isJamming();
+    const player = this.game.player.position;
     // In the dark of totality or of the night, a Nova no light is on is seen from a quarter as far and lost twice as fast.
+    // A unit with a building between it and her does not see her at all.
     const cover = this.game.darkness;
-    const seen = !jammed && (this.game.police.anyUnitWithin(cover.sightRange(SEEN_RANGE)) || this.locked > 0);
-    this.unseen = seen ? 0 : this.unseen + dt * (jammed ? 1.6 : 1) * cover.escapePace();
+    this.seenBy = jammed ? 0 : this.game.police.unitsWithEyesOn(cover.sightRange(SEEN_RANGE));
+    const seen = !jammed && (this.seenBy > 0 || this.locked > 0);
+    if (seen || !this.lastSeen) {
+      this.lastSeen = { x: player.x, z: player.z };
+      this.searchRadius = SEARCH_RADIUS;
+    } else {
+      // The search circle widens the longer she stays hidden; once she is outside it the trail goes cold twice as fast.
+      this.searchRadius += dt * 2.5;
+    }
+    const outside = Math.hypot(player.x - this.lastSeen.x, player.z - this.lastSeen.z) > this.searchRadius;
+    this.unseen = seen ? 0 : this.unseen + dt * (jammed ? 1.6 : 1) * (outside ? 2 : 1) * cover.escapePace();
     this.evading = this.unseen > 3;
     if (this.unseen > this.escapeTime()) this.clear();
   }
 }
+
+const SEARCH_RADIUS = 45;
 
 /** Heat each crime adds; `floor` forces at least that many stars at once. */
 const CRIMES = {

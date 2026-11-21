@@ -60,7 +60,10 @@ export function deleteSaveSlot(slot) {
   try { window.localStorage.removeItem(slotKey(slot)); } catch (error) { /* nothing to delete */ }
 }
 
-export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true };
+/** HUD SIZE: how big the panels and their type are drawn, as a factor of the standard size. */
+export const HUD_SIZES = { standard: 1, large: 1.25, huge: 1.5 };
+
+export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true, hudSize: 'standard' };
 
 export function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(readStored(SETTINGS_KEY) || {}) };
@@ -75,7 +78,7 @@ export function freshStats() {
   return {
     missionsPassed: 0, missionsFailed: 0, carsStolen: 0, peopleHurt: 0, copsDowned: 0, enforcersDowned: 0, choppersDowned: 0, shotsFired: 0,
     maxStars: 0, escapes: 0, earned: 0, spent: 0, faresDone: 0, racesRun: 0, racesWon: 0, bountiesClaimed: 0, favorsUsed: 0, metresDriven: 0,
-    timesBusted: 0, timesWiped: 0, playSeconds: 0,
+    timesBusted: 0, timesWiped: 0, playSeconds: 0, nearMisses: 0, stuntCash: 0,
   };
 }
 

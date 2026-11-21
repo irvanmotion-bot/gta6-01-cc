@@ -11,6 +11,7 @@ export class HudWeaponBar {
     this.game = game;
     this.cache = cache;
     const root = createElement('div', 'hud-panel weapon-bar', parent);
+    this.slotLine = createElement('div', 'weapon-caption', root);
     const line = createElement('div', 'weapon-line', root);
     this.name = createElement('span', 'weapon-name', line);
     this.ammo = createElement('b', 'weapon-ammo', line);
@@ -36,6 +37,10 @@ export class HudWeaponBar {
       if (entry.drawn !== color) { entry.drawn = color; drawWeaponIcon(entry.icon, entry.id, color); }
     });
     const status = weapons.status();
+    const slots = weapons.slots();
+    const held = slots.findIndex((slot) => slot.current);
+    const owned = slots.filter((slot) => slot.owned).length;
+    cache.text(this.slotLine, `WEAPON · SLOT ${held + 1} OF ${slots.length} · ${slots.length - owned} LOCKED`);
     cache.text(this.name, status.name.toUpperCase());
     cache.text(this.ammo, status.ammo);
   }

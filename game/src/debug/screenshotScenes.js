@@ -139,6 +139,13 @@ function chaseScene(game) {
     ['duna', 3.0, blockadeZ + 9, Math.PI, '#1abc9c', false], ['toro', 3.0, blockadeZ + 20, Math.PI, '#ff7eb6', false],
   ];
   for (const [model, x, z, heading, paint, panics] of traffic) spawnCivilianCar(game, model, x, z, heading, paint, panics);
+  // Two citizens coming the other way in the ocean-side lane: she threads past each at a door's width, and the
+  // stunt score pays both as near misses, the second on the combo.
+  const oncoming = [['caravana', z0 + 47, '#e9e4d8'], ['toro', z0 + 66, '#ff9f1c']].map(([model, z, paint]) => {
+    const car = spawnCivilianCar(game, model, 3.1, z, Math.PI, paint);
+    car.velZ = -12;
+    return car;
+  });
   // The pavement and the boardwalk are full on eclipse afternoon; the people nearest the chase are already running.
   for (const [x, z] of [[7.3, 6], [8.1, 10], [7.6, 14], [8.4, 18], [7.2, 23], [8.0, 29], [7.5, 36], [8.3, 44], [7.4, 53]]) {
     if (z < 20) game.pedestrians.spawnFleeing(x, zEnd + z, { x: lane, z: zEnd }); else spawnStroller(game, x, zEnd + z);
@@ -154,6 +161,8 @@ function chaseScene(game) {
   play(game, seconds, (t) => {
     // She holds the Rayo at the pace the interceptors can match, feathering the throttle.
     if (rayo.speed < speed + 1) game.input.held.add('KeyW'); else game.input.held.delete('KeyW');
+    // The oncoming drivers hold their lane and their pace; neither sees her coming in time to brake.
+    for (const car of oncoming) { car.velX = 0; car.velZ = Math.min(car.velZ, -11); }
     // The pack catches her as she reaches the junction: an interceptor draws level on her ocean side and a
     // cruiser on the other, each a door's width away and about to turn in.
     if (t >= closeIn && !pack.length) {
@@ -309,6 +318,10 @@ function pauseScene(game) {
 const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
 
 export function stageScreenshot(game, name) {
+  // The HUD SIZE a scene is taken at (?hud=standard|large|huge), large unless asked; the player's own setting is
+  // left as it is saved.
+  game.settings.hudSize = new URLSearchParams(window.location.search).get('hud') || 'large';
+  game.applySettings();
   (SCENES[name] || titleScene)(game);
   game.input.held.clear();
   game.frozen = true;

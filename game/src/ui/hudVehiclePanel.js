@@ -19,6 +19,10 @@ export class HudVehiclePanel {
     const gauges = createElement('div', 'vitals', this.root);
     this.condition = createMeter(gauges, 'condition-meter', 'BODY');
     this.nitro = createMeter(gauges, 'nitro-meter', 'NITRO');
+    // The car radio: station and frequency, then the song on air and who plays it.
+    this.radio = createElement('div', 'radio-line', this.root);
+    this.station = createElement('b', 'radio-station', this.radio);
+    this.song = createElement('span', 'radio-song', this.radio);
     this.gps = createElement('div', 'hud-panel gps-panel', parent);
     createElement('div', 'panel-caption', this.gps, 'GPS · NEAREST');
     this.gpsRows = createElement('div', 'gps-rows', this.gps);
@@ -60,6 +64,10 @@ export class HudVehiclePanel {
     const workshop = game.workshop;
     cache.toggle(this.nitro.root, 'empty', !workshop.hasNitro());
     cache.width(this.nitro.fill, workshop.hasNitro() ? workshop.nitroCharge : 0);
-    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURN' : workshop.nitroCharge >= 1 ? 'SHIFT' : '···');
+    cache.text(this.nitro.value, !workshop.hasNitro() ? 'NONE' : vehicle.boosting ? 'BURN' : workshop.nitroCharge >= 1 ? 'READY' : `${Math.round(workshop.nitroCharge * 100)}%`);
+    const song = game.audio.radio.nowPlaying(game.time);
+    cache.toggle(this.radio, 'off', !song);
+    cache.text(this.station, song ? `RADIO ${song.station.toUpperCase()}` : 'RADIO OFF · R TO TUNE');
+    cache.text(this.song, song ? `♪ ${song.title.toUpperCase()} · ${song.artist.toUpperCase()}` : '');
   }
 }

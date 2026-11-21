@@ -2,9 +2,12 @@
 
 /** Each station: tempo, a scale in semitones from its root, a bass line and how its lead plays. */
 export const STATIONS = [
-  { name: 'Penumbra 98.6', host: 'Jazz counts down to totality', bpm: 104, root: 45, scale: [0, 3, 5, 7, 10, 12, 15], bass: [0, 0, 5, 5, 3, 3, 7, 7], wave: 'sawtooth', leadEvery: 2 },
-  { name: 'Radio Azimuth 101', host: 'Latin brass, all afternoon', bpm: 122, root: 48, scale: [0, 2, 4, 7, 9, 12, 14], bass: [0, 7, 0, 7, 5, 9, 5, 7], wave: 'triangle', leadEvery: 1 },
-  { name: 'Umbra After Hours', host: 'Slow grooves for the dark', bpm: 84, root: 41, scale: [0, 3, 7, 10, 12, 14, 15], bass: [0, 0, 0, 3, 5, 5, 5, 7], wave: 'square', leadEvery: 4 },
+  { name: 'Penumbra 98.6', host: 'Jazz counts down to totality', bpm: 104, root: 45, scale: [0, 3, 5, 7, 10, 12, 15], bass: [0, 0, 5, 5, 3, 3, 7, 7], wave: 'sawtooth', leadEvery: 2,
+    tracks: [['Shadow Bands', 'Los Contactos'], ['Diamond Ring', 'Velvet Umbra'], ['Baily\'s Beads', 'The Corona Kids'], ['Second Contact', 'Nova Static']] },
+  { name: 'Radio Azimuth 101', host: 'Latin brass, all afternoon', bpm: 122, root: 48, scale: [0, 2, 4, 7, 9, 12, 14], bass: [0, 7, 0, 7, 5, 9, 5, 7], wave: 'triangle', leadEvery: 1,
+    tracks: [['Mambo del Mediodía', 'Orquesta Solsticio'], ['Cumbia Corona', 'Los Hermanos Ríos'], ['Trompeta de Oro', 'Banda Azimut']] },
+  { name: 'Umbra After Hours', host: 'Slow grooves for the dark', bpm: 84, root: 41, scale: [0, 3, 7, 10, 12, 14, 15], bass: [0, 0, 0, 3, 5, 5, 5, 7], wave: 'square', leadEvery: 4,
+    tracks: [['Two Minutes of Night', 'Moth & Lantern'], ['Low Tide, No Moon', 'Saros Quiet Club'], ['Kill the Lights', 'Ines del Mar']] },
   { name: 'Radio off', host: '', bpm: 0 },
 ];
 
@@ -36,6 +39,15 @@ export class RadioMusic {
   /** The station tuned in, or null with the radio off: the HUD's now-playing line. */
   current() {
     return STATIONS[this.station].bpm > 0 ? STATIONS[this.station] : null;
+  }
+
+  /** The song on air at `seconds` of game time: each runs two and a half minutes, then the next in the rotation. */
+  nowPlaying(seconds) {
+    const station = this.current();
+    if (!station) return null;
+    const index = Math.floor(seconds / 150 + this.station) % station.tracks.length;
+    const [title, artist] = station.tracks[index];
+    return { station: station.name, title, artist };
   }
 
   /** Tune to the next station; returns it for the HUD. */

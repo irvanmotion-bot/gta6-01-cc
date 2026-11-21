@@ -71,6 +71,7 @@ export class VaneBounties {
       header: `BOUNTY HUNT ${this.claimed.size + 1}/${VANE_CAPOS.length} · JAZZ PAYS $${capo.price.toLocaleString('en-US')}`, title: capo.name, stageLine: `${capo.turf} · ${left} OF ${total} GUNS STANDING`,
       steps: total, stepsDone: total - left, share: (total - left) / total, face: 'VANE CAPO', faceColor: '#ff6a4d',
       objective: guards > 0 ? `Take down ${capo.name} and his ${guards} ${guards === 1 ? 'guard' : 'guards'}` : `Take down ${capo.name}`, next: 'Cash and cred on the kill', timer: null, kind: 'bounty',
+      reward: `$${capo.price.toLocaleString('en-US')} CASH · BOUNTY ${this.claimed.size + 1} OF ${VANE_CAPOS.length}`,
     };
   }
 

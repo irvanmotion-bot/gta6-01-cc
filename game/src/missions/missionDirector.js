@@ -172,6 +172,32 @@ export class MissionDirector {
     };
   }
 
+  /**
+   * The clock the job runs against: a timed step's own seconds, or, for a job that must be in place before the
+   * dark (a step still ahead waits for totality), the eclipse's countdown. Null when nothing is timed.
+   */
+  timeLimit() {
+    const run = this.active;
+    if (!run || !run.step) return null;
+    if (run.timer !== null) return { seconds: run.timer, label: 'TIME LIMIT' };
+    const waitsForDark = run.mission.steps.slice(run.index).some((step) => step.kind === 'awaitTotality');
+    const phase = this.game.calendar.phase();
+    if (waitsForDark && (phase === 'partial' || phase === 'eclipseDay')) return { seconds: this.game.calendar.secondsToTotality(), label: 'TIME LIMIT · TOTALITY' };
+    return null;
+  }
+
+  /** What fails the job from here: the clock, the job's car, the sun coming back, and always going down or in. */
+  failConditions() {
+    const run = this.active;
+    if (!run || !run.step) return '';
+    const reasons = [];
+    if (run.vehicle) reasons.push(`${run.vehicle.spec.name.toUpperCase()} WRECKED`);
+    if (run.timer !== null) reasons.push('TIME RUNS OUT');
+    if (run.mission.steps.slice(run.index).some((step) => step.kind === 'awaitTotality')) reasons.push('SUN COMES BACK');
+    reasons.push('BUSTED', 'WASTED');
+    return reasons.slice(0, 3).join(' · ');
+  }
+
   objectiveText() {
     const run = this.active;
     if (!run || !run.step) return '';

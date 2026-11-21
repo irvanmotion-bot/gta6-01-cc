@@ -50,6 +50,25 @@ export class PoliceDispatch {
     return this.helicopter.active && this.helicopter.distanceToPlayer() < range * 1.5;
   }
 
+  /**
+   * How many units have eyes on the player right now: a cruiser or an officer within `range` with no building
+   * between them, and the helicopter, which looks down over the roofs, within half as far again.
+   */
+  unitsWithEyesOn(range) {
+    const game = this.game;
+    const player = game.player.position;
+    const sees = (x, z) => distance2D(x, z, player.x, player.z) < range && game.collision.hasLineOfSight(x, z, player.x, player.z);
+    let count = 0;
+    for (const vehicle of game.vehicles.list) {
+      if (vehicle.spec.police && !vehicle.dead && vehicle.driver === 'cop' && sees(vehicle.position.x, vehicle.position.z)) count += 1;
+    }
+    for (const gunman of game.gunmen.list) {
+      if (gunman.faction === 'police' && gunman.alive && sees(gunman.position.x, gunman.position.z)) count += 1;
+    }
+    if (this.helicopter.active && this.helicopter.distanceToPlayer() < range * 1.5) count += 1;
+    return count;
+  }
+
   /** Which kind of unit answers the next call at this wanted level. */
   chooseRole(stars) {
     const roll = this.rng.next();

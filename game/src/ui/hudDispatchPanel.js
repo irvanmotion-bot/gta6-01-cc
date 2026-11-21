@@ -1,6 +1,13 @@
-// The HUD's police dispatch panel: a big count of the units hunting the player, the nearest of them by callsign
-// with the tactic each is running and its distance, and, during a street race, the running order of the field.
+// The HUD's police dispatch panel: SAROS P.D. with a big count of the units hunting the player and the name of the
+// response, then the nearest units one to a line (kind, callsign, the tactic each is running, metres away), and,
+// during a street race, the running order of the field in the same place.
 import { createElement } from './domBuilder.js';
+
+/** Six rows: the whole response of a five-star chase reads at a glance, kind by kind. */
+const MAX_ROWS = 6;
+
+/** The short kind each unit is listed under. */
+const KIND_LABELS = { patrol: 'CAR', interceptor: 'CAR', tactical: 'VAN', roadblock: 'BLOCK', air: 'AIR', foot: 'FOOT' };
 
 /**
  * What the panel shows for a roster: the total of units (a blockade counts each of its cars, a foot squad each
@@ -21,16 +28,18 @@ export class HudDispatchPanel {
     this.root = createElement('div', 'hud-panel dispatch-panel', parent);
     const head = createElement('div', 'dispatch-head', this.root);
     this.count = createElement('b', 'dispatch-count', head);
-    this.label = createElement('span', 'dispatch-label', head);
+    const words = createElement('div', 'dispatch-words', head);
+    createElement('div', 'dispatch-force', words, 'SAROS P.D.');
+    this.label = createElement('div', 'dispatch-label', words);
     this.rows = createElement('div', 'dispatch-rows', this.root);
     this.board = createElement('div', 'hud-panel race-board', parent);
     createElement('div', 'panel-caption', this.board, 'RACE BOARD');
     this.boardRows = createElement('div', 'dispatch-rows', this.board);
   }
 
-  /** One line per unit: icon, callsign, tactic, metres away; then one line counting the units not listed. */
+  /** One line per unit: kind, callsign, tactic, metres away; then one line counting the units not listed. */
   rosterMarkup(summary) {
-    const rows = summary.shown.map((unit) => `<div class="unit unit-${unit.role}"><i>${unit.icon}</i><b>${unit.callsign}</b><em>${unit.tactic}</em><u>${Math.round(unit.distance)} m</u></div>`);
+    const rows = summary.shown.map((unit) => `<div class="unit unit-${unit.role}"><i>${KIND_LABELS[unit.role] || 'CAR'}</i><b>${unit.callsign}</b><em>${unit.tactic}</em><u>${Math.round(unit.distance)}M</u></div>`);
     if (summary.more > 0) rows.push(`<div class="unit unit-more"><i>+</i><b>${summary.more} MORE</b><em>CLOSING IN</em><u></u></div>`);
     return rows.join('');
   }
@@ -56,10 +65,7 @@ export class HudDispatchPanel {
     cache.text(this.count, String(summary.total));
     // Wanted with nobody on the road yet: say the units are on their way instead of a bare zero.
     cache.toggle(this.root, 'en-route', summary.total === 0);
-    cache.text(this.label, summary.total === 0 ? 'SAROS P.D. · UNITS EN ROUTE' : `${summary.total === 1 ? 'UNIT' : 'UNITS'} · ${game.wanted.responseTier()}`);
+    cache.text(this.label, summary.total === 0 ? 'UNITS EN ROUTE' : `${summary.total === 1 ? 'UNIT' : 'UNITS'} · ${game.wanted.responseTier()}`);
     cache.html(this.rows, this.rosterMarkup(summary));
   }
 }
-
-/** Two rows read at a glance and leave the street in view; the rest of the response is counted in the line under them. */
-const MAX_ROWS = 2;

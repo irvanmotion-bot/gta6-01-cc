@@ -10,6 +10,7 @@ import { WantedLevel } from './police/wantedLevel.js';
 import { MissionDirector } from './missions/missionDirector.js';
 import { StreetCred } from './progression/streetCred.js';
 import { CrewFavors } from './progression/crewFavors.js';
+import { StuntScore } from './progression/stuntScore.js';
 import { TuningWorkshop } from './garage/tuningWorkshop.js';
 import { WorkshopShowroom } from './garage/workshopShowroom.js';
 import { StreetRaces } from './activities/streetRaces.js';
@@ -57,7 +58,9 @@ class Game {
   constructor() {
     const canvas = document.getElementById('game-canvas');
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    // A staged screenshot is drawn at twice the window's pixels and shrunk by the browser, so its edges stay clean.
+    const staged = new URLSearchParams(window.location.search).has('shot');
+    this.renderer.setPixelRatio(staged ? 2 : Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -106,6 +109,7 @@ class Game {
     this.gunmen = new Gunmen(this);
     this.cred = new StreetCred(this);
     this.crew = new CrewFavors(this);
+    this.stunts = new StuntScore(this);
     this.workshop = new TuningWorkshop(this);
     this.showroom = new WorkshopShowroom(this);
     this.wanted = new WantedLevel(this);
@@ -144,6 +148,7 @@ class Game {
     this.audio.setVolume(this.settings.volume);
     this.camera.sensitivity = this.settings.sensitivity;
     this.sky.setShadows(this.settings.shadows);
+    this.hud.setSize(this.settings.hudSize);
   }
 
   /** Everyone a bullet, a bumper or a blast can reach: Nova, the citizens and the gunmen. */
@@ -186,6 +191,7 @@ class Game {
     this.crew.reset();
     this.workshop.reset();
     this.bounties.reset();
+    this.stunts.reset();
     this.darkness.headlightsOn = true;
     this.stats = freshStats();
     this.player.armor = 0;
@@ -347,6 +353,7 @@ class Game {
       this.shops.update(dt);
       this.workshop.update(dt);
       this.darkness.update(dt);
+      this.stunts.update(dt);
       this.stats.playSeconds += dt;
     }
     this.watchParties.update(dt);

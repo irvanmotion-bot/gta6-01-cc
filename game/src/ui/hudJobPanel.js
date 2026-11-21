@@ -1,6 +1,7 @@
-// The HUD's top-left job panel: who gave the job (their portrait), its name, one bar cut into the job's steps with
-// the step in hand named under it, the objective and the timer. A street race, a taxi fare or a bounty hit takes the
-// panel over while it runs; in free roam it points at the next job.
+// The HUD's top-left job panel: who gave the job (their portrait), its number and name, one bar cut into the job's
+// steps with the step in hand named under it, then labelled rows: NOW (the objective), NEXT (the step after it),
+// the time limit and what fails the job. A street race, a taxi fare or a bounty hit takes the panel over while it
+// runs, with its reward in place of the fail line; in free roam it points at the next job.
 import { completionPercent } from '../progression/completionTracker.js';
 import { CHARACTERS, STORY_MISSIONS } from '../missions/storyMissions.js';
 import { ECLIPSE_WEEK } from '../eclipse/eclipseCalendar.js';
@@ -9,6 +10,7 @@ import { drawSpeakerPortrait } from './speakerPortraits.js';
 
 /** A bar is cut into steps up to this many; a longer run (a race's checkpoints) fills one plain bar. */
 const MAX_SEGMENTS = 12;
+const ROWS = ['now', 'next', 'time', 'fail'];
 
 export class HudJobPanel {
   constructor(game, parent, cache) {
@@ -22,14 +24,15 @@ export class HudJobPanel {
     this.face.height = 64;
     this.drawnFace = '';
     const name = createElement('div', 'job-name', top);
-    const head = createElement('div', 'job-head', name);
-    this.header = createElement('span', 'job-header', head);
-    this.timer = createElement('b', 'job-timer', head);
+    this.header = createElement('div', 'job-header', name);
     this.title = createElement('div', 'job-title', name);
     this.track = createElement('div', 'job-track', root);
     this.stage = createElement('div', 'job-stage', root);
-    this.objective = createElement('div', 'job-objective', root);
-    this.next = createElement('div', 'job-next', root);
+    this.rows = {};
+    for (const key of ROWS) {
+      const row = createElement('div', `job-row job-row-${key}`, root);
+      this.rows[key] = { row, label: createElement('b', 'job-label', row), value: createElement('span', 'job-value', row) };
+    }
   }
 
   /** The story job in progress, in the panel's own terms. */
@@ -38,10 +41,13 @@ export class HudJobPanel {
     const info = missions.stageInfo();
     if (!info) return null;
     const giver = CHARACTERS[missions.active.mission.giver];
+    const limit = missions.timeLimit();
     return {
-      header: `STORY JOB ${info.number} · FROM ${giver.name}`, title: info.title, stageLine: `STEP ${info.stage} OF ${info.count} · ${info.name.toUpperCase()}`,
+      header: `STORY JOB ${info.number}/${info.total} · ${giver.name}`, title: info.title, stageLine: `STEP ${info.stage} OF ${info.count} · ${info.name.toUpperCase()}`,
       steps: info.count, stepsDone: info.stage - 1, stepShare: missions.stepShare(), face: giver.name, faceColor: giver.color,
-      share: info.share, objective: missions.objectiveText(), next: info.next, timer: missions.active.timer, counting: 'down', kind: 'story',
+      share: info.share, objective: missions.objectiveText(), next: info.next, kind: 'story',
+      time: limit ? `${formatClock(limit.seconds)}${limit.label === 'TIME LIMIT' ? '' : ' TO TOTALITY'}` : null, urgent: limit && limit.seconds < 20,
+      fail: missions.failConditions(),
     };
   }
 
@@ -53,9 +59,9 @@ export class HudJobPanel {
     const percent = completionPercent(game);
     return {
       header: 'FREE ROAM', title: 'Saros is open', stageLine: `STORY ${game.missions.completed.size}/${STORY_MISSIONS.length} · ${percent}% COMPLETE`, share: percent / 100,
-      objective: offer ? `Next job: ${offer.title} · find ${offer.at.name} (${offer.at.icon} on the radar)`
-        : waiting ? `${waiting.title} opens ${ECLIPSE_WEEK[waiting.day - 1].name} · rest at CASA REYES (H) to sleep till then` : 'The story is done. The city is yours.',
-      next: 'Races R · bounties ☠ · taxi fares T', timer: null, kind: 'roam',
+      objective: offer ? `${offer.title}: find ${offer.at.name} (${offer.at.icon} on the radar)`
+        : waiting ? `${waiting.title} opens ${ECLIPSE_WEEK[waiting.day - 1].name} · sleep at CASA REYES (H)` : 'The story is done. The city is yours.',
+      next: 'Races R · bounties ☠ · taxi fares T', kind: 'roam',
     };
   }
 
@@ -71,19 +77,30 @@ export class HudJobPanel {
     return cells;
   }
 
+  /** One labelled row; a row with nothing to say is hidden. */
+  setRow(key, label, value) {
+    const row = this.rows[key];
+    this.cache.toggle(row.row, 'empty', !value);
+    this.cache.text(row.label, label);
+    this.cache.text(row.value, value || '');
+  }
+
   update() {
     const game = this.game;
     const cache = this.cache;
     const info = this.storyInfo() || game.races.panelInfo() || game.activities.panelInfo() || game.bounties.panelInfo() || this.freeRoamInfo();
     cache.text(this.header, info.header);
     cache.text(this.title, info.title.toUpperCase());
-    cache.text(this.stage, info.stageLine);
+    cache.text(this.stage, info.stageLine || '');
     cache.toggle(this.stage, 'empty', !info.stageLine);
     cache.html(this.track, this.trackMarkup(info));
-    cache.text(this.objective, `▸ ${info.objective}`);
-    cache.text(this.next, info.kind === 'roam' ? info.next : `NEXT ▸ ${info.next}`);
-    cache.text(this.timer, info.timer === null || info.timer === undefined ? '' : formatClock(info.timer));
-    cache.toggle(this.timer, 'urgent', info.counting === 'down' && info.timer !== null && info.timer < 20);
+    // Races and fares carry their clock as `timer`; the story job names its own limit.
+    const timed = info.time !== undefined ? info.time : info.timer === null || info.timer === undefined ? null : `${formatClock(info.timer)}${info.counting === 'down' ? ' LEFT' : ''}`;
+    this.setRow('now', 'NOW', info.objective);
+    this.setRow('next', info.kind === 'roam' ? 'ALSO' : 'NEXT', info.next);
+    this.setRow('time', 'TIME LIMIT', timed);
+    this.setRow('fail', info.fail ? 'FAIL IF' : 'REWARD', info.fail || info.reward || null);
+    cache.toggle(this.rows.time.row, 'urgent', Boolean(info.urgent || (info.counting === 'down' && info.timer < 20)));
     cache.toggle(this.root, 'roam', info.kind === 'roam');
     // Whose job it is: the giver of a story job, the capo with a price on him, or Nova herself between jobs.
     const face = info.face || 'NOVA';
