@@ -60,10 +60,10 @@ export class CounterMenu {
     };
   }
 
-  /** Three pips for an upgrade line: filled for every tier already fitted. */
+  /** The tier fitted in words (TIER 2/3) and three pips for an upgrade line, filled for every tier already fitted. */
   pipsMarkup(tier) {
     if (tier === undefined) return '';
-    return `<span class="shop-pips">${[0, 1, 2].map((index) => `<i class="${index < tier ? 'on' : ''}"></i>`).join('')}</span>`;
+    return `<b class="shop-tier">${tier >= 3 ? 'TIER 3/3 · MAX' : `TIER ${tier}/3`}</b><span class="shop-pips">${[0, 1, 2].map((index) => `<i class="${index < tier ? 'on' : ''}"></i>`).join('')}</span>`;
   }
 
   /**
@@ -102,7 +102,7 @@ export class CounterMenu {
         <div class="shop-cash"><span>CASH</span><b>${formatCash(cash)}</b></div>
         ${sheet.bars}
         <div class="shop-rows">${rows}</div>
-        <button class="shop-close" data-close="1">Leave (Esc)</button>
+        <button class="shop-close" data-close="1"><b>ESC</b> LEAVE THE ${showroom ? 'WORKSHOP' : 'COUNTER'}</button>
       </div>`;
   }
 

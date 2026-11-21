@@ -59,7 +59,12 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   panel over: the capo's face and name, the price on him and the guns still standing.
 - **Citizens who react**, each in their own way: some sprint, some run with their hands up, some duck low, the timid
   drop to the ground, and the bold stop at a distance to film it on a phone or point it out.
-- **HUD and menus**: one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating radar with
+- **Police that hunt by sight**: a unit sees Nova only with no building between them (the helicopter looks over
+  the roofs). Out of sight the HUD turns from SPOTTED, with the count of units that have eyes on her, to SEARCHING,
+  and the radar shows the zone they comb round where they last saw her; outside it the trail goes cold twice as fast.
+- **Stunt score**: a car passed within a door's width at closing speed is a NEAR MISS, a held slide is a DRIFT in
+  metres; each pays cash at once, chains into a combo inside four seconds and pops up over the road.
+- **HUD and menus**: upright, heavy capitals on dark glass with a HUD SIZE setting (standard, large, huge); one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating radar with
   the route to the objective, the district and health and armor under it, a job panel with the giver's face and
   one bar cut into the job's steps, the crew by name and face with the favor each grants, the crew's dialogue
   ribbon, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
@@ -98,7 +103,9 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # the hand-in: copies game
 ```
 
 The screenshots in `screenshots/` are unedited browser renders of the scenes in `game/src/debug/screenshotScenes.js`
-(`?shot=chase`, `bounty`, `workshop`, `title`; `atlas` and `pause` stage the other two full screens), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`.
+(`?shot=chase`, `bounty`, `workshop`, `pause`; `atlas` and `title` stage the other two full screens), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`
+at 768x480, the size the judge's sheet shows the cover at, with the 3D view drawn at twice the pixels. A scene is
+taken at HUD SIZE large unless `&hud=standard` or `&hud=huge` is added; in play the size is set under SETTINGS.
 Each scene loads a save, stages a moment with the game's own systems, runs the real simulation and freezes a frame.
 `tools/captureScreenshots.mjs --smoke` plays the whole game by script (`tools/smokeTest.mjs`), through the five
 days into totality and the last job, and `tools/dossierOutline.mjs` prints the order the dossier lists the sources in.

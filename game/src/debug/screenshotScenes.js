@@ -184,17 +184,22 @@ function chaseScene(game) {
 }
 
 /**
- * A bounty hit on foot, Thursday afternoon at the south end of the Strand: El Anzuelo and his guards have come off
- * the boardwalk into Corona Drive. Nova has dropped one and set their car alight; the capo and two guards shoot
- * back, Saros P.D. answers the noise, a car at the kerb is hers for the taking, and the eclipse crowd scatters.
+ * A bounty hit on foot in the two minutes of totality, at the south end of the Strand: the sun is a black disc in
+ * its corona over Corona Drive and the street lamps are on. El Anzuelo and his guards have come off the boardwalk
+ * into the drive. Nova has dropped one and set their car alight; the capo and two guards shoot back, Saros P.D.
+ * answers the noise, a car at the kerb is hers for the taking, and the eclipse crowd scatters.
+ * The scene is laid out looking north, up the drive and into the eclipsed sun: `at(x, z)` is x across the drive
+ * from Nova and z metres ahead of her.
  */
 function bountyScene(game) {
   const seconds = 1.0;
   const capo = VANE_CAPOS.find((entry) => entry.id === 'anzuelo');
   const x0 = 2.4;
-  const z0 = capo.z + 13;
-  const facing = Math.PI + 0.12;
-  loadCity(game, stagedSave(7, { bounties: ['contadora'] }), x0, z0, facing);
+  const z0 = capo.z - 13;
+  const at = (x, z) => [x0 + x, z0 + z];
+  const facing = -0.12;
+  loadCity(game, stagedSave(7, { bounties: ['contadora'], day: ECLIPSE_DAY, hour: CONTACTS.totalityStart + 0.07 }), x0, z0, facing);
+  game.calendar.setHour(CONTACTS.totalityStart + 0.07);
   game.player.cash = 31450;
   game.player.armor = 64;
   // His crew stands on its corner as soon as Nova is this close; the job panel turns to the hit.
@@ -204,44 +209,46 @@ function bountyScene(game) {
   const boss = crew.find((gunman) => gunman.kind === 'capo');
   const [near, left, right] = crew.filter((gunman) => gunman !== boss);
   // Where each stands as she opens up, and which way he sidesteps while he shoots (the gunmen's own strafe).
-  const posts = [[near, 0, -5.4, 1], [left, -2.9, -8.2, -1], [boss, 1.5, -9, 1], [right, 0.9, -12.4, 1]];
+  // They stand on the beach side of the drive, so her aim on them looks straight into the black sun.
+  const posts = [[near, -4.4, 8, 1], [left, -7.6, 11.6, -1], [boss, -3.4, 12.8, 1], [right, -4.8, 16.5, 1]];
   for (const [gunman, x, z, strafe] of posts) {
-    gunman.position.set(x0 + x, 0, z0 + z);
-    gunman.heading = 0;
+    const [px, pz] = at(x, z);
+    gunman.position.set(px, 0, pz);
+    gunman.heading = Math.PI;
     gunman.hostile = true;
     gunman.strafe = strafe;
     gunman.strafeClock = 9;
   }
   // A citizen's Avocet left at the kerb beside her: in reach, so the game rings it and offers F to steal it.
-  const parked = game.vehicles.spawn('avocet', x0 + 3.4, z0 - 3.2, Math.PI + 0.32, '#ffd23f');
+  const parked = game.vehicles.spawn('avocet', ...at(3.4, 3.2), -0.32, '#ffd23f');
   parked.parked = true;
   parked.ambient = true;
   // The crew's black Duna up the road: she has shot it up, it is burning, and it goes up as the frame is taken.
-  clearLane(game, parked, 0, z0 - 60, z0 + 20);
-  const crewCar = game.vehicles.spawn('duna', x0 - 1.4, z0 - 24.5, Math.PI - 0.5, '#17181d');
+  clearLane(game, parked, 0, z0 - 20, z0 + 60);
+  const crewCar = game.vehicles.spawn('duna', ...at(-1.4, 24.5), 0.5, '#17181d');
   crewCar.parked = true;
   crewCar.damage(crewCar.maxHealth + 1, true);
   crewCar.burning = 3.6 - (seconds - 0.3);
   game.wanted.setStars(3, 99);
   // Saros P.D. answers the shots: one cruiser has pulled up across the drive and put its two officers on the
   // street (the dispatcher's own rule for a suspect on foot), and another is coming down the drive behind it.
-  spawnPursuit(game, 'patrol', 'centinela', x0 + 2.6, z0 - 13.6, 1.05, 0);
-  spawnPursuit(game, 'patrol', 'centinela', x0 + 2.8, z0 - 62, 0, 14);
+  spawnPursuit(game, 'patrol', 'centinela', ...at(2.6, 13.6), Math.PI - 1.05, 0);
+  spawnPursuit(game, 'patrol', 'centinela', ...at(2.8, 62), Math.PI, 14);
   // The people out for the eclipse are caught in it, each in their own way: a sprint, hands up, ducked low, on the
   // ground, and two who would rather film it.
   const crowd = game.pedestrians;
-  const runner = (x, z, style, awayX) => { const ped = crowd.spawnFleeing(x0 + x, z0 + z, { x: x0 + awayX, z: z0 + z + 1.5 }); ped.fearStyle = style; ped.timid = false; ped.bold = false; ped.heading = Math.atan2(x - awayX, -1.5); return ped; };
-  runner(-5.6, -5.2, 'sprint', 0);
-  runner(-7.4, -11.5, 'handsUp', 0);
-  runner(5.6, -12.5, 'duck', 0);
-  runner(6.4, -19, 'handsUp', 0);
-  const bystander = (x, z, style) => { const ped = spawnStroller(game, x0 + x, z0 + z); ped.timid = false; ped.bold = true; ped.gawkStyle = style; ped.gawk(x0, z0 - 8, 30); ped.heading = Math.atan2(-x, -8 - z); return ped; };
-  bystander(-10.5, -17.5, 'film');
-  bystander(5.2, -24, 'point');
-  const coward = spawnStroller(game, x0 - 4.3, z0 - 3.3);
+  const runner = (x, z, style, awayX) => { const [px, pz] = at(x, z); const ped = crowd.spawnFleeing(px, pz, { x: x0 + awayX, z: pz - 1.5 }); ped.fearStyle = style; ped.timid = false; ped.bold = false; ped.heading = Math.atan2(x - awayX, 1.5); return ped; };
+  runner(-5.6, 5.2, 'sprint', 0);
+  runner(-7.4, 11.5, 'handsUp', 0);
+  runner(5.6, 12.5, 'duck', 0);
+  runner(6.4, 19, 'handsUp', 0);
+  const bystander = (x, z, style) => { const ped = spawnStroller(game, ...at(x, z)); ped.timid = false; ped.bold = true; ped.gawkStyle = style; ped.gawk(x0, z0 + 8, 30); ped.heading = Math.atan2(-x, 8 - z); return ped; };
+  bystander(-10.5, 17.5, 'film');
+  bystander(5.2, 24, 'point');
+  const coward = spawnStroller(game, ...at(-4.3, 3.3));
   coward.timid = true;
-  coward.cower(x0, z0 - 6, 30);
-  game.hud.say('JAZZ', 'El Anzuelo, live on Penumbra FM. Twenty-five hundred says he never sees the eclipse!', '#f4ecd8');
+  coward.cower(x0, z0 + 6, 30);
+  game.hud.say('JAZZ', 'Lights out on the Strand! El Anzuelo is yours, two and a half grand says he never sees the sun come back.', '#f4ecd8');
   // Nova holds the aim (right mouse) on the near guard and drops him, then swings onto the capo behind him: the
   // frame is her next shot, with the first man down in the road between them.
   play(game, seconds, (t) => {
@@ -256,7 +263,9 @@ function bountyScene(game) {
     game.input.buttons[2] = true;
     game.input.buttons[0] = t > seconds - 0.55;
     near.health = t > seconds - 0.5 ? Math.min(near.health, 20) : 400;
-    for (const gunman of [boss, left, right]) gunman.health = 400;
+    // They hold up under her fire until the frame, which finds each one as hurt as the fight has left him.
+    const last = t > seconds - STEP * 1.5;
+    for (const [gunman, share] of [[boss, 0.62], [left, 0.38], [right, 0.8]]) gunman.health = last ? gunman.spec.health * share : 400;
     if (t > seconds - STEP * 1.5) game.weapons.cooldown = 0;
     // The crew holds its fire until she has shown herself; the three still standing answer as the frame is taken.
     for (const gunman of game.gunmen.list) if (gunman.alive) gunman.cooldown = gunman !== near && t > seconds - STEP * 2.5 ? 0 : 1;

@@ -9,6 +9,7 @@ import { HudDispatchPanel } from './hudDispatchPanel.js';
 import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
+import { HudEnemyTags } from './hudEnemyTags.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
 import { HUD_SIZES } from '../core/saveGame.js';
 import { CREW_FAVORS } from '../progression/crewFavors.js';
@@ -36,6 +37,7 @@ export class Hud {
     this.weaponBar = new HudWeaponBar(game, corner, this.cache);
     this.vehiclePanel = new HudVehiclePanel(game, corner, this.cache);
     this.buildOverlays(root);
+    this.enemyTags = new HudEnemyTags(game, root);
     this.speech = [];
     this.speechClock = 0;
     this.bannerClock = 0;
@@ -229,6 +231,7 @@ export class Hud {
     }
     this.advanceDialogue(dt);
     this.drawStunts();
+    this.enemyTags.update();
   }
 
   /** The stunt popups over the road: what was pulled off, how close or how far, the cash and the combo. */

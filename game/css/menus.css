@@ -181,3 +181,35 @@
 #loading { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 42%, #ffcf6b 0, #ffb547 12vh, #ff6a4d 13vh, #17122b 60vh); font-family: var(--display); font-size: 14vh; font-style: italic; color: var(--cream); text-shadow: 0 0.8vh 0 var(--ink); transition: opacity 0.6s; }
 #loading small { font-family: var(--body); font-size: 2.4vh; font-style: normal; font-weight: 700; letter-spacing: 0.3vh; text-shadow: 0 0.2vh 0.4vh var(--ink); color: var(--cream); }
 #loading.done { opacity: 0; pointer-events: none; }
+
+/* Every title and figure in the menus stands upright in the black display face, as the HUD does. */
+.menu header h1, .menu-legend b, .slot-card b, .atlas-head h2, .atlas-slot b, .shop-card h2, .showroom-plate b { font-style: normal; letter-spacing: 0.05vh; }
+/* The tier fitted, in words beside its pips; the leave button with its key. */
+.shop-tier { font-family: var(--display); font-size: 1.7vh; color: var(--amber); white-space: nowrap; }
+.shop-close b { margin-right: 1vh; padding: 0.1vh 0.7vh; font-family: var(--display); color: var(--ink); background: var(--cream); border-radius: 0.3vh; }
+.shop-close { font-family: var(--display); }
+
+/* Bravo's workshop reads as one list from across the room: each upgrade on its own line, its name, the tier fitted
+   and the price of the next tier in big capitals; the car keeps the left half of the screen. */
+#shop-menu.showroom .shop-card { width: 88vh; margin: 1.5vh; padding: 1.6vh 2.2vh 1.4vh; }
+#shop-menu.showroom .shop-card h2 { font-size: 5.6vh; }
+#shop-menu.showroom .shop-tag { font-family: var(--display); font-size: 1.7vh; margin: 0.4vh 0 0.8vh; color: var(--cream); }
+#shop-menu.showroom .shop-cash { padding: 0.3vh 1.2vh; margin-bottom: 0.8vh; }
+#shop-menu.showroom .shop-cash span { font-family: var(--display); font-size: 2.4vh; }
+#shop-menu.showroom .shop-cash b { font-family: var(--display); font-size: 4.4vh; }
+#shop-menu.showroom .spec-bar { grid-template-columns: 19vh 1fr 15vh; font-family: var(--display); font-size: 1.9vh; line-height: 2.9vh; }
+#shop-menu.showroom .spec-bar b { font-size: 2.3vh; }
+#shop-menu.showroom .shop-rows { display: flex; flex-direction: column; gap: 0.6vh; }
+#shop-menu.showroom .upgrade-card { grid-template-columns: 5.4vh 1fr auto auto; grid-template-rows: auto; column-gap: 1.4vh; padding: 0.6vh 1.2vh; }
+#shop-menu.showroom .upgrade-card .shop-key { display: none; }
+#shop-menu.showroom .upgrade-card .upgrade-icon { width: 5.4vh; height: 5.4vh; padding: 0.4vh; }
+#shop-menu.showroom .upgrade-card .shop-label { font-size: 3.3vh; text-transform: uppercase; padding-right: 0; white-space: nowrap; overflow: hidden; }
+#shop-menu.showroom .upgrade-card .shop-label small { display: none; }
+#shop-menu.showroom .upgrade-card .shop-tier { font-size: 2.5vh; }
+#shop-menu.showroom .upgrade-card .shop-pips { display: none; }
+#shop-menu.showroom .upgrade-card .shop-price { font-size: 3.9vh; min-width: 15vh; }
+#shop-menu.showroom .shop-close { font-size: 2.4vh; padding: 0.8vh; }
+
+/* The black face runs wider than the condensed one the sizes were first set for. */
+.menu header h1 { font-size: 10vh; }
+.menu-item span, #pause-menu .menu-item span { letter-spacing: 0.05vh; }
