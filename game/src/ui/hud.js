@@ -111,6 +111,7 @@ export class Hud {
     this.bannerBox = createElement('div', 'banner', root);
     this.bannerTitle = createElement('div', 'banner-title', this.bannerBox);
     this.bannerSub = createElement('div', 'banner-sub', this.bannerBox);
+    this.bannerRows = createElement('div', 'banner-rows', this.bannerBox);
     this.downScreen = createElement('div', 'down-screen', document.body);
     this.downTitle = createElement('div', 'down-title', this.downScreen);
     this.downSub = createElement('div', 'down-sub', this.downScreen);
@@ -129,13 +130,22 @@ export class Hud {
     setTimeout(() => line.remove(), 4300);
   }
 
-  /** The big centred title of a job start, pass or fail. */
-  banner(title, subtitle, color) {
+  /**
+   * The big centred title of a job start, pass or fail. With `rows` ([label, value, cash?] each) it is a result
+   * card: the rows sit under the title on glass and the card stays up a little longer.
+   */
+  banner(title, subtitle, color, rows = null) {
     this.bannerTitle.textContent = title;
     this.bannerTitle.style.color = color;
     this.bannerSub.textContent = subtitle;
+    this.bannerRows.innerHTML = '';
+    for (const [label, value, cash] of rows || []) {
+      createElement('span', '', this.bannerRows, label);
+      createElement('b', cash ? 'cash' : '', this.bannerRows, value);
+    }
+    this.bannerBox.classList.toggle('result', Boolean(rows));
     this.bannerBox.classList.add('visible');
-    this.bannerClock = 4.2;
+    this.bannerClock = rows ? 6 : 4.2;
   }
 
   /** Queue a line of dialogue; lines play one after another in the dialogue box, each with its speaker's portrait. */

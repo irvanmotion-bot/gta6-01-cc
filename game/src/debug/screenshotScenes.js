@@ -293,6 +293,36 @@ function workshopScene(game) {
   play(game, 2.2);
 }
 
+/**
+ * Wednesday's job done: Nova rolls the police Lince she took from Saros P.D.'s front door into Bravo's yard, the
+ * job director pays out on its result card and Tío Bravo's closing line plays in the crew's ribbon.
+ */
+function passScene(game) {
+  const bay = LANDMARKS.garage.kerb;
+  loadCity(game, stagedSave(5, { hour: 17.45 }), bay.x + 9, bay.z, -Math.PI / 2);
+  game.calendar.setHour(17.45);
+  game.missions.start(missionById('borrowedSirens'));
+  const run = game.missions.active;
+  const lince = run.vehicle;
+  lince.position.set(bay.x + 5, 0, bay.z + 0.4);
+  lince.heading = -Math.PI / 2;
+  tryEnterVehicle(game);
+  // Into the seat (the steal step raises the alarm), then the pursuit shaken off, as the job's middle plays out.
+  for (let guard = 0; guard < 240 && run.step.kind !== 'deliver'; guard += 1) {
+    play(game, STEP);
+    if (game.wanted.stars > 0) game.wanted.clear(false);
+  }
+  game.police.clear();
+  game.hud.clearSpeech();
+  // The last metres into the yard at walking pace, then the brake: the director sees the car stopped in the bay.
+  play(game, 1.3, (t) => {
+    game.camera.idleLook = 2;
+    if (t < 0.7) { lince.velX = -6 * (1 - t / 0.7); lince.velZ = 0; } else game.input.held.add('Space');
+  });
+  game.input.held.clear();
+  play(game, 0.6, () => { game.camera.idleLook = 2; });
+}
+
 /** The city atlas mid-week: three save slots on file, the second one loaded and its map and progress open. */
 function atlasScene(game) {
   for (const [slot, jobs] of [[1, 2], [3, 9], [2, 6]]) {
@@ -324,7 +354,7 @@ function pauseScene(game) {
   game.setState('pause');
 }
 
-const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, passed: passScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
 
 export function stageScreenshot(game, name) {
   // The HUD SIZE a scene is taken at (?hud=standard|large|huge), large unless asked; the player's own setting is

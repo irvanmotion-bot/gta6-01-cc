@@ -336,13 +336,14 @@ export class MissionDirector {
     if (this.active) this.fail(kind === 'busted' ? 'You were arrested.' : 'You were taken down.');
   }
 
-  cleanup() {
+  /** End the running job; a passed job keeps its closing lines playing under the result card. */
+  cleanup(clearLines = true) {
     const run = this.active;
     if (!run) return;
     this.game.gunmen.removeTagged(run.tag);
     if (run.vehicle) { run.vehicle.missionTag = null; run.vehicle.ambient = true; }
     for (const target of run.targets) { target.missionTag = null; target.ambient = true; }
-    this.game.hud.clearSpeech();
+    if (clearLines) this.game.hud.clearSpeech();
     this.active = null;
   }
 
@@ -363,12 +364,16 @@ export class MissionDirector {
     const game = this.game;
     const mission = this.active.mission;
     this.completed.add(mission.id);
-    this.cleanup();
+    this.cleanup(false);
     this.cooldown = 5;
     game.player.addCash(mission.reward);
     game.stats.missionsPassed += 1;
-    game.hud.banner('JOB PASSED', `+$${mission.reward.toLocaleString('en-US')} · +${mission.cred} cred`, '#f4ecd8');
     const waiting = this.waitingForDay();
+    const next = STORY_MISSIONS.find((entry) => !this.completed.has(entry.id) && entry.requires.every((id) => this.completed.has(id)));
+    const opens = next ? `${next.title.toUpperCase()} · ${ECLIPSE_WEEK[next.day - 1].name.toUpperCase()}` : 'THE CITY IS YOURS';
+    game.hud.banner('JOB PASSED', mission.title.toUpperCase(), '#f4ecd8', [
+      ['PAID', `+$${mission.reward.toLocaleString('en-US')}`, true], ['STREET CRED', `+${mission.cred}`], ['JOBS DONE', `${this.completed.size} / ${STORY_MISSIONS.length}`], ['NEXT', opens],
+    ]);
     if (waiting) game.hud.notify(`Next job opens ${ECLIPSE_WEEK[waiting.day - 1].name}. Rest at Casa Reyes to sleep till then.`);
     game.cred.earn(mission.cred, mission.title);
     game.audio.jingle(true);

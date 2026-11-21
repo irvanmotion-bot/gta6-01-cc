@@ -103,7 +103,7 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # the hand-in: copies game
 ```
 
 The screenshots in `screenshots/` are unedited browser renders of the scenes in `game/src/debug/screenshotScenes.js`
-(`?shot=chase`, `bounty`, `workshop`, `pause`; `atlas` and `title` stage the other two full screens), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`
+(`?shot=chase`, `bounty`, `workshop`, `pause`; `atlas` and `title` stage the other two full screens, `passed` a job's result card), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`
 at 768x480, the size the judge's sheet shows the cover at, with the 3D view drawn at twice the pixels. A scene is
 taken at HUD SIZE large unless `&hud=standard` or `&hud=huge` is added; in play the size is set under SETTINGS.
 Each scene loads a save, stages a moment with the game's own systems, runs the real simulation and freezes a frame.
