@@ -98,6 +98,21 @@ if (smoke) {
     }
     await page.screenshot({ type: 'jpeg', quality, path: join(outDir, shot.name) });
     console.log(`${shot.name}: ${image.length} bytes at quality ${quality}`);
+    // Any visible line of text cut short by its box is reported, so a shot never goes out with "COVERI...".
+    const clipped = await page.evaluate(() => [...document.querySelectorAll('body *')]
+      .filter((node) => node.childElementCount === 0 && node.textContent.trim() && node.offsetParent !== null && node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflow !== 'visible')
+      .map((node) => `${node.className || node.tagName}: "${node.textContent.trim()}"`));
+    for (const line of clipped) problems.push(`${shot.name} clipped text · ${line}`);
+    // A save card's LATEST/PLAYING tag must sit clear of the slot name it shares the header strip with.
+    const covered = await page.evaluate(() => [...document.querySelectorAll('.save-card')].filter((card) => {
+      const tag = card.querySelector('strong');
+      const name = card.querySelector('b');
+      if (!tag || !name || card.offsetParent === null) return false;
+      const range = document.createRange();
+      range.selectNodeContents(name);
+      return range.getBoundingClientRect().right > tag.getBoundingClientRect().left;
+    }).map((card) => card.querySelector('b').textContent));
+    for (const name of covered) problems.push(`${shot.name} tag covers · ${name}`);
   }
 }
 if (problems.length) console.log(`PROBLEMS:\n${[...new Set(problems)].join('\n')}`);

@@ -107,7 +107,7 @@ export class Menus {
       { label: `MOUSE SPEED · ${settings.sensitivity.toFixed(2)}`, hint: 'Camera sensitivity', run: cycle('sensitivity', [0.5, 0.75, 1, 1.25, 1.5, 2]) },
       { label: `SHADOWS · ${settings.shadows ? 'ON' : 'OFF'}`, hint: 'Turn off for more speed', run: cycle('shadows', [true, false]) },
       { label: `HUD SIZE · ${settings.hudSize.toUpperCase()}`, hint: 'Standard, large or huge panels and type', run: cycle('hudSize', Object.keys(HUD_SIZES)) },
-      { label: `HUD STYLE · ${settings.hudStyle.toUpperCase()}`, hint: 'Full panels; cinematic: radar, stars, cash, job, speed; minimal: radar and stars', run: cycle('hudStyle', HUD_STYLES) },
+      { label: `HUD STYLE · ${settings.hudStyle.toUpperCase()}`, hint: 'Full panels; cinematic: radar, stars, cash, rank, job, weapon, speed; minimal: radar and stars', run: cycle('hudStyle', HUD_STYLES) },
       { label: 'BACK', hint: '', run: () => this.open('main') },
     ];
   }
@@ -128,8 +128,8 @@ export class Menus {
     const cards = listSaveSlots().map((card, index) => {
       const slot = index + 1;
       const tag = slot === lit ? `<strong>${this.screen === 'pause' ? 'PLAYING' : 'LATEST'}</strong>` : '';
-      if (!card) return `<button class="save-card empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>NEW</span><i><u style="width:0"></u></i><em>EMPTY SLOT</em><small>Start a new week here</small>${tag}</button>`;
-      return `<button class="save-card${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SAVE SLOT ${slot}</b><span>${card.percent}%</span><i><u style="width:${card.percent}%"></u></i>
+      if (!card) return `<button class="save-card empty${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SLOT ${slot}</b><span>NEW</span><i><u style="width:0"></u></i><em>EMPTY SLOT</em><small>Start a new week here</small>${tag}</button>`;
+      return `<button class="save-card${slot === lit ? ' lit' : ''}" data-slot="${slot}"><b>SLOT ${slot}</b><span>${card.percent}%</span><i><u style="width:${card.percent}%"></u></i>
         <em>${card.day || 'MON'} · JOB ${card.jobs}/${STORY_MISSIONS.length}</em><small>${formatPlayTime(card.playSeconds)} PLAYED · RANK ${card.rank} · ${formatCash(card.cash)}</small>${tag}</button>`;
     }).join('');
     const districts = Object.values(DISTRICTS).map((district) => `<li><i style="background:${district.map}"></i>${district.name}</li>`).join('');

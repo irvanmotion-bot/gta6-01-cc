@@ -23,7 +23,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 
 /* Shared panel pieces: dark glass with an amber edge on top */
 .hud-column { position: absolute; top: 1.2vh; display: flex; flex-direction: column; gap: 0.7vh; }
-.left-column { left: 1.2vh; width: 34vh; }
+.left-column { left: 1.2vh; width: 36vh; }
 .right-column { right: 1.2vh; width: 33vh; align-items: stretch; }
 .hud-panel { background: var(--panel); border-top: 0.4vh solid var(--amber); border-radius: 0 0 0.6vh 0.6vh; padding: 0.7vh 1vh; box-sizing: border-box; text-shadow: var(--outline); }
 .panel-caption { font-family: var(--display); font-size: 1.7vh; letter-spacing: 0.05vh; color: var(--amber); margin-bottom: 0.3vh; white-space: nowrap; }
@@ -134,7 +134,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .dispatch-words { min-width: 0; line-height: 1.1; }
 .dispatch-force { font-family: var(--display); font-size: 1.65vh; color: #fff; letter-spacing: 0.05vh; }
 .dispatch-label { font-family: var(--display); font-size: 1.4vh; color: var(--coral); white-space: nowrap; overflow: hidden; }
-.unit { display: grid; grid-template-columns: 4.6vh 8.6vh 1fr 4.4vh; align-items: center; gap: 0.4vh; font-family: var(--display); font-size: 1.4vh; line-height: 2.25vh; border-top: 0.12vh solid rgba(255, 246, 226, 0.16); white-space: nowrap; }
+.unit { display: grid; grid-template-columns: 4.6vh 9.6vh 1fr 4.4vh; align-items: center; gap: 0.4vh; font-family: var(--display); font-size: 1.4vh; line-height: 2.25vh; border-top: 0.12vh solid rgba(255, 246, 226, 0.16); white-space: nowrap; }
 .unit i { font-style: normal; text-align: center; font-size: 1.2vh; line-height: 1.7vh; color: var(--ink); background: #8fb4ff; border-radius: 0.3vh; text-shadow: none; }
 .unit-air i { background: var(--amber); }
 .unit-foot i { background: var(--coral); }
@@ -256,19 +256,19 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .down-title { font-family: var(--display); font-size: 15vh; letter-spacing: 0.5vh; color: var(--coral); text-shadow: 0 0.8vh 0 var(--ink); }
 .down-sub { font-family: var(--display); font-size: 2.6vh; }
 
-/* HUD STYLE · CINEMATIC (settings): the radar, the stars and cash under the eclipse, the job with its current step,
-   the car's speed, the dialogue box and four dispatch rows. The crew strip, stunt popups, weapon bar, GPS list, radio,
-   rank and sight lines step aside and leave the middle of the screen to the city. MINIMAL keeps only the radar, the
-   stars and cash, the car's speed and the key prompts. */
+/* HUD STYLE · CINEMATIC (settings): the radar, the stars and cash under the eclipse with the rank line beneath, the
+   job with its current step, the car's speed, the weapon slots and rounds on one slim strip, the dialogue box and four
+   dispatch rows. The crew strip, stunt popups, GPS list, radio and sight lines step aside and leave the middle of the
+   screen to the city. MINIMAL keeps only the radar, the stars and cash, the car's speed and the key prompts. */
 #hud:not([data-style="full"]) .crew-dock,
 #hud:not([data-style="full"]) .stunt-feed,
-#hud:not([data-style="full"]) .weapon-bar,
 #hud:not([data-style="full"]) .gps-panel,
 #hud:not([data-style="full"]) .radio-line,
 #hud:not([data-style="full"]) .sight-line,
 #hud:not([data-style="full"]) .escape-meter,
-#hud:not([data-style="full"]) .rank-line,
 #hud:not([data-style="full"]) .rank-track,
+#hud[data-style="minimal"] .weapon-bar,
+#hud[data-style="minimal"] .rank-line,
 #hud:not([data-style="full"]) .eclipse-track,
 #hud:not([data-style="full"]) .job-row-next,
 #hud:not([data-style="full"]) .job-row-fail,
@@ -279,6 +279,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 /* The eclipse panel and the stars-and-cash line are one block of glass. */
 #hud[data-style="cinematic"] .eclipse-panel { border-radius: 0; padding-bottom: 0.2vh; }
 #hud[data-style="cinematic"] .status-panel { margin-top: -0.7vh; border-top: 0; padding-top: 0.3vh; }
+/* The cinematic weapon strip: the five slots with their silhouettes, then the weapon's name over its rounds. */
+#hud[data-style="cinematic"] .weapon-bar { display: flex; align-items: center; gap: 0.8vh; padding: 0.4vh 0.8vh; }
+#hud[data-style="cinematic"] .weapon-caption { display: none; }
+#hud[data-style="cinematic"] .weapon-slots { flex: 1; margin-top: 0; }
+#hud[data-style="cinematic"] .weapon-slot { height: 2.6vh; }
+#hud[data-style="cinematic"] .weapon-line { order: 2; flex-direction: column; align-items: flex-end; font-size: 1.25vh; line-height: 1.1; }
+#hud[data-style="cinematic"] .weapon-ammo { font-size: 1.9vh; }
 
 @keyframes pulse { from { opacity: 1; } to { opacity: 0.55; } }
 @keyframes slide-in { from { transform: translateY(-2vh); opacity: 0; } to { transform: none; opacity: 1; } }

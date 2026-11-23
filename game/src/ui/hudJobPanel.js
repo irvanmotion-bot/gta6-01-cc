@@ -43,7 +43,7 @@ export class HudJobPanel {
     const giver = CHARACTERS[missions.active.mission.giver];
     const limit = missions.timeLimit();
     return {
-      header: `STORY JOB ${info.number}/${info.total} · ${giver.name}`, title: info.title, stageLine: `STEP ${info.stage} OF ${info.count} · ${info.name.toUpperCase()}`,
+      header: `JOB ${info.number}/${info.total} · ${giver.name}`, title: info.title, stageLine: `STEP ${info.stage} OF ${info.count} · ${info.name.toUpperCase()}`,
       steps: info.count, stepsDone: info.stage - 1, stepShare: missions.stepShare(), face: giver.name, faceColor: giver.color,
       share: info.share, objective: missions.objectiveText(), next: info.next, kind: 'story',
       time: limit ? `${formatClock(limit.seconds)}${limit.label === 'TIME LIMIT' ? '' : ' TO TOTALITY'}` : null, urgent: limit && limit.seconds < 20,
@@ -58,7 +58,7 @@ export class HudJobPanel {
     const waiting = game.missions.waitingForDay();
     const percent = completionPercent(game);
     return {
-      header: 'FREE ROAM', title: 'Saros is open', stageLine: `STORY ${game.missions.completed.size}/${STORY_MISSIONS.length} · ${percent}% COMPLETE`, share: percent / 100,
+      header: 'FREE ROAM', title: 'Open city', stageLine: `STORY ${game.missions.completed.size}/${STORY_MISSIONS.length} · ${percent}% COMPLETE`, share: percent / 100,
       objective: offer ? `${offer.title}: find ${offer.at.name} (${offer.at.icon} on the radar)`
         : waiting ? `${waiting.title} opens ${ECLIPSE_WEEK[waiting.day - 1].name} · sleep at CASA REYES (H)` : 'The story is done. The city is yours.',
       next: 'Races R · bounties ☠ · taxi fares T', kind: 'roam',

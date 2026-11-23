@@ -34,7 +34,7 @@
 .save-card span { font-family: var(--display); font-size: 10vh; line-height: 0.95; color: var(--cream); }
 .save-card i { display: block; height: 1.8vh; margin: 1vh 0; background: rgba(244, 236, 216, 0.16); border-radius: 0.9vh; overflow: hidden; }
 .save-card i u { display: block; height: 100%; background: linear-gradient(90deg, var(--coral), var(--amber)); }
-.save-card em { font-family: var(--display); font-style: normal; font-size: 3.1vh; letter-spacing: 0.12vh; color: #fff; }
+.save-card em { font-family: var(--display); font-style: normal; font-size: 2.3vh; letter-spacing: 0.06vh; color: #fff; white-space: nowrap; }
 .save-card small { font-size: 1.55vh; font-weight: 700; color: var(--dim); white-space: nowrap; }
 .save-card strong { position: absolute; right: 1.2vh; top: 0.9vh; padding: 0.1vh 0.8vh; font-family: var(--display); font-weight: 400; font-size: 1.8vh; letter-spacing: 0.12vh; color: var(--amber); background: var(--ink); border-radius: 0.5vh; }
 .save-card.lit { border-color: var(--amber); box-shadow: 0 0 3vh rgba(255, 181, 71, 0.4); }

@@ -58,9 +58,10 @@ export class Hud {
   }
 
   /**
-   * HUD STYLE from the settings (HUD_STYLES). Cinematic hides the crew strip, the stunt popups, the weapon bar, the
-   * radio and the rank line, joins the cash and stars to the eclipse panel and cuts the dispatch list to four rows;
-   * minimal also puts away the job, the dialogue, the eclipse and the dispatch panels (the CSS does the hiding).
+   * HUD STYLE from the settings (HUD_STYLES). Cinematic hides the crew strip, the stunt popups, the GPS list and the
+   * radio, slims the weapon bar to one strip of slots and rounds, keeps the rank line without its bar, joins the cash
+   * and stars to the eclipse panel and cuts the dispatch list to four rows; minimal also puts away the weapon strip,
+   * the rank, the job, the dialogue, the eclipse and the dispatch panels (the CSS does the hiding).
    */
   setStyle(name) {
     this.styleName = HUD_STYLES.includes(name) ? name : HUD_STYLES[0];
