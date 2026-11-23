@@ -107,7 +107,7 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # the hand-in: copies game
 ```
 
 The screenshots in `screenshots/` are unedited browser renders of the game's photo mode, `game/src/ui/photoMode.js`
-(`?photo=chase`, `boardwalk`, `workshop`, `atlas`; `bounty` is the same hit in totality, `title` and `pause` the
+(`?photo=chase`, `boardwalk`, `atlas`, `beach`; `bounty` is the same hit in totality, `workshop` Bravo's garage, `title` and `pause` the
 start screen and pause menu, `passed` a job's result card), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`
 at 768x480, the size the judge's sheet shows the cover at, with the 3D view drawn at twice the pixels. A scene is
 taken at HUD SIZE large and HUD STYLE cinematic unless `&hud=` or `&style=` says otherwise; in play both are set

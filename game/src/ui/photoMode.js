@@ -1,4 +1,4 @@
-// Photo mode: ?photo=chase|boardwalk|bounty|workshop|passed|atlas|title|pause opens the game on one moment of the
+// Photo mode: ?photo=chase|boardwalk|bounty|workshop|passed|atlas|beach|title|pause opens the game on one moment of the
 // week. Each scene loads a save, stages the moment with the game's own systems, plays the real simulation forward
 // for a few seconds with keys held down, then freezes the frame for a still.
 import { LANDMARKS } from '../world/cityLayout.js';
@@ -63,10 +63,10 @@ function hourOfCoverage(share) {
   return CONTACTS.first + (CONTACTS.totalityStart - CONTACTS.first) * share;
 }
 
-/** Late-afternoon light for an outdoor still: an orange-gold sky, honey sunlight and a touch more exposure. */
-function goldenLight(game) {
-  game.sky.goldenHour = 1;
-  game.renderer.toneMappingExposure = 1.08;
+/** Clear daylight for an outdoor still: a blue sky over a pale sea-blue haze, white sunlight, a touch more exposure. */
+function daylight(game) {
+  game.sky.clearSky = 1;
+  game.renderer.toneMappingExposure = 1.06;
 }
 
 /** Start the last job on eclipse afternoon and play its opening steps until the one of `kind` is running. */
@@ -113,7 +113,7 @@ function clearLane(game, keep, x, zFrom, zTo) {
 }
 
 /**
- * The cover: eclipse afternoon, the moon two thirds of the way across the sun, and Nova breaking through to the
+ * The cover: eclipse afternoon, the moon just biting into the sun, and Nova breaking through to the
  * Orrery Trust in the getaway Rayo down Corona Drive at five stars, with the whole response around her.
  */
 function chaseScene(game) {
@@ -126,8 +126,8 @@ function chaseScene(game) {
   const blockadeZ = 424;
   const z0 = zEnd - speed * seconds;
   loadCity(game, stagedSave(9), lane, z0 - 4, 0);
-  // The CLOSE camera range (V): the Rayo, the cars on her doors and the blockade fill the middle of the frame.
-  game.camera.range = CAMERA_RANGES.findIndex(([name]) => name === 'CLOSE');
+  // The STANDARD camera range (V): the Rayo in the middle distance, the drive running on to the horizon.
+  game.camera.range = CAMERA_RANGES.findIndex(([name]) => name === 'STANDARD');
   startHeist(game, 'steal');
   const rayo = game.missions.active.vehicle;
   rayo.position.set(lane, 0, z0);
@@ -135,8 +135,9 @@ function chaseScene(game) {
   tryEnterVehicle(game);
   // Jazz comes on the radio the moment the door shuts: her line is in the crew's ribbon when the frame is taken.
   play(game, 0.05);
-  game.calendar.setHour(hourOfCoverage(0.6));
-  goldenLight(game);
+  // Just after first contact: the moon has only taken a bite out of the sun and the afternoon is still bright blue.
+  game.calendar.setHour(hourOfCoverage(0.1));
+  daylight(game);
   rayo.velZ = speed;
   rayo.health = rayo.maxHealth * 0.78;
   clearLane(game, rayo, 0, z0 - 90, z0 + 220);
@@ -188,8 +189,10 @@ function chaseScene(game) {
     for (const cruiser of pack) if (cruiser.controller && cruiser.controller.isPursuit) cruiser.controller.windowClock = cruiser === pack[0] && t > seconds - STEP * 1.5 ? 0 : 1;
     // No hit in the last moments, so the red damage vignette does not tint the frame.
     game.player.invulnerable = 1;
-    // The mouse is left alone: the chase camera settles behind the car by itself.
-    game.camera.idleLook = 2;
+    // She glances right with the mouse, over the boardwalk and the sand to the ocean, as a player looks around.
+    game.camera.idleLook = 0;
+    game.camera.yaw = rayo.heading - 0.42;
+    game.camera.pitch = 0.12;
     game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
   });
 }
@@ -305,7 +308,7 @@ function boardwalkScene(game) {
   const at = (x, z) => [x0 + x, z0 - z];
   loadCity(game, stagedSave(7, { bounties: ['contadora'], day: ECLIPSE_DAY, hour }), x0, z0, Math.PI + 0.12);
   game.calendar.setHour(hour);
-  goldenLight(game);
+  daylight(game);
   game.player.cash = 31450;
   game.player.armor = 64;
   play(game, 0.05);
@@ -437,6 +440,30 @@ function atlasScene(game) {
   game.setState('map');
 }
 
+/**
+ * Eclipse-day lunchtime on the Gnomon Strand boardwalk: Nova on foot among the watchers walking the boards towards
+ * the watch parties, the sand, the umbrellas and the ocean beyond them, hours before first contact.
+ */
+function beachScene(game) {
+  const hour = 12.8;
+  const x0 = -9.5;
+  const z0 = 352;
+  loadCity(game, stagedSave(6, { day: ECLIPSE_DAY, hour }), x0, z0, Math.PI);
+  game.calendar.setHour(hour);
+  daylight(game);
+  game.player.cash = 24860;
+  // The boards fill up ahead of her, people in pairs and alone, some at the rail, some coming her way.
+  for (const [x, z] of [[0.9, 5], [-1.1, 8], [0.4, 12], [-0.8, 15], [1.3, 19], [-1.4, 23], [0.2, 27], [1.0, 32], [-0.6, 37], [0.7, 43], [-1.2, 50], [0.3, 58]]) {
+    spawnStroller(game, x0 + x, z0 - z, true);
+  }
+  play(game, 1.2, () => {
+    // She looks out past the rail, over the sand to the sea, with the boardwalk running away on her right.
+    game.camera.yaw = Math.PI + 0.62;
+    game.camera.pitch = 0.1;
+    game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
+  });
+}
+
 /** The start screen with three saves on file: CONTINUE and LOAD GAME are offered and every slot card is filled. */
 function titleScene(game) {
   for (const [slot, jobs] of [[1, 2], [3, 9], [2, 6]]) {
@@ -456,7 +483,7 @@ function pauseScene(game) {
   game.setState('pause');
 }
 
-const SCENES = { chase: chaseScene, boardwalk: boardwalkScene, bounty: bountyScene, workshop: workshopScene, passed: passScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+const SCENES = { chase: chaseScene, boardwalk: boardwalkScene, bounty: bountyScene, workshop: workshopScene, passed: passScene, atlas: atlasScene, beach: beachScene, title: titleScene, pause: pauseScene };
 
 export function openPhotoMode(game, name) {
   // The HUD a still is taken with: &hud=standard|large|huge (large unless asked) and &style=full|cinematic

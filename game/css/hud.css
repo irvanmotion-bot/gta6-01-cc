@@ -257,8 +257,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .down-sub { font-family: var(--display); font-size: 2.6vh; }
 
 /* HUD STYLE · CINEMATIC (settings): the radar, the stars and cash under the eclipse with the rank line beneath, the
-   job with its current step, the car's speed, the weapon slots and rounds on one slim strip, the dialogue box and four
-   dispatch rows. The crew strip, stunt popups, GPS list, radio and sight lines step aside and leave the middle of the
+   job with its current step, the car's speed, the weapon slots and rounds on one slim strip and the dialogue box.
+   The dispatch rows, the crew strip, stunt popups, GPS list, radio and sight lines step aside and leave the middle of the
    screen to the city. MINIMAL keeps only the radar, the stars and cash, the car's speed and the key prompts. */
 #hud:not([data-style="full"]) .crew-dock,
 #hud:not([data-style="full"]) .stunt-feed,
@@ -276,9 +276,18 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 #hud[data-style="minimal"] .dialogue,
 #hud[data-style="minimal"] .eclipse-panel,
 #hud[data-style="minimal"] .dispatch-panel { display: none; }
-/* The eclipse panel and the stars-and-cash line are one block of glass. */
-#hud[data-style="cinematic"] .eclipse-panel { border-radius: 0; padding-bottom: 0.2vh; }
-#hud[data-style="cinematic"] .status-panel { margin-top: -0.7vh; border-top: 0; padding-top: 0.3vh; }
+/* CINEMATIC top right: the stars and cash lead, and the eclipse folds under them into one slim line (a small disc,
+   the countdown and its words) on the same block of glass; the dispatch rows step aside so the far side of the
+   frame stays open. The dialogue box sits at the foot of the screen, centred. */
+#hud[data-style="cinematic"] .status-panel { order: -1; border-radius: 0; padding-bottom: 0.3vh; }
+#hud[data-style="cinematic"] .eclipse-panel { margin-top: -0.7vh; border-top: 0; gap: 0.6vh; padding: 0.1vh 1vh 0.4vh; }
+#hud[data-style="cinematic"] .eclipse-disc { width: 2.6vh; height: 2.6vh; }
+#hud[data-style="cinematic"] .eclipse-caption,
+#hud[data-style="cinematic"] .eclipse-cover,
+#hud[data-style="cinematic"] .dispatch-panel { display: none; }
+#hud[data-style="cinematic"] .eclipse-row { flex-wrap: nowrap; overflow: hidden; }
+#hud[data-style="cinematic"] .eclipse-big { font-size: 2vh; }
+#hud[data-style="cinematic"] .dialogue { position: fixed; left: 50%; bottom: 2vh; width: 60vh; transform: translateX(-50%); }
 /* The cinematic weapon strip: the five slots with their silhouettes, then the weapon's name over its rounds. */
 #hud[data-style="cinematic"] .weapon-bar { display: flex; align-items: center; gap: 0.8vh; padding: 0.4vh 0.8vh; }
 #hud[data-style="cinematic"] .weapon-caption { display: none; }
