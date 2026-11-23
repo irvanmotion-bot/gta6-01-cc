@@ -1,6 +1,6 @@
 [
   { "name": "1-eclipse-chase.jpg", "query": "?photo=chase", "wait": 4800 },
   { "name": "2-boardwalk-hit.jpg", "query": "?photo=boardwalk&style=minimal", "wait": 4800 },
-  { "name": "3-bravo-workshop.jpg", "query": "?photo=workshop", "wait": 2500 },
+  { "name": "3-city-atlas.jpg", "query": "?photo=atlas", "wait": 2500 },
   { "name": "4-title-screen.jpg", "query": "?photo=title", "wait": 2500 }
 ]

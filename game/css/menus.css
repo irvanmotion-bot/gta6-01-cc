@@ -73,10 +73,10 @@
 /* City atlas: map on the left, the week and the record on the right */
 .atlas { position: fixed; inset: 0; display: none; background: #17122b; }
 .atlas.visible { display: block; }
-.atlas-map { position: absolute; left: 2vh; top: 2vh; bottom: 2vh; right: 56vh; border: 0.5vh solid var(--amber); border-radius: 0.8vh; overflow: hidden; box-sizing: border-box; }
+.atlas-map { position: absolute; left: 2vh; top: 2vh; bottom: 2vh; right: 64vh; border: 0.5vh solid var(--amber); border-radius: 0.8vh; overflow: hidden; box-sizing: border-box; }
 #city-map { position: absolute; inset: 0; width: 100%; height: 100%; }
 .atlas-caption { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6vh 1.4vh; background: rgba(23, 18, 43, 0.86); font-family: var(--display); font-size: 2.2vh; letter-spacing: 0.25vh; color: var(--amber); }
-.atlas-side { position: absolute; right: 2vh; top: 2vh; bottom: 2vh; width: 52vh; overflow: hidden; }
+.atlas-side { position: absolute; right: 2vh; top: 2vh; bottom: 2vh; width: 60vh; overflow: hidden; }
 /* The WEEK page gives the side its old width for the five day columns and the slot cards. */
 .atlas.week-page .atlas-map { right: 68vh; }
 .atlas.week-page .atlas-side { width: 64vh; }
@@ -85,8 +85,8 @@
 .atlas:not(.week-page) .atlas-percent { display: flex; align-items: baseline; gap: 1vh; margin-top: 1.4vh; text-align: left; }
 .atlas-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1vh; margin-top: 1.2vh; }
 .atlas-tile { padding: 0.9vh 1.2vh 1.1vh; background: rgba(244, 236, 216, 0.08); border-top: 0.6vh solid var(--amber); border-radius: 0 0 0.8vh 0.8vh; overflow: hidden; }
-.atlas-tile b { display: block; font-family: var(--display); font-weight: 400; font-size: 6.4vh; line-height: 1; color: var(--cream); }
-.atlas-tile span { display: block; margin-top: 0.4vh; font-family: var(--display); font-size: 1.9vh; letter-spacing: 0.05vh; color: var(--amber); white-space: nowrap; }
+.atlas-tile b { display: block; font-family: var(--display); font-weight: 400; font-size: 7vh; line-height: 1; color: var(--cream); }
+.atlas-tile span { display: block; margin-top: 0.4vh; font-family: var(--display); font-size: 2.3vh; letter-spacing: 0.05vh; color: var(--amber); white-space: nowrap; }
 .atlas-tile small { display: block; font-size: 1.6vh; font-weight: 700; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .atlas-head { display: flex; justify-content: space-between; align-items: flex-end; }
 /* The logo, as on the start screen: the title set across a sun with the moon most of the way over it. */

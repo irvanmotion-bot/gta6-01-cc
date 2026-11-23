@@ -99,8 +99,9 @@ if (smoke) {
     await page.screenshot({ type: 'jpeg', quality, path: join(outDir, shot.name) });
     console.log(`${shot.name}: ${image.length} bytes at quality ${quality}`);
     // Any visible line of text cut short by its box is reported, so a shot never goes out with "COVERI...".
+    // The HUD faded out under a full-screen page (the atlas, the menus) is not visible and is not checked.
     const clipped = await page.evaluate(() => [...document.querySelectorAll('body *')]
-      .filter((node) => node.childElementCount === 0 && node.textContent.trim() && node.offsetParent !== null && node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflow !== 'visible')
+      .filter((node) => node.childElementCount === 0 && node.textContent.trim() && node.offsetParent !== null && !node.closest('#hud.hidden') && node.scrollWidth > node.clientWidth + 1 && getComputedStyle(node).overflow !== 'visible')
       .map((node) => `${node.className || node.tagName}: "${node.textContent.trim()}"`));
     for (const line of clipped) problems.push(`${shot.name} clipped text · ${line}`);
     // A save card's LATEST/PLAYING tag must sit clear of the slot name it shares the header strip with.

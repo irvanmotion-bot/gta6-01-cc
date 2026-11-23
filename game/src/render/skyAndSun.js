@@ -129,6 +129,7 @@ export class SkyAndSun {
     this.hour = 16;
     this.night = 0;
     this.eclipseDark = 0;
+    this.goldenHour = 0;
     this.uniforms = {
       topColor: { value: new THREE.Color() },
       horizonColor: { value: new THREE.Color() },
@@ -231,6 +232,19 @@ export class SkyAndSun {
     this.fill.intensity = this.sun.intensity * 0.26 * (1 - dark) + dark * 0.2;
     this.fill.color.copy(uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
     // The haze is the horizon's colour with a little of the sky's blue in it: distance reads as depth, not as glare.
+    // Golden hour (0 to 1, set by photo mode): the late sun turns the haze orange-gold and the light honey, the
+    // shade warms with it, and the sun itself shines a little harder. It fades out as the moon's shadow falls.
+    const golden = this.goldenHour * (1 - dark);
+    if (golden > 0) {
+      uniforms.horizonColor.value.lerp(this.scratchA.set('#ff9e48'), 0.78 * golden);
+      uniforms.topColor.value.lerp(this.scratchA.set('#ffb878'), 0.4 * golden);
+      this.sun.color.lerp(this.scratchA.set('#ffb35e'), 0.7 * golden);
+      uniforms.sunColor.value.copy(this.sun.color);
+      this.sun.intensity *= 1 + 0.12 * golden;
+      this.ambient.color.lerp(this.scratchA.set('#ffd8ac'), 0.35 * golden);
+      this.ambient.groundColor.lerp(this.scratchA.set('#e8944c'), 0.4 * golden);
+      this.fill.color.copy(uniforms.horizonColor.value).lerp(this.scratchA.set('#ffffff'), 0.5);
+    }
     this.scene.fog.color.copy(uniforms.horizonColor.value).lerp(uniforms.topColor.value, 0.22 + dark * 0.4);
 
     const sunDir = this.sunDirectionAt(hour, uniforms.sunDir.value);

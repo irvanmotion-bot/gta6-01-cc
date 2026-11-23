@@ -63,6 +63,12 @@ function hourOfCoverage(share) {
   return CONTACTS.first + (CONTACTS.totalityStart - CONTACTS.first) * share;
 }
 
+/** Late-afternoon light for an outdoor still: an orange-gold sky, honey sunlight and a touch more exposure. */
+function goldenLight(game) {
+  game.sky.goldenHour = 1;
+  game.renderer.toneMappingExposure = 1.08;
+}
+
 /** Start the last job on eclipse afternoon and play its opening steps until the one of `kind` is running. */
 function startHeist(game, untilKind) {
   game.missions.start(missionById('totality'));
@@ -130,6 +136,7 @@ function chaseScene(game) {
   // Jazz comes on the radio the moment the door shuts: her line is in the crew's ribbon when the frame is taken.
   play(game, 0.05);
   game.calendar.setHour(hourOfCoverage(0.6));
+  goldenLight(game);
   rayo.velZ = speed;
   rayo.health = rayo.maxHealth * 0.78;
   clearLane(game, rayo, 0, z0 - 90, z0 + 220);
@@ -298,6 +305,7 @@ function boardwalkScene(game) {
   const at = (x, z) => [x0 + x, z0 - z];
   loadCity(game, stagedSave(7, { bounties: ['contadora'], day: ECLIPSE_DAY, hour }), x0, z0, Math.PI + 0.12);
   game.calendar.setHour(hour);
+  goldenLight(game);
   game.player.cash = 31450;
   game.player.armor = 64;
   play(game, 0.05);
