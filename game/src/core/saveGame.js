@@ -63,7 +63,13 @@ export function deleteSaveSlot(slot) {
 /** HUD SIZE: how big the panels and their type are drawn, as a factor of the standard size. */
 export const HUD_SIZES = { standard: 1, large: 1.25, huge: 1.5 };
 
-export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true, hudSize: 'standard' };
+/**
+ * HUD STYLE: 'full' shows every panel; 'cinematic' keeps the radar, the stars, the cash with the eclipse, the job,
+ * the car's speed, one line of dialogue and four dispatch rows; 'minimal' keeps the radar, stars, cash and speed.
+ */
+export const HUD_STYLES = ['full', 'cinematic', 'minimal'];
+
+export const DEFAULT_SETTINGS = { volume: 0.8, sensitivity: 1, shadows: true, radio: true, hudSize: 'standard', hudStyle: 'full' };
 
 export function loadSettings() {
   return { ...DEFAULT_SETTINGS, ...(readStored(SETTINGS_KEY) || {}) };

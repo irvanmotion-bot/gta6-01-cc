@@ -1,5 +1,6 @@
-// The scenes behind ?shot=chase|bounty|workshop|atlas|title: each loads a save, stages a moment with the game's
-// own systems, plays the real simulation forward for a few seconds with keys held down, then freezes the frame.
+// Photo mode: ?photo=chase|boardwalk|bounty|workshop|passed|atlas|title|pause opens the game on one moment of the
+// week. Each scene loads a save, stages the moment with the game's own systems, plays the real simulation forward
+// for a few seconds with keys held down, then freezes the frame for a still.
 import { LANDMARKS } from '../world/cityLayout.js';
 import { VANE_CAPOS } from '../activities/vaneBounties.js';
 import { tryEnterVehicle } from '../vehicles/carjacking.js';
@@ -8,6 +9,7 @@ import { GETAWAY_PAINT, STORY_MISSIONS } from '../missions/storyMissions.js';
 import { CONTACTS, ECLIPSE_DAY } from '../eclipse/eclipseCalendar.js';
 import { restoreGame, summarizeGame, captureGame } from '../core/gameSnapshot.js';
 import { freshStats, writeSaveSlot } from '../core/saveGame.js';
+import { CAMERA_RANGES } from '../render/chaseCamera.js';
 
 const STEP = 1 / 60;
 
@@ -115,9 +117,11 @@ function chaseScene(game) {
   const lane = 0;
   // Where the Rayo is when the frame is taken (just across Second Contact Street), and where it starts from.
   const zEnd = 406;
-  const blockadeZ = 432;
+  const blockadeZ = 424;
   const z0 = zEnd - speed * seconds;
   loadCity(game, stagedSave(9), lane, z0 - 4, 0);
+  // The CLOSE camera range (V): the Rayo, the cars on her doors and the blockade fill the middle of the frame.
+  game.camera.range = CAMERA_RANGES.findIndex(([name]) => name === 'CLOSE');
   startHeist(game, 'steal');
   const rayo = game.missions.active.vehicle;
   rayo.position.set(lane, 0, z0);
@@ -277,6 +281,96 @@ function bountyScene(game) {
   game.input.buttons[2] = false;
 }
 
+/**
+ * The same hit in daylight: eclipse afternoon, half an hour before first contact, the Strand packed with people out
+ * for the sky. Nova walks up Corona Drive from the north with the sun behind her; El Anzuelo's crew has come off the
+ * boardwalk into the drive. She drops one guard and swings onto the capo, the crew shoots back, a cruiser answers,
+ * the crowd on the boards scatters or films it, and a citizen's car at the kerb is hers for the taking.
+ * `at(x, z)` is x metres towards the city side of the drive (screen right) and z metres ahead of Nova.
+ */
+function boardwalkScene(game) {
+  const seconds = 1.0;
+  const capo = VANE_CAPOS.find((entry) => entry.id === 'anzuelo');
+  const hour = 15.7;
+  // At the beach-side kerb, between two lamp posts, as she reaches the watch party with its telescopes on the boards.
+  const x0 = -6;
+  const z0 = capo.z - 12;
+  const at = (x, z) => [x0 + x, z0 - z];
+  loadCity(game, stagedSave(7, { bounties: ['contadora'], day: ECLIPSE_DAY, hour }), x0, z0, Math.PI + 0.12);
+  game.calendar.setHour(hour);
+  game.player.cash = 31450;
+  game.player.armor = 64;
+  play(game, 0.05);
+  game.hud.clearSpeech();
+  const crew = game.gunmen.list.filter((gunman) => gunman.missionTag === `bounty:${capo.id}`);
+  const boss = crew.find((gunman) => gunman.kind === 'capo');
+  const [near, left, right] = crew.filter((gunman) => gunman !== boss);
+  // Among the watchers on the boards and the sand, sidestepping as they shoot (the gunmen's own strafe), lit by the
+  // sun behind her.
+  const posts = [[near, -2.6, 7.5, -1], [left, -7, 11, 1], [boss, -3.6, 12.8, -1], [right, 0.4, 15.5, -1]];
+  for (const [gunman, x, z, strafe] of posts) {
+    const [px, pz] = at(x, z);
+    gunman.position.set(px, 0, pz);
+    gunman.heading = 0;
+    gunman.hostile = true;
+    gunman.strafe = strafe;
+    gunman.strafeClock = 9;
+  }
+  // A citizen's Avocet at the kerb at her shoulder: in reach, so the game rings it and offers F to steal it.
+  const parked = game.vehicles.spawn('avocet', ...at(3.0, -1.7), Math.PI + 0.08, '#ffd23f');
+  parked.parked = true;
+  parked.ambient = true;
+  clearLane(game, parked, -3, z0 - 60, z0 + 20);
+  // The crew's black Duna in the drive: she has shot it up, it is burning, and it goes up as the frame is taken.
+  const crewCar = game.vehicles.spawn('duna', ...at(5.2, 20), Math.PI - 0.5, '#17181d');
+  crewCar.parked = true;
+  crewCar.damage(crewCar.maxHealth + 1, true);
+  crewCar.burning = 3.6 - (seconds - 0.3);
+  game.wanted.setStars(2, 99);
+  // Saros P.D. answers the shots: a cruiser pulls up across the drive, another comes up it behind.
+  spawnPursuit(game, 'patrol', 'centinela', ...at(8.4, 14), 1.05, 0);
+  spawnPursuit(game, 'patrol', 'centinela', ...at(10, 62), 0, 14);
+  const crowd = game.pedestrians;
+  const runner = (x, z, style) => { const [px, pz] = at(x, z); const ped = crowd.spawnFleeing(px, pz, { x: x0, z: pz + 1.5 }); ped.fearStyle = style; ped.timid = false; ped.bold = false; ped.heading = Math.atan2(x, -1.5); return ped; };
+  runner(-4.4, 4.6, 'sprint');
+  runner(-6, 9.5, 'handsUp');
+  runner(-0.6, 10.2, 'duck');
+  runner(-8.2, 6.8, 'sprint');
+  runner(1.4, 18, 'handsUp');
+  const bystander = (x, z, style) => { const ped = spawnStroller(game, ...at(x, z)); ped.timid = false; ped.bold = true; ped.gawkStyle = style; ped.gawk(x0, z0 - 8, 30); ped.heading = Math.atan2(-x, z - 8); return ped; };
+  bystander(-7.8, 17.5, 'film');
+  bystander(-5.2, 22, 'point');
+  bystander(-1, 24, 'film');
+  bystander(-9.5, 20, 'point');
+  const coward = spawnStroller(game, ...at(-2.8, 3.1));
+  coward.timid = true;
+  coward.cower(x0, z0 - 6, 30);
+  // Further down the boards the eclipse crowd has not heard it yet.
+  for (const z of [16, 19, 27, 31, 36, 42, 49]) spawnStroller(game, -9.5 - (z % 3) * 0.6, z0 - z, true);
+  play(game, seconds, (t) => {
+    const camera = game.camera;
+    const target = near.alive ? near : boss;
+    for (let pass = 0; pass < 2; pass += 1) {
+      const focusX = game.player.position.x - Math.cos(camera.yaw) * 1.15;
+      const focusZ = game.player.position.z + Math.sin(camera.yaw) * 1.15;
+      camera.yaw = Math.atan2(target.position.x - focusX, target.position.z - focusZ);
+    }
+    camera.pitch = 0.15;
+    game.input.buttons[2] = true;
+    game.input.buttons[0] = t > seconds - 0.55;
+    near.health = t > seconds - 0.5 ? Math.min(near.health, 20) : 400;
+    const last = t > seconds - STEP * 1.5;
+    for (const [gunman, share] of [[boss, 0.62], [left, 0.38], [right, 0.8]]) gunman.health = last ? gunman.spec.health * share : 400;
+    if (last) game.weapons.cooldown = 0;
+    for (const gunman of game.gunmen.list) if (gunman.alive) gunman.cooldown = gunman !== near && t > seconds - STEP * 2.5 ? 0 : 1;
+    game.hud.bannerClock = Math.min(game.hud.bannerClock, 0.01);
+    game.player.health = Math.max(game.player.health, 58);
+    game.player.invulnerable = 1;
+  });
+  game.input.buttons[0] = false;
+  game.input.buttons[2] = false;
+}
+
 /** Bravo's workshop on eclipse eve: the Rayo on the turntable, the upgrade list and its prices beside it. */
 function workshopScene(game) {
   const bay = LANDMARKS.garage.kerb;
@@ -354,15 +448,17 @@ function pauseScene(game) {
   game.setState('pause');
 }
 
-const SCENES = { chase: chaseScene, bounty: bountyScene, workshop: workshopScene, passed: passScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
+const SCENES = { chase: chaseScene, boardwalk: boardwalkScene, bounty: bountyScene, workshop: workshopScene, passed: passScene, atlas: atlasScene, title: titleScene, pause: pauseScene };
 
-export function stageScreenshot(game, name) {
-  // The HUD SIZE a scene is taken at (?hud=standard|large|huge), large unless asked; the player's own setting is
-  // left as it is saved.
-  game.settings.hudSize = new URLSearchParams(window.location.search).get('hud') || 'large';
+export function openPhotoMode(game, name) {
+  // The HUD a still is taken with: &hud=standard|large|huge (large unless asked) and &style=full|cinematic
+  // (cinematic unless asked). The player's own settings are left as they are saved.
+  const params = new URLSearchParams(window.location.search);
+  game.settings.hudSize = params.get('hud') || 'large';
+  game.settings.hudStyle = params.get('style') || 'cinematic';
   game.applySettings();
   (SCENES[name] || titleScene)(game);
   game.input.held.clear();
   game.frozen = true;
-  window.__shotReady = true;
+  window.__photoReady = true;
 }

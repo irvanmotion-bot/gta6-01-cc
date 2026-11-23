@@ -3,8 +3,8 @@
 // during a street race, the running order of the field in the same place.
 import { createElement } from './domBuilder.js';
 
-/** Six rows: the whole response of a five-star chase reads at a glance, kind by kind. */
-const MAX_ROWS = 6;
+/** Six rows: the whole response of a five-star chase reads at a glance, kind by kind (four in the cinematic HUD). */
+export const DISPATCH_ROWS = 6;
 
 /** The short kind each unit is listed under. */
 const KIND_LABELS = { patrol: 'CAR', interceptor: 'CAR', tactical: 'VAN', roadblock: 'BLOCK', air: 'AIR', foot: 'FOOT' };
@@ -13,7 +13,7 @@ const KIND_LABELS = { patrol: 'CAR', interceptor: 'CAR', tactical: 'VAN', roadbl
  * What the panel shows for a roster: the total of units (a blockade counts each of its cars, a foot squad each
  * officer), the nearest rows, and how many units the rows leave out. total = units in `shown` + `more`, always.
  */
-export function dispatchSummary(roster, maxRows = MAX_ROWS) {
+export function dispatchSummary(roster, maxRows = DISPATCH_ROWS) {
   const total = roster.reduce((sum, row) => sum + row.units, 0);
   const shown = roster.slice(0, maxRows);
   const listed = shown.reduce((sum, row) => sum + row.units, 0);
@@ -25,6 +25,7 @@ export class HudDispatchPanel {
     this.game = game;
     this.cache = cache;
     this.clock = 0;
+    this.maxRows = DISPATCH_ROWS;
     this.root = createElement('div', 'hud-panel dispatch-panel', parent);
     const head = createElement('div', 'dispatch-head', this.root);
     this.count = createElement('b', 'dispatch-count', head);
@@ -61,7 +62,7 @@ export class HudDispatchPanel {
     this.clock -= dt;
     if (this.clock > 0) return;
     this.clock = 0.25;
-    const summary = dispatchSummary(game.police.roster());
+    const summary = dispatchSummary(game.police.roster(), this.maxRows);
     cache.text(this.count, String(summary.total));
     // Wanted with nobody on the road yet: say the units are on their way instead of a bare zero.
     cache.toggle(this.root, 'en-route', summary.total === 0);

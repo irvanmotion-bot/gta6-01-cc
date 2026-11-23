@@ -300,13 +300,17 @@ export function playWholeGame() {
   game.setState('pause');
   game.menus.open('stats');
   game.setState('map');
+  const atlasTiles = document.querySelectorAll('.atlas-tile').length;
+  game.atlas.flip();
   const atlasJobs = document.querySelectorAll('.atlas-job').length;
+  game.atlas.flip();
+  if (atlasTiles !== 6 || atlasJobs === 0) failures.push(`the atlas pages are incomplete: ${atlasTiles} tiles on the map page, ${atlasJobs} jobs on the week page`);
   game.setState('play');
   run(30);
   const hud = {
     job: document.querySelector('.job-header').textContent, sight: document.querySelector('.sight-label').textContent, rank: document.querySelector('.rank-name').textContent, crew: document.querySelector('.crew-caption').textContent,
     stunts: { nearMisses: game.stats.nearMisses, stuntCash: game.stats.stuntCash },
-    slots: document.querySelectorAll('.weapon-slot.owned').length, favors: document.querySelectorAll('.favor').length, atlasJobs,
+    slots: document.querySelectorAll('.weapon-slot.owned').length, favors: document.querySelectorAll('.favor').length, atlasTiles, atlasJobs,
   };
   const slotCards = JSON.parse(window.localStorage.getItem(saveKey(2))).summary;
   // The script stands in the open through every firefight, so a job may take it more than one try; the story must

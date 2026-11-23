@@ -1,7 +1,7 @@
 // The start screen and the pause menu: the logo over a column of buttons (continue, new game, save, load, atlas,
 // statistics, controls, settings) and, beside them, the three save slots as cards that load on a click and the
 // district map of Saros with its legend. By keyboard or mouse.
-import { HUD_SIZES, SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
+import { HUD_SIZES, HUD_STYLES, SAVE_SLOT_COUNT, deleteSaveSlot, freeSaveSlot, latestSaveSlot, listSaveSlots, saveSettings } from '../core/saveGame.js';
 import { CITY_NAME, GAME_TITLE } from '../core/config.js';
 import { STORY_MISSIONS } from '../missions/storyMissions.js';
 import { DISTRICTS } from '../world/cityLayout.js';
@@ -107,6 +107,7 @@ export class Menus {
       { label: `MOUSE SPEED · ${settings.sensitivity.toFixed(2)}`, hint: 'Camera sensitivity', run: cycle('sensitivity', [0.5, 0.75, 1, 1.25, 1.5, 2]) },
       { label: `SHADOWS · ${settings.shadows ? 'ON' : 'OFF'}`, hint: 'Turn off for more speed', run: cycle('shadows', [true, false]) },
       { label: `HUD SIZE · ${settings.hudSize.toUpperCase()}`, hint: 'Standard, large or huge panels and type', run: cycle('hudSize', Object.keys(HUD_SIZES)) },
+      { label: `HUD STYLE · ${settings.hudStyle.toUpperCase()}`, hint: 'Full panels; cinematic: radar, stars, cash, job, speed; minimal: radar and stars', run: cycle('hudStyle', HUD_STYLES) },
       { label: 'BACK', hint: '', run: () => this.open('main') },
     ];
   }
@@ -216,5 +217,5 @@ const CONTROLS = [
   ['W A S D', 'Walk · steer, accelerate, brake'], ['Mouse', 'Look around · aim'], ['Shift', 'Sprint · nitro in a car'], ['Space', 'Jump · handbrake'],
   ['F', 'Enter / exit vehicle · carjack'], ['Left click', 'Punch · shoot'], ['Right click', 'Aim'], ['1-5 · Q · wheel', 'Switch weapon'],
   ['R', 'Reload · next radio station'], ['E', 'Shop · workshop · race · save'], ['T', 'Taxi fares (in a Saros Cab)'], ['L', 'Headlights off and on: run dark'], ['Z · X · C', 'Crew favors: car, signal jam, patch-up'],
-  ['H', 'Horn'], ['M · Tab', `${GAME_TITLE} city atlas`], ['Esc · P', 'Pause'],
+  ['H', 'Horn'], ['V', 'Camera: standard, close, far'], ['M · Tab', `${GAME_TITLE} city atlas`], ['Esc · P', 'Pause'],
 ];

@@ -52,14 +52,14 @@ import { SoundEffects } from './audio/soundEffects.js';
 import { Input } from './core/input.js';
 import { CITY_NAME, GAME_TITLE } from './core/config.js';
 import { distance2D } from './core/random.js';
-import { stageScreenshot } from './debug/screenshotScenes.js';
+import { openPhotoMode } from './ui/photoMode.js';
 
 class Game {
   constructor() {
     const canvas = document.getElementById('game-canvas');
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    // A staged screenshot is drawn at twice the window's pixels and shrunk by the browser, so its edges stay clean.
-    const staged = new URLSearchParams(window.location.search).has('shot');
+    // A photo-mode frame is drawn at twice the window's pixels and shrunk by the browser, so its edges stay clean.
+    const staged = new URLSearchParams(window.location.search).has('photo');
     this.renderer.setPixelRatio(staged ? 2 : Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -149,6 +149,7 @@ class Game {
     this.camera.sensitivity = this.settings.sensitivity;
     this.sky.setShadows(this.settings.shadows);
     this.hud.setSize(this.settings.hudSize);
+    this.hud.setStyle(this.settings.hudStyle);
   }
 
   /** Everyone a bullet, a bumper or a blast can reach: Nova, the citizens and the gunmen. */
@@ -364,6 +365,7 @@ class Game {
     const input = this.input;
     if (input.wasPressed('Escape', 'KeyP')) { this.setState('pause'); return; }
     if (input.wasPressed('KeyM', 'Tab')) { this.setState('map'); return; }
+    if (input.wasPressed('KeyV')) this.hud.notify(`Camera · ${this.camera.cycleRange()}`);
     const vehicle = this.player.vehicle;
     if (vehicle && input.wasPressed('KeyH')) this.audio.horn();
     if (vehicle && input.wasPressed('KeyR')) this.hud.showRadio(this.audio.radio.nextStation());
@@ -411,6 +413,7 @@ class Game {
       this.menus.update();
     } else if (this.state === 'map') {
       if (this.input.wasPressed('KeyM', 'Tab', 'Escape')) this.setState('play');
+      else if (this.input.wasPressed('KeyQ', 'KeyE')) this.atlas.flip();
     } else if (this.state === 'shop') {
       this.counter.updateMenu();
       this.showroom.update(realDt);
@@ -461,8 +464,8 @@ const TITLE_HOUR = 16.72;
 
 const game = new Game();
 window.totality = game;
-const shot = new URLSearchParams(window.location.search).get('shot');
-if (shot) stageScreenshot(game, shot);
+const photo = new URLSearchParams(window.location.search).get('photo');
+if (photo) openPhotoMode(game, photo);
 else game.showTitle();
 document.getElementById('loading').classList.add('done');
 game.run();

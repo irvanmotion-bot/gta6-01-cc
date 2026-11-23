@@ -5,13 +5,13 @@ import { DomCache, createElement } from './domBuilder.js';
 import { HudEclipsePanel } from './hudEclipsePanel.js';
 import { HudJobPanel } from './hudJobPanel.js';
 import { HudStatusPanel } from './hudStatusPanel.js';
-import { HudDispatchPanel } from './hudDispatchPanel.js';
+import { DISPATCH_ROWS, HudDispatchPanel } from './hudDispatchPanel.js';
 import { HudCrewPanel } from './hudCrewPanel.js';
 import { HudVehiclePanel } from './hudVehiclePanel.js';
 import { HudWeaponBar } from './hudWeaponBar.js';
 import { HudEnemyTags } from './hudEnemyTags.js';
 import { drawSpeakerPortrait } from './speakerPortraits.js';
-import { HUD_SIZES } from '../core/saveGame.js';
+import { HUD_SIZES, HUD_STYLES } from '../core/saveGame.js';
 import { CREW_FAVORS } from '../progression/crewFavors.js';
 import { CHARACTERS } from '../missions/storyMissions.js';
 
@@ -55,6 +55,17 @@ export class Hud {
     this.sizeFactor = HUD_SIZES[this.sizeName];
     this.root.dataset.size = this.sizeName;
     this.fitToWindow();
+  }
+
+  /**
+   * HUD STYLE from the settings (HUD_STYLES). Cinematic hides the crew strip, the stunt popups, the weapon bar, the
+   * radio and the rank line, joins the cash and stars to the eclipse panel and cuts the dispatch list to four rows;
+   * minimal also puts away the job, the dialogue, the eclipse and the dispatch panels (the CSS does the hiding).
+   */
+  setStyle(name) {
+    this.styleName = HUD_STYLES.includes(name) ? name : HUD_STYLES[0];
+    this.root.dataset.style = this.styleName;
+    this.dispatchPanel.maxRows = this.styleName === 'full' ? DISPATCH_ROWS : 4;
   }
 
   /**

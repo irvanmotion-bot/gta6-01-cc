@@ -64,12 +64,15 @@ dark. Nine jobs across four days set the crew up. The tenth is the vault, robbed
   and the radar shows the zone they comb round where they last saw her; outside it the trail goes cold twice as fast.
 - **Stunt score**: a car passed within a door's width at closing speed is a NEAR MISS, a held slide is a DRIFT in
   metres; each pays cash at once, chains into a combo inside four seconds and pops up over the road.
-- **HUD and menus**: upright, heavy capitals on dark glass with a HUD SIZE setting (standard, large, huge); one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating radar with
+- **HUD and menus**: upright, heavy capitals on dark glass with a HUD SIZE setting (standard, large, huge) and a
+  HUD STYLE setting (full; cinematic: radar, stars and cash on the eclipse panel, the job, speed, dialogue and four
+  dispatch rows; minimal: radar, stars and cash); V cycles the camera range (standard, close, far); one palette (shadow indigo, low-sun amber, coral, corona cream) across a rotating radar with
   the route to the objective, the district and health and armor under it, a job panel with the giver's face and
   one bar cut into the job's steps, the crew by name and face with the favor each grants, the crew's dialogue
   ribbon, the eclipse panel, status, dispatch and vehicle panels, a weapon bar with a silhouette for each gun, a
-  GPS list on a quiet walk, a city atlas with the map, the path of totality, the week's jobs day by day and the
-  three save slots as cards, a start screen and a pause menu with big buttons, the three save slots as cards that
+  GPS list on a quiet walk, a city atlas in two pages (Q/E): the map with the path of totality beside a strip of
+  big figures counted from the save (story jobs, side activities, workshop tiers, weapons, vehicles, districts),
+  then the week's jobs day by day, the activity tallies and the three save slots as cards, a start screen and a pause menu with big buttons, the three save slots as cards that
   load on a click (day, job, time played, completion) and a district map of Saros with its legend, SAVE GAME and
   LOAD GAME on the pause menu, statistics, settings and shop counters. Progress saves to the browser (localStorage).
 
@@ -92,7 +95,8 @@ The only library is three.js r160 (MIT), vendored as `game/vendor/three.module.m
 | T | Taxi fares in a Saros Cab |
 | L | Headlights off and on: run dark |
 | Z / X / C | Crew favors: getaway car, signal jam, patch-up |
-| M, Tab | City atlas |
+| V | Camera range: standard, close, far |
+| M, Tab | City atlas (Q / E turn its page) |
 | Esc, P | Pause |
 
 ## Run it
@@ -102,10 +106,12 @@ node serve.ts            # serves game/ at http://localhost:8080 (Node 22.18+, n
 mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # the hand-in: copies game/ and screenshots/, writes dossier.json
 ```
 
-The screenshots in `screenshots/` are unedited browser renders of the scenes in `game/src/debug/screenshotScenes.js`
-(`?shot=chase`, `bounty`, `workshop`, `pause`; `atlas` and `title` stage the other two full screens, `passed` a job's result card), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`
+The screenshots in `screenshots/` are unedited browser renders of the game's photo mode, `game/src/ui/photoMode.js`
+(`?photo=chase`, `boardwalk`, `workshop`, `atlas`; `bounty` is the same hit in totality, `title` and `pause` the
+start screen and pause menu, `passed` a job's result card), listed in `shots.json` and taken with `tools/captureScreenshots.mjs`
 at 768x480, the size the judge's sheet shows the cover at, with the 3D view drawn at twice the pixels. A scene is
-taken at HUD SIZE large unless `&hud=standard` or `&hud=huge` is added; in play the size is set under SETTINGS.
+taken at HUD SIZE large and HUD STYLE cinematic unless `&hud=` or `&style=` says otherwise; in play both are set
+under SETTINGS.
 Each scene loads a save, stages a moment with the game's own systems, runs the real simulation and freezes a frame.
 `tools/captureScreenshots.mjs --smoke` plays the whole game by script (`tools/smokeTest.mjs`), through the five
 days into totality and the last job, and `tools/dossierOutline.mjs` prints the order the dossier lists the sources in.
@@ -123,7 +129,7 @@ days into totality and the last job, and `tools/dossierOutline.mjs` prints the o
 - `game/src/garage/`, `game/src/economy/` — tuning workshop, workshop showroom, shops
 - `game/src/vehicles/` — catalog, models, lights, physics, fleet, traffic AI, carjacking
 - `game/src/characters/`, `game/src/combat/` — character body, player, pedestrians, weapons, gunmen, explosions
-- `game/src/ui/` — HUD panels, dialogue portraits, minimap, city atlas, menus, shop counter
+- `game/src/ui/` — HUD panels, dialogue portraits, minimap, city atlas, menus, shop counter, photo mode
 - `game/src/core/`, `render/`, `effects/`, `audio/` — config, input, save slots, snapshots, sky, sky reflections, camera, particles, sound, radio
 
 ---

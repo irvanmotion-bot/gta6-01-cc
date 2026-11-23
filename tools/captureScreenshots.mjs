@@ -87,7 +87,7 @@ if (smoke) {
   for (const shot of shots) {
     if (only && !shot.name.includes(only)) continue;
     await page.goto(base + shot.query);
-    await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 120000 });
+    await page.waitForFunction(() => window.__photoReady === true, null, { timeout: 120000 });
     // The frame is frozen; a longer wait only lets the notification toasts time out of a crowded shot.
     await page.waitForTimeout(shot.wait ?? 1500);
     let quality = 92;

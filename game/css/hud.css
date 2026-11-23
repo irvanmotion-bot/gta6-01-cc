@@ -256,6 +256,30 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0818; col
 .down-title { font-family: var(--display); font-size: 15vh; letter-spacing: 0.5vh; color: var(--coral); text-shadow: 0 0.8vh 0 var(--ink); }
 .down-sub { font-family: var(--display); font-size: 2.6vh; }
 
+/* HUD STYLE · CINEMATIC (settings): the radar, the stars and cash under the eclipse, the job with its current step,
+   the car's speed, the dialogue box and four dispatch rows. The crew strip, stunt popups, weapon bar, GPS list, radio,
+   rank and sight lines step aside and leave the middle of the screen to the city. MINIMAL keeps only the radar, the
+   stars and cash, the car's speed and the key prompts. */
+#hud:not([data-style="full"]) .crew-dock,
+#hud:not([data-style="full"]) .stunt-feed,
+#hud:not([data-style="full"]) .weapon-bar,
+#hud:not([data-style="full"]) .gps-panel,
+#hud:not([data-style="full"]) .radio-line,
+#hud:not([data-style="full"]) .sight-line,
+#hud:not([data-style="full"]) .escape-meter,
+#hud:not([data-style="full"]) .rank-line,
+#hud:not([data-style="full"]) .rank-track,
+#hud:not([data-style="full"]) .eclipse-track,
+#hud:not([data-style="full"]) .job-row-next,
+#hud:not([data-style="full"]) .job-row-fail,
+#hud[data-style="minimal"] .job-panel,
+#hud[data-style="minimal"] .dialogue,
+#hud[data-style="minimal"] .eclipse-panel,
+#hud[data-style="minimal"] .dispatch-panel { display: none; }
+/* The eclipse panel and the stars-and-cash line are one block of glass. */
+#hud[data-style="cinematic"] .eclipse-panel { border-radius: 0; padding-bottom: 0.2vh; }
+#hud[data-style="cinematic"] .status-panel { margin-top: -0.7vh; border-top: 0; padding-top: 0.3vh; }
+
 @keyframes pulse { from { opacity: 1; } to { opacity: 0.55; } }
 @keyframes slide-in { from { transform: translateY(-2vh); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes stunt-pop { from { transform: scale(1.3); opacity: 0; } to { opacity: 1; } }

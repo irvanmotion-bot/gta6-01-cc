@@ -4,6 +4,8 @@ import { angleDelta, clamp } from '../core/random.js';
 
 /** The driving view: metres behind the car (plus a share of its length), lift of the aim point, pitch and lens. */
 const CHASE = { distance: 4.6, perLength: 0.5, speedPull: 0.7, lift: 2.1, pitch: 0.13, fov: 54, speedFov: 6, boostFov: 2, follow: 36 };
+/** The camera ranges V cycles through, as a share of the usual distance behind Nova or her car. */
+export const CAMERA_RANGES = [['STANDARD', 1], ['CLOSE', 0.74], ['FAR', 1.35]];
 
 export class ChaseCamera {
   constructor(aspect) {
@@ -11,6 +13,7 @@ export class ChaseCamera {
     this.yaw = 0;
     this.pitch = 0.2;
     this.distance = 5;
+    this.range = 0;
     this.sensitivity = 1;
     this.idleLook = 0;
     this.shakeAmount = 0;
@@ -20,6 +23,12 @@ export class ChaseCamera {
 
   shake(amount) {
     this.shakeAmount = Math.min(1, Math.max(this.shakeAmount, amount));
+  }
+
+  /** The next camera range (V); returns its name for the HUD's notice. */
+  cycleRange() {
+    this.range = (this.range + 1) % CAMERA_RANGES.length;
+    return CAMERA_RANGES[this.range][0];
   }
 
   /** Put the camera straight behind a heading (after a load, a respawn or entering a car). */
@@ -56,6 +65,7 @@ export class ChaseCamera {
       wanted = player.aiming ? 3.3 : 5;
       height = 1.66;
     }
+    wanted *= CAMERA_RANGES[this.range][1];
     this.distance += (wanted - this.distance) * Math.min(1, dt * 6);
 
     const cosPitch = Math.cos(this.pitch);
