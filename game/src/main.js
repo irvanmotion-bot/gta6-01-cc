@@ -1,13 +1,14 @@
 // Totality: boots the city of Saros, owns every system and runs the game loop and its states (title, play, pause,
 // atlas, shop). The eclipse calendar is the first system it loads: every other one asks it what day and hour it is.
 import * as THREE from 'three';
+import { MissionDirector } from './missions/missionDirector.js';
+import { PedestrianCrowd } from './characters/pedestrians.js';
 import { ECLIPSE_DAY, EclipseCalendar } from './eclipse/eclipseCalendar.js';
 import { EclipseWatchParties } from './eclipse/eclipseWatchParties.js';
 import { DarknessCover } from './eclipse/darknessCover.js';
 import { LANDMARKS } from './world/cityLayout.js';
 import { PoliceDispatch } from './police/policeDispatch.js';
 import { WantedLevel } from './police/wantedLevel.js';
-import { MissionDirector } from './missions/missionDirector.js';
 import { StreetCred } from './progression/streetCred.js';
 import { CrewFavors } from './progression/crewFavors.js';
 import { StuntScore } from './progression/stuntScore.js';
@@ -18,7 +19,6 @@ import { VaneBounties } from './activities/vaneBounties.js';
 import { SideActivities } from './missions/sideActivities.js';
 import { captureGame, restoreGame, summarizeGame } from './core/gameSnapshot.js';
 import { freshStats, loadSaveSlot, loadSettings, migrateRetiredSaves, writeSaveSlot } from './core/saveGame.js';
-import { PedestrianCrowd } from './characters/pedestrians.js';
 import { Player } from './characters/player.js';
 import { Hud } from './ui/hud.js';
 import { Minimap } from './ui/minimap.js';
