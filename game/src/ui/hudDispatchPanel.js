@@ -3,7 +3,7 @@
 // during a street race, the running order of the field in the same place.
 import { createElement } from './domBuilder.js';
 
-/** Six rows: the whole response of a five-star chase reads at a glance, kind by kind (the cinematic HUD hides the panel). */
+/** Six rows: the whole response of a five-star chase reads at a glance, kind by kind (four in the cinematic HUD). */
 export const DISPATCH_ROWS = 6;
 
 /** The short kind each unit is listed under. */
